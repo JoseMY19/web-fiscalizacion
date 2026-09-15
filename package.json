@@ -1,0 +1,24 @@
+{
+  "name": "@pas-sjl/web-oficina",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Fuera de alcance en la fase actual (solo SP1/aplicativo). Placeholder para cuando se ataque SP2 en adelante.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build"
+  },
+  "dependencies": {
+    "@pas-sjl/shared-types": "*",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.30.6",
+    "socket.io-client": "^4.8.3"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "typescript": "^5.6.2",
+    "vite": "^5.4.6"
+  }
+}

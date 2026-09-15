@@ -1,0 +1,40 @@
+﻿# Dependencias
+node_modules/
+.pnp
+.pnp.js
+
+# Build y distribucion
+dist/
+dist-ssr/
+dev-dist/
+coverage/
+*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.log
+
+# Entornos y secretos
+.env
+.env.production
+.env.staging
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
+# Editor y sistema operativo
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db

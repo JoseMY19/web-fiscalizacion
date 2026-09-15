@@ -1,0 +1,151 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  /* ==========================================================================
+     PALETA AZUL NOCHE & BLANCO INSTITUCIONAL - MDSJL
+     ========================================================================== */
+  --color-midnight-950: #050a18;
+  --color-midnight-900: #0b132b;
+  --color-midnight-850: #0e1a38;
+  --color-midnight-800: #132247;
+  --color-midnight-700: #1c2e59;
+  --color-midnight-600: #2a4175;
+
+  /* Azules primarios y de acento */
+  --color-primary-700: #1d4ed8;
+  --color-primary-600: #2563eb;
+  --color-primary-500: #3b82f6;
+  --color-primary-400: #60a5fa;
+  --color-primary-100: #dbeafe;
+  --color-primary-50:  #eff6ff;
+
+  --color-cyan-600: #0284c7;
+  --color-cyan-500: #0ea5e9;
+  --color-cyan-400: #38bdf8;
+  --color-cyan-100: #e0f2fe;
+
+  /* Fondos y Neutros */
+  --color-white: #ffffff;
+  --color-bg-app: #f4f6fa;
+  --color-bg-card: #ffffff;
+  --color-bg-subtle: #f8fafc;
+  --color-bg-hover: #f1f5f9;
+
+  /* Textos */
+  --color-text-main: #0f172a;
+  --color-text-secondary: #334155;
+  --color-text-muted: #64748b;
+  --color-text-light: #94a3b8;
+  --color-text-white: #ffffff;
+
+  /* Bordes */
+  --color-border: #e2e8f0;
+  --color-border-dark: #cbd5e1;
+  --color-border-subtle: #f1f5f9;
+
+  /* Semáforos / Estados del PAS */
+  --color-success: #16a34a;
+  --color-success-bg: #f0fdf4;
+  --color-success-border: #bbf7d0;
+
+  --color-warning: #d97706;
+  --color-warning-bg: #fffbeb;
+  --color-warning-border: #fde68a;
+
+  --color-danger: #dc2626;
+  --color-danger-bg: #fef2f2;
+  --color-danger-border: #fecaca;
+
+  --color-info: #0284c7;
+  --color-info-bg: #f0f9ff;
+  --color-info-border: #bae6fd;
+
+  --color-purple: #7c3aed;
+  --color-purple-bg: #f5f3ff;
+  --color-purple-border: #ddd6fe;
+
+  /* Sombras y Elevaciones */
+  --shadow-xs: 0 1px 2px 0 rgba(11, 19, 43, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(11, 19, 43, 0.08), 0 1px 2px -1px rgba(11, 19, 43, 0.05);
+  --shadow-md: 0 4px 10px -1px rgba(11, 19, 43, 0.08), 0 2px 6px -2px rgba(11, 19, 43, 0.05);
+  --shadow-lg: 0 10px 20px -3px rgba(11, 19, 43, 0.1), 0 4px 8px -4px rgba(11, 19, 43, 0.06);
+  --shadow-xl: 0 20px 25px -5px rgba(11, 19, 43, 0.12), 0 8px 10px -6px rgba(11, 19, 43, 0.06);
+  --shadow-glow: 0 0 20px rgba(37, 99, 235, 0.25);
+
+  /* Radios */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 9999px;
+
+  /* Transiciones */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--color-bg-app);
+  color: var(--color-text-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button, input, textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* Scrollbar moderno */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Utilidades Comunes */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--color-bg-app);
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.page-body {
+  flex: 1;
+  padding: 28px 36px 48px;
+  max-width: 1440px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .page-body {
+    padding: 16px;
+  }
+}
