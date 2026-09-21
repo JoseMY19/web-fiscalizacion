@@ -10,7 +10,6 @@ import {
   ShieldAlertIcon,
   CalendarIcon,
   LogOutIcon,
-  UserIcon,
   EyeIcon,
   BellIcon,
 } from '../icons/Icons';
@@ -91,21 +90,24 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     0
   );
 
+  const cleanName = (user?.nombres || 'Carla Vega').replace(/\s*\(admin\s*dev\)/gi, '').trim();
+  const cleanRole = user?.rol === 'ADMIN' ? 'Administrador' : user?.rol === 'FISCALIZADOR' ? 'Inspector de Campo' : user?.rol ?? 'Oficina';
+
   return (
     <div className="app-container">
       {/* ================================================================ */}
-      {/* SIDEBAR INSTITUCIONAL - AZUL NOCHE PROFUNDO                       */}
+      {/* SIDEBAR INSTITUCIONAL - AZUL NAVY INSTITUCIONAL                   */}
       {/* ================================================================ */}
       <aside
         style={{
           width: '280px',
-          backgroundColor: '#0b132b',
+          background: 'linear-gradient(180deg, #163666 0%, #10264a 100%)',
           color: '#ffffff',
           display: 'flex',
           flexDirection: 'column',
           flexShrink: 0,
-          borderRight: '1px solid #1c2e59',
-          boxShadow: '4px 0 16px rgba(5, 10, 24, 0.25)',
+          borderRight: '1px solid rgba(255, 255, 255, 0.1)',
+          boxShadow: '4px 0 20px rgba(16, 38, 74, 0.25)',
           zIndex: 100,
         }}
       >
@@ -113,10 +115,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         <div
           style={{
             padding: '22px 20px 18px',
-            borderBottom: '1px solid #1c2e59',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
             display: 'flex',
             flexDirection: 'column',
             gap: '12px',
+            background: 'rgba(255, 255, 255, 0.03)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
@@ -124,7 +127,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               src="/logo-sjl-white.png"
               alt="Municipalidad de San Juan de Lurigancho"
               style={{
-                height: '38px',
+                height: '40px',
                 width: 'auto',
                 maxWidth: '220px',
                 objectFit: 'contain',
@@ -132,10 +135,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             />
           </div>
           <div>
-            <div style={{ fontSize: '12px', fontWeight: 700, color: '#f8fafc', letterSpacing: '0.2px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff', letterSpacing: '0.2px' }}>
               Fiscalización Administrativa
             </div>
-            <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+            <div style={{ fontSize: '11px', color: '#bfdbfe', marginTop: '2px' }}>
               MDSJL • Sistema Sancionador PAS
             </div>
           </div>
@@ -149,8 +152,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               fontWeight: 700,
               textTransform: 'uppercase',
               letterSpacing: '0.8px',
-              color: '#64748b',
+              color: '#93c5fd',
               padding: '6px 12px 8px',
+              opacity: 0.85,
             }}
           >
             Módulos del Sistema
@@ -168,36 +172,37 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    padding: '9px 12px',
+                    padding: '10px 12px',
                     borderRadius: '8px',
-                    backgroundColor: active ? 'rgba(56, 189, 248, 0.12)' : 'transparent',
-                    color: active ? '#ffffff' : '#94a3b8',
-                    borderLeft: active ? '3px solid #38bdf8' : '3px solid transparent',
+                    backgroundColor: active ? '#1d4ed8' : 'transparent',
+                    color: active ? '#ffffff' : '#dbeafe',
+                    borderLeft: active ? '3px solid #60a5fa' : '3px solid transparent',
                     borderTop: 'none',
                     borderRight: 'none',
                     borderBottom: 'none',
                     cursor: 'pointer',
                     fontSize: '13px',
-                    fontWeight: active ? 600 : 500,
+                    fontWeight: active ? 700 : 500,
                     transition: 'all 150ms ease',
                     textAlign: 'left',
                     width: '100%',
+                    boxShadow: active ? '0 2px 8px rgba(29, 78, 216, 0.4)' : 'none',
                   }}
                   onMouseEnter={(e) => {
                     if (!active) {
-                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
                       e.currentTarget.style.color = '#ffffff';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!active) {
                       e.currentTarget.style.backgroundColor = 'transparent';
-                      e.currentTarget.style.color = '#94a3b8';
+                      e.currentTarget.style.color = '#dbeafe';
                     }
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ color: active ? '#38bdf8' : '#94a3b8', display: 'flex', alignItems: 'center' }}>
+                    <span style={{ color: active ? '#ffffff' : '#bfdbfe', display: 'flex', alignItems: 'center' }}>
                       {item.icon}
                     </span>
                     <span>{item.label}</span>
@@ -227,12 +232,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           </nav>
         </div>
 
-        {/* User Profile & Logout in Azul Noche */}
+        {/* User Profile & Logout in Azul Navy */}
         <div
           style={{
             padding: '16px',
-            borderTop: '1px solid #1c2e59',
-            backgroundColor: '#070d1e',
+            borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+            backgroundColor: '#0c1f3c',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -242,18 +247,18 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                   width: '36px',
                   height: '36px',
                   borderRadius: '50%',
-                  backgroundColor: '#1e293b',
-                  color: '#38bdf8',
+                  backgroundColor: '#1d4ed8',
+                  color: '#ffffff',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontWeight: 700,
                   fontSize: '13px',
-                  border: '1px solid #334155',
                   flexShrink: 0,
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
                 }}
               >
-                <UserIcon size={18} />
+                {cleanName.charAt(0)}
               </div>
               <div style={{ minWidth: 0 }}>
                 <div
@@ -265,12 +270,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                   }}
-                  title={user?.nombres ?? 'Usuario'}
+                  title={cleanName}
                 >
-                  {user?.nombres ?? 'Oficina PAS'}
+                  {cleanName}
                 </div>
-                <div style={{ fontSize: '11px', color: '#94a3b8' }}>
-                  {user?.rol ?? 'OPERADOR'} • DNI: {user?.dni ?? '---'}
+                <div style={{ fontSize: '11px', color: '#93c5fd' }}>
+                  {cleanRole} • DNI: {user?.dni ?? '---'}
                 </div>
               </div>
             </div>
@@ -280,7 +285,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               style={{
                 backgroundColor: 'transparent',
                 border: 'none',
-                color: '#94a3b8',
+                color: '#bfdbfe',
                 cursor: 'pointer',
                 padding: '6px',
                 borderRadius: '6px',
@@ -289,8 +294,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                 justifyContent: 'center',
                 transition: 'color 150ms',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = '#ef4444')}
-              onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#f87171')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#bfdbfe')}
             >
               <LogOutIcon size={18} />
             </button>
@@ -304,24 +309,24 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       <div className="main-content">
         {/* Topbar Header */}
         <header className="app-topbar">
-          <div>
-            <div
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#64748b' }}>
+              <span style={{ fontWeight: 500 }}>Fiscalización</span>
+              <span style={{ color: '#cbd5e1' }}>/</span>
+              <span style={{ color: '#0f172a', fontWeight: 700 }}>{currentNav?.label}</span>
+            </div>
+            <span
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '12px',
-                color: '#64748b',
-                marginBottom: '2px',
+                fontSize: '11px',
+                fontWeight: 600,
+                color: '#0369a1',
+                backgroundColor: '#e0f2fe',
+                padding: '2px 8px',
+                borderRadius: '6px',
               }}
             >
-              <span>Fiscalización Administrativa</span>
-              <span style={{ color: '#cbd5e1' }}>/</span>
-              <span style={{ color: '#0284c7', fontWeight: 600 }}>{currentNav?.label}</span>
-            </div>
-            <h1 style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
-              {currentNav?.label}
-            </h1>
+              MDSJL
+            </span>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>

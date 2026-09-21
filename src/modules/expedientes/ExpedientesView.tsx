@@ -6,7 +6,7 @@ import {
   IntervencionObservadaItem,
   ActasApi,
 } from '../../api';
-import { Card, Button, Badge, Modal, Input, Textarea, Alert, EmptyState, Spinner } from '../../components/common/Common';
+import { Button, Badge, Modal, Input, Textarea, Alert, EmptyState, Spinner } from '../../components/common/Common';
 import {
   ExpedienteIcon,
   CheckCircleIcon,
@@ -324,251 +324,441 @@ export const ExpedientesView: React.FC = () => {
   return (
     <div>
       {/* Header Bar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '22px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a' }}>
-            Control y Validación Formal de Expedientes
+          <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.3px', margin: 0 }}>
+            Mesa de Control y Calificación Formal
           </h2>
-          <p style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
-            Revisión de requisitos de validez del PAS, subsanación y digitalización de actas físicas.
+          <p style={{ fontSize: '13px', color: '#64748b', marginTop: '4px', margin: 0 }}>
+            Validación de requisitos de procedibilidad, verificación de series de campo y control documental del PAS.
           </p>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <Button variant="secondary" icon={<RefreshCwIcon size={15} />} loading={loading} onClick={cargar}>
+          <Button variant="secondary" icon={<RefreshCwIcon size={14} />} loading={loading} onClick={cargar}>
             Actualizar
+          </Button>
+          <Button variant="primary" icon={<PlusIcon size={15} />} onClick={() => setActiveTab('digitalizar')}>
+            Digitalizar Acta Física
           </Button>
         </div>
       </div>
 
       {message && <Alert type={message.type}>{message.text}</Alert>}
 
-      {/* Tabs Selector */}
-      <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', marginBottom: '20px', gap: '8px' }}>
-        <button
-          onClick={() => setActiveTab('validar')}
+      {/* KPI Stats Cards */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: '16px',
+          marginBottom: '24px',
+        }}
+      >
+        <div
           style={{
-            padding: '10px 16px',
-            border: 'none',
-            borderBottom: activeTab === 'validar' ? '2px solid #0284c7' : '2px solid transparent',
-            backgroundColor: 'transparent',
-            color: activeTab === 'validar' ? '#0369a1' : '#64748b',
-            fontWeight: activeTab === 'validar' ? 600 : 500,
-            cursor: 'pointer',
-            fontSize: '13px',
+            backgroundColor: '#ffffff',
+            borderRadius: '12px',
+            padding: '16px 20px',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            transition: 'all 150ms ease',
+            justifyContent: 'space-between',
           }}
         >
-          <ExpedienteIcon size={16} />
-          Bandeja de Validación
-          <span style={{ fontSize: '11px', fontWeight: 600, padding: '1px 7px', borderRadius: '10px', backgroundColor: '#e0f2fe', color: '#0369a1' }}>
-            {expedientes.length}
-          </span>
-        </button>
-        <button
-          onClick={() => setActiveTab('observadas')}
+          <div>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Por Calificar</span>
+            <div style={{ fontSize: '26px', fontWeight: 800, color: '#0f172a', marginTop: '2px' }}>{expedientes.length}</div>
+            <span style={{ fontSize: '11px', color: '#0284c7', fontWeight: 600 }}>En bandeja de validación</span>
+          </div>
+          <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: '#e0f2fe', color: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <ExpedienteIcon size={22} />
+          </div>
+        </div>
+
+        <div
           style={{
-            padding: '10px 16px',
-            border: 'none',
-            borderBottom: activeTab === 'observadas' ? '2px solid #0284c7' : '2px solid transparent',
-            backgroundColor: 'transparent',
-            color: activeTab === 'observadas' ? '#0369a1' : '#64748b',
-            fontWeight: activeTab === 'observadas' ? 600 : 500,
-            cursor: 'pointer',
-            fontSize: '13px',
+            backgroundColor: '#ffffff',
+            borderRadius: '12px',
+            padding: '16px 20px',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            transition: 'all 150ms ease',
+            justifyContent: 'space-between',
           }}
         >
-          <AlertTriangleIcon size={16} />
-          Actas Observadas
-          {observadas.length > 0 && (
-            <span style={{ fontSize: '11px', fontWeight: 600, padding: '1px 7px', borderRadius: '10px', backgroundColor: '#fee2e2', color: '#991b1b' }}>
-              {observadas.length}
-            </span>
-          )}
-        </button>
-        <button
-          onClick={() => setActiveTab('digitalizar')}
+          <div>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Actas Observadas</span>
+            <div style={{ fontSize: '26px', fontWeight: 800, color: '#dc2626', marginTop: '2px' }}>{observadas.length}</div>
+            <span style={{ fontSize: '11px', color: '#dc2626', fontWeight: 600 }}>Devueltas para subsanación</span>
+          </div>
+          <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <AlertTriangleIcon size={22} />
+          </div>
+        </div>
+
+        <div
           style={{
-            padding: '10px 16px',
-            border: 'none',
-            borderBottom: activeTab === 'digitalizar' ? '2px solid #0284c7' : '2px solid transparent',
-            backgroundColor: 'transparent',
-            color: activeTab === 'digitalizar' ? '#0369a1' : '#64748b',
-            fontWeight: activeTab === 'digitalizar' ? 600 : 500,
-            cursor: 'pointer',
-            fontSize: '13px',
+            backgroundColor: '#ffffff',
+            borderRadius: '12px',
+            padding: '16px 20px',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            transition: 'all 150ms ease',
+            justifyContent: 'space-between',
           }}
         >
-          <PlusIcon size={16} />
-          Digitalizar Acta Física
-        </button>
+          <div>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Ingreso Físico Recibido</span>
+            <div style={{ fontSize: '26px', fontWeight: 800, color: '#059669', marginTop: '2px' }}>
+              {expedientes.filter((e) => e.fechaIngresoFisico).length}
+            </div>
+            <span style={{ fontSize: '11px', color: '#059669', fontWeight: 600 }}>Talonarios en custodia</span>
+          </div>
+          <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: '#dcfce7', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <FileTextIcon size={22} />
+          </div>
+        </div>
+
+        <div
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '12px',
+            padding: '16px 20px',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <div>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Conformidad Legal</span>
+            <div style={{ fontSize: '26px', fontWeight: 800, color: '#0f172a', marginTop: '2px' }}>100%</div>
+            <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Art. 248° TUO LPAG</span>
+          </div>
+          <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: '#f1f5f9', color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <CheckCircleIcon size={22} />
+          </div>
+        </div>
       </div>
 
-      {/* TAB 1: BANDEJA DE VALIDACIÓN */}
-      {activeTab === 'validar' && (
-        <Card>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', gap: '12px' }}>
-            <div style={{ position: 'relative', maxWidth: '380px', width: '100%' }}>
-              <span style={{ position: 'absolute', left: '12px', top: '10px', color: '#94a3b8' }}>
-                <SearchIcon size={16} />
-              </span>
-              <input
-                type="text"
-                placeholder="Buscar por N° expediente, infractor o fiscalizador..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+      {/* Main Container Card */}
+      <div style={{ backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
+        {/* Segmented Control Bar & Search Toolbar */}
+        <div
+          style={{
+            padding: '16px 20px',
+            borderBottom: '1px solid #e2e8f0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '14px',
+            backgroundColor: '#fafbfc',
+          }}
+        >
+          {/* Segmented Control Tabs */}
+          <div style={{ display: 'inline-flex', backgroundColor: '#f1f5f9', padding: '4px', borderRadius: '8px', gap: '4px' }}>
+            <button
+              onClick={() => setActiveTab('validar')}
+              style={{
+                padding: '7px 16px',
+                borderRadius: '6px',
+                border: 'none',
+                backgroundColor: activeTab === 'validar' ? '#ffffff' : 'transparent',
+                color: activeTab === 'validar' ? '#0f172a' : '#64748b',
+                fontWeight: activeTab === 'validar' ? 700 : 500,
+                fontSize: '13px',
+                cursor: 'pointer',
+                boxShadow: activeTab === 'validar' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'all 150ms ease',
+              }}
+            >
+              <span>Bandeja de Validación</span>
+              <span
                 style={{
-                  width: '100%',
-                  padding: '8px 12px 8px 36px',
-                  fontSize: '13px',
-                  borderRadius: '6px',
-                  border: '1px solid #cbd5e1',
-                  outline: 'none',
-                  backgroundColor: '#ffffff',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  padding: '1px 7px',
+                  borderRadius: '9999px',
+                  backgroundColor: activeTab === 'validar' ? '#e0f2fe' : '#e2e8f0',
+                  color: activeTab === 'validar' ? '#0369a1' : '#64748b',
                 }}
-              />
-            </div>
-            <div style={{ fontSize: '12px', color: '#64748b' }}>
-              Mostrando <strong>{filteredExpedientes.length}</strong> expedientes pendientes
-            </div>
+              >
+                {expedientes.length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('observadas')}
+              style={{
+                padding: '7px 16px',
+                borderRadius: '6px',
+                border: 'none',
+                backgroundColor: activeTab === 'observadas' ? '#ffffff' : 'transparent',
+                color: activeTab === 'observadas' ? '#0f172a' : '#64748b',
+                fontWeight: activeTab === 'observadas' ? 700 : 500,
+                fontSize: '13px',
+                cursor: 'pointer',
+                boxShadow: activeTab === 'observadas' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'all 150ms ease',
+              }}
+            >
+              <span>Actas Observadas</span>
+              {observadas.length > 0 && (
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    padding: '1px 7px',
+                    borderRadius: '9999px',
+                    backgroundColor: '#fee2e2',
+                    color: '#dc2626',
+                  }}
+                >
+                  {observadas.length}
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('digitalizar')}
+              style={{
+                padding: '7px 16px',
+                borderRadius: '6px',
+                border: 'none',
+                backgroundColor: activeTab === 'digitalizar' ? '#ffffff' : 'transparent',
+                color: activeTab === 'digitalizar' ? '#0f172a' : '#64748b',
+                fontWeight: activeTab === 'digitalizar' ? 700 : 500,
+                fontSize: '13px',
+                cursor: 'pointer',
+                boxShadow: activeTab === 'digitalizar' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'all 150ms ease',
+              }}
+            >
+              <PlusIcon size={14} />
+              <span>Digitalizar Acta Física</span>
+            </button>
           </div>
 
-          {loading ? (
-            <div style={{ padding: '40px', textAlign: 'center' }}>
-              <Spinner size={32} />
-              <p style={{ fontSize: '13px', color: '#64748b', marginTop: '12px' }}>
-                Cargando expedientes pendientes de validación...
-              </p>
-            </div>
-          ) : filteredExpedientes.length === 0 ? (
-            <EmptyState
-              icon={<CheckCircleIcon size={40} color="var(--color-success)" />}
-              title="Bandeja al día"
-              description="No se encontraron expedientes pendientes de validación formal en este momento."
-            />
-          ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                    <th style={{ padding: '12px 16px', fontWeight: 600, color: '#475569' }}>N° Expediente</th>
-                    <th style={{ padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Fecha Intervención</th>
-                    <th style={{ padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Fiscalizador</th>
-                    <th style={{ padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Estado</th>
-                    <th style={{ padding: '12px 16px', fontWeight: 600, color: '#475569', textAlign: 'right' }}>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredExpedientes.map((exp) => (
-                    <tr
-                      key={exp.id}
-                      style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 100ms' }}
-                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8fafc')}
-                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                    >
-                      <td style={{ padding: '14px 16px', fontWeight: 600, color: '#0f172a' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ color: '#0284c7' }}>
-                            <ExpedienteIcon size={16} />
-                          </span>
-                          {exp.numeroExpediente}
-                        </div>
-                      </td>
-                      <td style={{ padding: '14px 16px', color: '#475569' }}>
-                        {exp.fechaHoraInicioIntervencion
-                          ? new Date(exp.fechaHoraInicioIntervencion).toLocaleString('es-PE', {
-                              day: '2-digit',
-                              month: '2-digit',
-                              year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })
-                          : '---'}
-                      </td>
-                      <td style={{ padding: '14px 16px', color: '#475569' }}>
-                        <div style={{ fontWeight: 600, color: '#0f172a' }}>{exp.fiscalizadorNombre || 'No asignado'}</div>
-                        <div style={{ fontSize: '11px', color: '#64748b' }}>Fiscalizador de Campo</div>
-                      </td>
-                      <td style={{ padding: '14px 16px' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
-                          <Badge variant="warning">{formatEstado(exp.estado)}</Badge>
-                          {exp.fechaIngresoFisico && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
-                              <FileTextIcon size={12} color="#94a3b8" />
-                              Ingreso físico: {new Date(exp.fechaIngresoFisico).toLocaleDateString('es-PE')}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td style={{ padding: '14px 16px', textAlign: 'right' }}>
-                        <div style={{ display: 'inline-flex', gap: '8px' }}>
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            icon={<EyeIcon size={14} />}
-                            onClick={() =>
-                              setDetalleModal({
-                                isOpen: true,
-                                intervencionId: exp.intervencionId,
-                                numeroExpediente: exp.numeroExpediente,
-                              })
-                            }
-                          >
-                            Revisar
-                          </Button>
-                          <Button
-                            variant="success"
-                            size="sm"
-                            disabled={actionLoading}
-                            onClick={() => handleAprobar(exp.id, exp.numeroExpediente)}
-                          >
-                            Aprobar
-                          </Button>
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            disabled={actionLoading}
-                            onClick={() => {
-                              setObservarModal({ isOpen: true, id: exp.id, numero: exp.numeroExpediente });
-                              setObservacionesTexto('');
-                            }}
-                          >
-                            Observar
-                          </Button>
-                          {!exp.fechaIngresoFisico && (
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              disabled={actionLoading}
-                              onClick={() => handleIngresoFisico(exp.id, exp.numeroExpediente)}
-                            >
-                              Ingreso Físico
-                            </Button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {/* Integrated Search Tool */}
+          {activeTab === 'validar' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ position: 'relative', width: '320px' }}>
+                <span style={{ position: 'absolute', left: '10px', top: '9px', color: '#94a3b8' }}>
+                  <SearchIcon size={15} />
+                </span>
+                <input
+                  type="text"
+                  placeholder="Buscar por N°, inspector, infractor..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '7px 10px 7px 32px',
+                    fontSize: '13px',
+                    borderRadius: '6px',
+                    border: '1px solid #cbd5e1',
+                    backgroundColor: '#ffffff',
+                    outline: 'none',
+                  }}
+                />
+              </div>
             </div>
           )}
-        </Card>
-      )}
+        </div>
+
+        {/* TAB 1: BANDEJA DE VALIDACIÓN */}
+        {activeTab === 'validar' && (
+          <div>
+            {loading ? (
+              <div style={{ padding: '48px', textAlign: 'center' }}>
+                <Spinner size={32} />
+                <p style={{ fontSize: '13px', color: '#64748b', marginTop: '12px' }}>
+                  Cargando expedientes pendientes de validación...
+                </p>
+              </div>
+            ) : filteredExpedientes.length === 0 ? (
+              <EmptyState
+                icon={<CheckCircleIcon size={40} color="var(--color-success)" />}
+                title="Bandeja al día"
+                description="No se encontraron expedientes pendientes de validación formal en este momento."
+              />
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                      <th style={{ padding: '12px 20px', fontWeight: 600, color: '#475569' }}>Expediente</th>
+                      <th style={{ padding: '12px 20px', fontWeight: 600, color: '#475569' }}>Fecha de Emisión</th>
+                      <th style={{ padding: '12px 20px', fontWeight: 600, color: '#475569' }}>Fiscalizador Asignado</th>
+                      <th style={{ padding: '12px 20px', fontWeight: 600, color: '#475569' }}>Calificación & Custodia</th>
+                      <th style={{ padding: '12px 20px', fontWeight: 600, color: '#475569', textAlign: 'right' }}>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredExpedientes.map((exp) => {
+                      const fiscalizadorLimpio = (exp.fiscalizadorNombre || 'No asignado')
+                        .replace(/\s*\(admin\s*dev\)/gi, '')
+                        .trim();
+                      return (
+                        <tr
+                          key={exp.id}
+                          style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 100ms' }}
+                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8fafc')}
+                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                        >
+                          <td style={{ padding: '14px 20px', color: '#0f172a' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{ color: '#0284c7' }}>
+                                <ExpedienteIcon size={16} />
+                              </span>
+                              <span
+                                style={{ fontWeight: 700, color: '#1d4ed8', cursor: 'pointer' }}
+                                onClick={() =>
+                                  setDetalleModal({
+                                    isOpen: true,
+                                    intervencionId: exp.intervencionId,
+                                    numeroExpediente: exp.numeroExpediente,
+                                  })
+                                }
+                              >
+                                {exp.numeroExpediente}
+                              </span>
+                            </div>
+                            <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px', paddingLeft: '24px' }}>
+                              Intervención de Fiscalización
+                            </div>
+                          </td>
+                          <td style={{ padding: '14px 20px', color: '#334155' }}>
+                            <div style={{ fontWeight: 500 }}>
+                              {exp.fechaHoraInicioIntervencion
+                                ? new Date(exp.fechaHoraInicioIntervencion).toLocaleDateString('es-PE', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric',
+                                  })
+                                : '---'}
+                            </div>
+                            <div style={{ fontSize: '11px', color: '#64748b' }}>
+                              {exp.fechaHoraInicioIntervencion
+                                ? new Date(exp.fechaHoraInicioIntervencion).toLocaleTimeString('es-PE', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  }) + ' hrs'
+                                : '---'}
+                            </div>
+                          </td>
+                          <td style={{ padding: '14px 20px', color: '#334155' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div
+                                style={{
+                                  width: '28px',
+                                  height: '28px',
+                                  borderRadius: '50%',
+                                  backgroundColor: '#e0f2fe',
+                                  color: '#0284c7',
+                                  fontWeight: 700,
+                                  fontSize: '11px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {fiscalizadorLimpio.charAt(0)}
+                              </div>
+                              <div>
+                                <div style={{ fontWeight: 600, color: '#0f172a' }}>{fiscalizadorLimpio}</div>
+                                <div style={{ fontSize: '11px', color: '#64748b' }}>Inspector de Campo</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td style={{ padding: '14px 20px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
+                              <Badge variant="warning">{formatEstado(exp.estado)}</Badge>
+                              {exp.fechaIngresoFisico && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#059669', fontWeight: 500, marginTop: '2px' }}>
+                                  <FileTextIcon size={12} color="#059669" />
+                                  <span>Documento físico: {new Date(exp.fechaIngresoFisico).toLocaleDateString('es-PE')}</span>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td style={{ padding: '14px 20px', textAlign: 'right' }}>
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                icon={<EyeIcon size={14} />}
+                                onClick={() =>
+                                  setDetalleModal({
+                                    isOpen: true,
+                                    intervencionId: exp.intervencionId,
+                                    numeroExpediente: exp.numeroExpediente,
+                                  })
+                                }
+                              >
+                                Revisar
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={actionLoading}
+                                onClick={() => handleAprobar(exp.id, exp.numeroExpediente)}
+                                style={{ borderColor: '#86efac', color: '#15803d', backgroundColor: '#f0fdf4' }}
+                              >
+                                Aprobar
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={actionLoading}
+                                onClick={() => {
+                                  setObservarModal({ isOpen: true, id: exp.id, numero: exp.numeroExpediente });
+                                  setObservacionesTexto('');
+                                }}
+                                style={{ borderColor: '#fca5a5', color: '#b91c1c', backgroundColor: '#fef2f2' }}
+                              >
+                                Observar
+                              </Button>
+                              {!exp.fechaIngresoFisico && (
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  disabled={actionLoading}
+                                  onClick={() => handleIngresoFisico(exp.id, exp.numeroExpediente)}
+                                >
+                                  Ingreso Físico
+                                </Button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
 
       {/* TAB 2: ACTAS OBSERVADAS & SUBSANACIÓN */}
       {activeTab === 'observadas' && (
-        <Card>
+        <div style={{ padding: '20px' }}>
           <div style={{ marginBottom: '16px' }}>
             <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--color-midnight-900)' }}>
               Actas con Defectos Subsanables (V-01)
@@ -641,12 +831,12 @@ export const ExpedientesView: React.FC = () => {
               </table>
             </div>
           )}
-        </Card>
+        </div>
       )}
 
       {/* TAB 3: DIGITALIZAR ACTA FÍSICA MANUAL */}
       {activeTab === 'digitalizar' && (
-        <Card>
+        <div style={{ padding: '24px' }}>
           <div style={{ marginBottom: '20px' }}>
             <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--color-midnight-900)' }}>
               Ingreso y Digitalización de Acta Preimpresa de Campo
@@ -724,7 +914,7 @@ export const ExpedientesView: React.FC = () => {
               </div>
             )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px' }}>
               <Input
                 label="Dirección del Predio / Intervención *"
                 placeholder="Ej. Av. Próceres de la Independencia 1420"
@@ -733,10 +923,19 @@ export const ExpedientesView: React.FC = () => {
                 required
               />
               <Input
-                label="DNI o RUC Administrado"
-                placeholder="Ej. 10458923412"
+                label="DNI o RUC del Administrado"
+                placeholder="Ej. 10452367891"
                 value={digitalizarForm.numeroDocumento}
                 onChange={(e) => setDigitalizarForm({ ...digitalizarForm, numeroDocumento: e.target.value })}
+              />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <Input
+                label="Código de Infracción (CUIS)"
+                placeholder="Ej. G-010"
+                value={digitalizarForm.cuisCodigo}
+                onChange={(e) => setDigitalizarForm({ ...digitalizarForm, cuisCodigo: e.target.value })}
               />
               <Input
                 label="Giro o Actividad Comercial"
@@ -771,8 +970,9 @@ export const ExpedientesView: React.FC = () => {
               </Button>
             </div>
           </form>
-        </Card>
+        </div>
       )}
+      </div>
 
       {/* Modal para Observar (SP2) */}
       <Modal

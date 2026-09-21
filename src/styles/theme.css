@@ -2,14 +2,14 @@
 
 :root {
   /* ==========================================================================
-     PALETA AZUL NOCHE & BLANCO INSTITUCIONAL - MDSJL
+     PALETA AZUL NAVY INSTITUCIONAL & BLANCO - MDSJL
      ========================================================================== */
-  --color-midnight-950: #050a18;
-  --color-midnight-900: #0b132b;
-  --color-midnight-850: #0e1a38;
-  --color-midnight-800: #132247;
-  --color-midnight-700: #1c2e59;
-  --color-midnight-600: #2a4175;
+  --color-midnight-950: #0d1f3c;
+  --color-midnight-900: #122b52;
+  --color-midnight-850: #163666;
+  --color-midnight-800: #1c427b;
+  --color-midnight-700: #25549b;
+  --color-midnight-600: #2f66bc;
 
   /* Azules primarios y de acento */
   --color-primary-700: #1d4ed8;
@@ -26,7 +26,7 @@
 
   /* Fondos y Neutros */
   --color-white: #ffffff;
-  --color-bg-app: #f4f6fa;
+  --color-bg-app: #f1f5f9;
   --color-bg-card: #ffffff;
   --color-bg-subtle: #f8fafc;
   --color-bg-hover: #f1f5f9;
@@ -138,9 +138,9 @@ button, input, textarea, select {
 
 .page-body {
   flex: 1;
-  padding: 28px 36px 48px;
-  max-width: 1440px;
+  padding: 24px 32px 48px;
   width: 100%;
+  max-width: 1600px;
   margin: 0 auto;
 }
 

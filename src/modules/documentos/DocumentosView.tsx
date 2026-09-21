@@ -455,7 +455,7 @@ export const DocumentosView: React.FC = () => {
               {/* Carátula del Expediente */}
               <div
                 style={{
-                  backgroundColor: '#0b132b',
+                  background: 'linear-gradient(135deg, #163666 0%, #10264a 100%)',
                   color: '#ffffff',
                   padding: '24px',
                   borderRadius: '12px',

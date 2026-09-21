@@ -74,7 +74,7 @@ function MainApp() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#0b132b',
+          backgroundColor: '#10264a',
           color: '#ffffff',
           gap: '16px',
         }}

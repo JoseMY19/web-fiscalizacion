@@ -186,7 +186,7 @@ export const Badge: React.FC<BadgeProps> = ({ children, variant = 'neutral', siz
     info: { bg: '#f0f9ff', color: '#0369a1', border: '#bae6fd' },
     purple: { bg: '#f5f3ff', color: '#6d28d9', border: '#ddd6fe' },
     neutral: { bg: '#f8fafc', color: '#475569', border: '#e2e8f0' },
-    midnight: { bg: '#0b132b', color: '#ffffff', border: '#1c2e59' },
+    midnight: { bg: '#10264a', color: '#ffffff', border: '#163666' },
   };
 
   const c = map[variant] || map.neutral;

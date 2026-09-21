@@ -60,7 +60,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
       {/* Welcome Banner in Midnight Blue */}
       <div
         style={{
-          background: 'linear-gradient(135deg, #0b132b 0%, #1c2e59 100%)',
+          background: 'linear-gradient(135deg, #163666 0%, #0f264c 100%)',
           borderRadius: 'var(--radius-lg)',
           padding: '32px',
           color: '#ffffff',
@@ -68,7 +68,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          boxShadow: '0 10px 25px -5px rgba(11, 19, 43, 0.3)',
+          boxShadow: '0 10px 25px -5px rgba(22, 54, 102, 0.25)',
           border: '1px solid rgba(255, 255, 255, 0.08)',
         }}
       >
