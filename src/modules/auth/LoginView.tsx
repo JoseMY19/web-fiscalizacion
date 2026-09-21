@@ -53,36 +53,35 @@ export const LoginView: React.FC = () => {
           maxWidth: '460px',
           backgroundColor: '#ffffff',
           borderRadius: 'var(--radius-xl)',
-          boxShadow: '0 20px 45px -10px rgba(11, 19, 43, 0.18), 0 0 1px 1px rgba(11, 19, 43, 0.05)',
+          boxShadow: '0 20px 45px -10px rgba(16, 38, 74, 0.22), 0 0 1px 1px rgba(16, 38, 74, 0.06)',
           overflow: 'hidden',
           border: '1px solid #e2e8f0',
           position: 'relative',
           zIndex: 10,
         }}
       >
-        {/* Cabecera Azul Noche con Logo Oficial */}
+        {/* Cabecera Azul Marino Municipal con Logo Oficial */}
         <div
           style={{
-            backgroundColor: '#0b132b',
-            backgroundImage: 'linear-gradient(145deg, #0b132b 0%, #1c2e59 100%)',
+            background: 'linear-gradient(180deg, #163666 0%, #10264a 100%)',
             padding: '36px 32px 28px',
             textAlign: 'center',
             color: '#ffffff',
-            borderBottom: '1px solid #1c2e59',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
             position: 'relative',
           }}
         >
-          {/* Logo Oficial SJL en versión blanca para fondo oscuro */}
-          <div style={{ marginBottom: '14px', display: 'flex', justifyContent: 'center' }}>
+          {/* Logo Oficial SJL en versión transparente de alta resolución */}
+          <div style={{ marginBottom: '18px', display: 'flex', justifyContent: 'center' }}>
             <img
               src="/logo-sjl-white.png"
               alt="Municipalidad de San Juan de Lurigancho - es momento de crecer"
               style={{
-                height: '52px',
+                height: '84px',
                 width: 'auto',
-                maxWidth: '260px',
+                maxWidth: '310px',
                 objectFit: 'contain',
-                filter: 'drop-shadow(0 2px 6px rgba(0, 0, 0, 0.3))',
+                filter: 'drop-shadow(0 2px 8px rgba(0, 0, 0, 0.25))',
               }}
             />
           </div>
@@ -90,7 +89,7 @@ export const LoginView: React.FC = () => {
           <h2 style={{ fontSize: '15px', fontWeight: 800, letterSpacing: '0.4px', color: '#ffffff', margin: 0 }}>
             SUBGERENCIA DE FISCALIZACIÓN
           </h2>
-          <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '3px', fontWeight: 500 }}>
+          <p style={{ fontSize: '12px', color: '#bfdbfe', marginTop: '4px', fontWeight: 500, margin: '4px 0 0' }}>
             Procedimiento Administrativo Sancionador (PAS)
           </p>
 
@@ -98,20 +97,18 @@ export const LoginView: React.FC = () => {
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '6px',
-              marginTop: '12px',
-              padding: '3px 12px',
-              borderRadius: '9999px',
-              backgroundColor: 'rgba(56, 189, 248, 0.12)',
-              border: '1px solid rgba(56, 189, 248, 0.28)',
+              marginTop: '14px',
+              padding: '4px 14px',
+              borderRadius: '6px',
+              backgroundColor: 'rgba(255, 255, 255, 0.08)',
+              border: '1px solid rgba(255, 255, 255, 0.14)',
               fontSize: '11px',
-              fontWeight: 700,
-              color: '#38bdf8',
-              letterSpacing: '0.6px',
+              fontWeight: 600,
+              color: '#bfdbfe',
+              letterSpacing: '0.4px',
             }}
           >
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#38bdf8' }} />
-            PORTAL WEB DE OFICINA
+            Módulo Web de Fiscalización
           </div>
         </div>
 
