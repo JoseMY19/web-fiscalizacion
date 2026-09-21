@@ -114,31 +114,34 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         {/* Brand Header con Logo Oficial SJL */}
         <div
           style={{
-            padding: '22px 20px 18px',
+            padding: '24px 20px 20px',
             borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
             display: 'flex',
             flexDirection: 'column',
-            gap: '12px',
-            background: 'rgba(255, 255, 255, 0.03)',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+            gap: '14px',
+            background: 'rgba(255, 255, 255, 0.02)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
             <img
               src="/logo-sjl-white.png"
               alt="Municipalidad de San Juan de Lurigancho"
               style={{
-                height: '40px',
+                height: '66px',
                 width: 'auto',
                 maxWidth: '220px',
                 objectFit: 'contain',
               }}
             />
           </div>
-          <div>
+          <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff', letterSpacing: '0.2px' }}>
               Fiscalización Administrativa
             </div>
-            <div style={{ fontSize: '11px', color: '#bfdbfe', marginTop: '2px' }}>
+            <div style={{ fontSize: '11px', color: '#bfdbfe', marginTop: '3px' }}>
               MDSJL • Sistema Sancionador PAS
             </div>
           </div>
@@ -149,18 +152,18 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           <div
             style={{
               fontSize: '11px',
-              fontWeight: 700,
+              fontWeight: 600,
               textTransform: 'uppercase',
               letterSpacing: '0.8px',
               color: '#93c5fd',
-              padding: '6px 12px 8px',
-              opacity: 0.85,
+              padding: '4px 12px 8px',
+              opacity: 0.75,
             }}
           >
             Módulos del Sistema
           </div>
 
-          <nav style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+          <nav style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
             {navItems.filter((item) => esVisibleParaRol(item, user?.rol)).map((item) => {
               const active = currentModule === item.id;
               const count = badgeCounts[item.id];
@@ -172,37 +175,34 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    padding: '10px 12px',
-                    borderRadius: '8px',
-                    backgroundColor: active ? '#1d4ed8' : 'transparent',
-                    color: active ? '#ffffff' : '#dbeafe',
-                    borderLeft: active ? '3px solid #60a5fa' : '3px solid transparent',
-                    borderTop: 'none',
-                    borderRight: 'none',
-                    borderBottom: 'none',
+                    padding: '9px 12px',
+                    borderRadius: '6px',
+                    backgroundColor: active ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
+                    color: active ? '#ffffff' : '#cbd5e1',
+                    border: 'none',
                     cursor: 'pointer',
                     fontSize: '13px',
-                    fontWeight: active ? 700 : 500,
-                    transition: 'all 150ms ease',
+                    fontWeight: active ? 600 : 400,
+                    transition: 'background-color 150ms ease, color 150ms ease',
                     textAlign: 'left',
                     width: '100%',
-                    boxShadow: active ? '0 2px 8px rgba(29, 78, 216, 0.4)' : 'none',
+                    boxShadow: 'none',
                   }}
                   onMouseEnter={(e) => {
                     if (!active) {
-                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.06)';
                       e.currentTarget.style.color = '#ffffff';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!active) {
                       e.currentTarget.style.backgroundColor = 'transparent';
-                      e.currentTarget.style.color = '#dbeafe';
+                      e.currentTarget.style.color = '#cbd5e1';
                     }
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ color: active ? '#ffffff' : '#bfdbfe', display: 'flex', alignItems: 'center' }}>
+                    <span style={{ color: active ? '#38bdf8' : '#94a3b8', display: 'flex', alignItems: 'center' }}>
                       {item.icon}
                     </span>
                     <span>{item.label}</span>
@@ -212,8 +212,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                       style={{
                         fontSize: '11px',
                         fontWeight: 700,
-                        minWidth: '20px',
-                        height: '20px',
+                        minWidth: '19px',
+                        height: '19px',
                         padding: '0 6px',
                         borderRadius: '10px',
                         backgroundColor: '#ef4444',
