@@ -1,7 +1,7 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { RecursosApi, ReconsideracionPendienteItem, ApelacionPendienteItem } from '../../api';
 import { Card, Button, Input, Textarea, Alert, Badge, EmptyState } from '../../components/common/Common';
-import { ScaleIcon, FileTextIcon, PenToolIcon } from '../../components/icons/Icons';
+import { ScaleIcon, FileTextIcon, PenToolIcon, CheckIcon } from '../../components/icons/Icons';
 
 export const RecursosView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'reconsideracion' | 'apelacion'>('reconsideracion');
@@ -506,10 +506,11 @@ export const RecursosView: React.FC = () => {
             </div>
 
             {informeGopResult && (
-              <div style={{ backgroundColor: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid var(--color-border)', marginBottom: '16px' }}>
-                <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-primary-600)' }}>
-                  ✓ Informe técnico generado con éxito (conforme al principio de doble instancia, sin opinión de fondo).
-                </p>
+              <div style={{ backgroundColor: '#f0fdf4', padding: '12px', borderRadius: '8px', border: '1px solid #bbf7d0', marginBottom: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, color: '#16a34a' }}>
+                  <CheckIcon size={14} />
+                  <span>Informe técnico generado con éxito (conforme al principio de doble instancia, sin opinión de fondo).</span>
+                </div>
               </div>
             )}
 

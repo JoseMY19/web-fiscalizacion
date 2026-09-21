@@ -8,6 +8,10 @@ import {
   CheckCircleIcon,
   ClockIcon,
   UserIcon,
+  FileTextIcon,
+  ExpedienteIcon,
+  AlertTriangleIcon,
+  UsersIcon,
 } from '../../components/icons/Icons';
 
 interface ExpedienteDetalleModalProps {
@@ -105,8 +109,9 @@ export const ExpedienteDetalleModal: React.FC<ExpedienteDetalleModalProps> = ({
                 GPS: {data.latitud ? `${data.latitud}, ${data.longitud}` : 'Manual'} ({data.origenUbicacion})
               </span>
             </div>
-            <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-midnight-800)' }}>
-              🕒 {new Date(data.fechaHoraInicio).toLocaleString('es-PE')}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, color: 'var(--color-midnight-800)' }}>
+              <ClockIcon size={14} color="#64748b" />
+              <span>{new Date(data.fechaHoraInicio).toLocaleString('es-PE')}</span>
             </div>
           </div>
 
@@ -123,9 +128,13 @@ export const ExpedienteDetalleModal: React.FC<ExpedienteDetalleModalProps> = ({
                 fontWeight: activeTab === 'resumen' ? 700 : 500,
                 cursor: 'pointer',
                 fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
             >
-              📋 Resumen & Ubicación
+              <FileTextIcon size={15} />
+              Resumen y Ubicación
             </button>
             <button
               onClick={() => setActiveTab('administrado')}
@@ -138,9 +147,13 @@ export const ExpedienteDetalleModal: React.FC<ExpedienteDetalleModalProps> = ({
                 fontWeight: activeTab === 'administrado' ? 700 : 500,
                 cursor: 'pointer',
                 fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
             >
-              👤 Administrado / Infractor
+              <UserIcon size={15} />
+              Administrado e Infractor
             </button>
             <button
               onClick={() => setActiveTab('actas')}
@@ -153,9 +166,13 @@ export const ExpedienteDetalleModal: React.FC<ExpedienteDetalleModalProps> = ({
                 fontWeight: activeTab === 'actas' ? 700 : 500,
                 cursor: 'pointer',
                 fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
             >
-              📄 Actas Físicas & Cédula
+              <ExpedienteIcon size={15} />
+              Actas Físicas y Cédula
             </button>
             <button
               onClick={() => setActiveTab('medidas')}
@@ -168,9 +185,13 @@ export const ExpedienteDetalleModal: React.FC<ExpedienteDetalleModalProps> = ({
                 fontWeight: activeTab === 'medidas' ? 700 : 500,
                 cursor: 'pointer',
                 fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
             >
-              🛡️ Medidas & Testigos ({data.actasMedidaProvisional?.length || 0})
+              <ShieldAlertIcon size={15} />
+              Medidas y Testigos ({data.actasMedidaProvisional?.length || 0})
             </button>
             <button
               onClick={() => setActiveTab('evidencias')}
@@ -183,9 +204,13 @@ export const ExpedienteDetalleModal: React.FC<ExpedienteDetalleModalProps> = ({
                 fontWeight: activeTab === 'evidencias' ? 700 : 500,
                 cursor: 'pointer',
                 fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
             >
-              📸 Evidencias & Firmas
+              <CameraIcon size={15} />
+              Evidencias y Firmas
             </button>
           </div>
 
@@ -299,8 +324,8 @@ export const ExpedienteDetalleModal: React.FC<ExpedienteDetalleModalProps> = ({
               {data.notificacionCargo && (
                 <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                    <h4 style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-primary-700)' }}>
-                      📑 Notificación de Cargo (NC)
+                    <h4 style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-primary-700)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <FileTextIcon size={15} /> Notificación de Cargo (NC)
                     </h4>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <Badge variant="info">N° {data.notificacionCargo.numeroCorrelativo}</Badge>
@@ -350,8 +375,9 @@ export const ExpedienteDetalleModal: React.FC<ExpedienteDetalleModalProps> = ({
                     )}
                   </div>
                   {data.notificacionCargo.seNegoFirmar && (
-                    <div style={{ marginTop: '12px', padding: '10px', backgroundColor: 'var(--color-warning-bg)', borderRadius: '6px', fontSize: '12px', color: 'var(--color-warning-text)' }}>
-                      ⚠️ <strong>Constancia de Negativa:</strong> El infractor se negó a identificarse o firmar. Suministro: {data.notificacionCargo.domicilioNumeroSuministro || 'N/A'}. Fachada: {data.notificacionCargo.domicilioPuertas || '---'}.
+                    <div style={{ marginTop: '12px', padding: '10px', backgroundColor: 'var(--color-warning-bg)', borderRadius: '6px', fontSize: '12px', color: 'var(--color-warning-text)', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                      <span style={{ marginTop: '1px' }}><AlertTriangleIcon size={14} color="#d97706" /></span>
+                      <span><strong>Constancia de Negativa:</strong> El infractor se negó a identificarse o firmar. Suministro: {data.notificacionCargo.domicilioNumeroSuministro || 'N/A'}. Fachada: {data.notificacionCargo.domicilioPuertas || '---'}.</span>
                     </div>
                   )}
                 </div>
@@ -360,8 +386,8 @@ export const ExpedienteDetalleModal: React.FC<ExpedienteDetalleModalProps> = ({
               {data.actaFiscalizacion && (
                 <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                    <h4 style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-midnight-900)' }}>
-                      📋 Acta de Fiscalización
+                    <h4 style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-midnight-900)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <FileTextIcon size={15} /> Acta de Fiscalización
                     </h4>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <Badge variant="neutral">N° {data.actaFiscalizacion.numeroCorrelativo}</Badge>
@@ -436,8 +462,8 @@ export const ExpedienteDetalleModal: React.FC<ExpedienteDetalleModalProps> = ({
               </div>
 
               <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
-                <h4 style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-midnight-900)', marginBottom: '12px' }}>
-                  👥 Testigos Presenciales
+                <h4 style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-midnight-900)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <UsersIcon size={15} /> Testigos Presenciales
                 </h4>
                 {data.testigos && data.testigos.length > 0 ? (
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>

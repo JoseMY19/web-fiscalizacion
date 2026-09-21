@@ -430,12 +430,13 @@ export const ConfiguracionView: React.FC = () => {
         </Card>
       )}
 
-      {/* Tab 5: Seguridad & Sesiones (Admin - HU-29) */}
+      {/* Tab 5: Seguridad & Sesiones (Admin) */}
       {activeTab === 'seguridad' && (
-        <Card title="Auditoría de Sesiones y Control de Accesos (HU-29)">
+        <Card title="Auditoría de Sesiones y Control de Accesos">
           <div style={{ marginBottom: '16px', padding: '12px 16px', backgroundColor: '#eff6ff', borderRadius: '8px', border: '1px solid #bfdbfe' }}>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: '#1e40af', marginBottom: '4px' }}>
-              🛡️ Revocación Inmediata de Tokens (POST /auth/admin/usuarios/:id/revocar)
+            <div style={{ fontSize: '13px', fontWeight: 700, color: '#1e40af', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <ShieldAlertIcon size={16} />
+              <span>Revocación Inmediata de Credenciales y Sesiones</span>
             </div>
             <p style={{ fontSize: '12px', color: '#1e3a8a', margin: 0 }}>
               Permite a los administradores invalidar instantáneamente todas las credenciales de refresh activas asociadas a un usuario en caso de pérdida o robo de terminales móviles de campo, o por desvinculación funcional del personal.

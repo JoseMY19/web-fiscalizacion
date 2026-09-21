@@ -12,6 +12,7 @@ import {
   LogOutIcon,
   UserIcon,
   EyeIcon,
+  BellIcon,
 } from '../icons/Icons';
 
 export type NavModule =
@@ -39,7 +40,6 @@ interface AppLayoutProps {
 interface NavItem {
   id: NavModule;
   label: string;
-  stage: string;
   icon: React.ReactNode;
 }
 
@@ -49,17 +49,17 @@ interface NavItemConDef extends NavItem {
 }
 
 const navItems: NavItemConDef[] = [
-  { id: 'dashboard', label: 'Panel Principal', stage: 'INICIO', icon: <DashboardIcon size={18} /> },
-  { id: 'documentos', label: 'Control Documentario', stage: 'ARCHIVO', icon: <FileTextIcon size={18} /> },
-  { id: 'expedientes', label: 'Validación Expedientes', stage: 'SP2', icon: <ExpedienteIcon size={18} /> },
-  { id: 'consulta-campo', label: 'Exhortación / Constatación', stage: 'CONSULTA', icon: <EyeIcon size={18} /> },
-  { id: 'notificaciones', label: 'Notificación Cédulas', stage: 'SP3', icon: <MailIcon size={18} /> },
-  { id: 'ifi', label: 'Instrucción e IFI', stage: 'SP4', icon: <FileTextIcon size={18} /> },
-  { id: 'resoluciones', label: 'Resolución Sancionadora', stage: 'SP5', icon: <GavelIcon size={18} /> },
-  { id: 'recursos', label: 'Recursos Impugnativos', stage: 'SP6/7', icon: <ScaleIcon size={18} /> },
-  { id: 'coactiva-pagos', label: 'Acto Firme & Pagos', stage: 'SP8', icon: <CreditCardIcon size={18} /> },
-  { id: 'cautelares', label: 'Medidas Cautelares', stage: 'ES2', icon: <ShieldAlertIcon size={18} /> },
-  { id: 'configuracion', label: 'Plazos, CUIS y UIT', stage: 'MOTOR', icon: <CalendarIcon size={18} /> },
+  { id: 'dashboard', label: 'Panel Principal', icon: <DashboardIcon size={18} /> },
+  { id: 'documentos', label: 'Control Documentario', icon: <FileTextIcon size={18} /> },
+  { id: 'expedientes', label: 'Validación de Expedientes', icon: <ExpedienteIcon size={18} /> },
+  { id: 'consulta-campo', label: 'Exhortación y Consulta', icon: <EyeIcon size={18} /> },
+  { id: 'notificaciones', label: 'Notificación de Cédulas', icon: <MailIcon size={18} /> },
+  { id: 'ifi', label: 'Instrucción e IFI', icon: <FileTextIcon size={18} /> },
+  { id: 'resoluciones', label: 'Resolución Sancionadora', icon: <GavelIcon size={18} /> },
+  { id: 'recursos', label: 'Recursos Impugnativos', icon: <ScaleIcon size={18} /> },
+  { id: 'coactiva-pagos', label: 'Acto Firme y Cobranza', icon: <CreditCardIcon size={18} /> },
+  { id: 'cautelares', label: 'Medidas Cautelares', icon: <ShieldAlertIcon size={18} /> },
+  { id: 'configuracion', label: 'Configuración y Parámetros', icon: <CalendarIcon size={18} /> },
 ];
 
 /**
@@ -116,39 +116,28 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             borderBottom: '1px solid #1c2e59',
             display: 'flex',
             flexDirection: 'column',
-            gap: '10px',
+            gap: '12px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
             <img
               src="/logo-sjl-white.png"
-              alt="Municipalidad de San Juan de Lurigancho - es momento de crecer"
+              alt="Municipalidad de San Juan de Lurigancho"
               style={{
-                height: '42px',
+                height: '38px',
                 width: 'auto',
-                maxWidth: '210px',
+                maxWidth: '220px',
                 objectFit: 'contain',
-                filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25))',
               }}
             />
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2px' }}>
-            <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.4px', color: '#38bdf8' }}>
-              MDSJL • FISCALIZACIÓN
+          <div>
+            <div style={{ fontSize: '12px', fontWeight: 700, color: '#f8fafc', letterSpacing: '0.2px' }}>
+              Fiscalización Administrativa
             </div>
-            <span
-              style={{
-                fontSize: '9px',
-                fontWeight: 700,
-                color: '#94a3b8',
-                backgroundColor: 'rgba(56, 189, 248, 0.12)',
-                border: '1px solid rgba(56, 189, 248, 0.25)',
-                padding: '1px 6px',
-                borderRadius: '4px',
-              }}
-            >
-              PAS OFICINA
-            </span>
+            <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+              MDSJL • Sistema Sancionador PAS
+            </div>
           </div>
         </div>
 
@@ -159,15 +148,15 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               fontSize: '11px',
               fontWeight: 700,
               textTransform: 'uppercase',
-              letterSpacing: '1px',
+              letterSpacing: '0.8px',
               color: '#64748b',
-              padding: '8px 12px 6px',
+              padding: '6px 12px 8px',
             }}
           >
-            Módulos del Procedimiento
+            Módulos del Sistema
           </div>
 
-          <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <nav style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
             {navItems.filter((item) => esVisibleParaRol(item, user?.rol)).map((item) => {
               const active = currentModule === item.id;
               const count = badgeCounts[item.id];
@@ -179,17 +168,17 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    padding: '10px 14px',
+                    padding: '9px 12px',
                     borderRadius: '8px',
-                    backgroundColor: active ? '#162447' : 'transparent',
+                    backgroundColor: active ? 'rgba(56, 189, 248, 0.12)' : 'transparent',
                     color: active ? '#ffffff' : '#94a3b8',
                     borderLeft: active ? '3px solid #38bdf8' : '3px solid transparent',
-                    borderTop: '1px solid transparent',
-                    borderRight: '1px solid transparent',
-                    borderBottom: '1px solid transparent',
+                    borderTop: 'none',
+                    borderRight: 'none',
+                    borderBottom: 'none',
                     cursor: 'pointer',
                     fontSize: '13px',
-                    fontWeight: active ? 700 : 500,
+                    fontWeight: active ? 600 : 500,
                     transition: 'all 150ms ease',
                     textAlign: 'left',
                     width: '100%',
@@ -203,42 +192,35 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                   onMouseLeave={(e) => {
                     if (!active) {
                       e.currentTarget.style.backgroundColor = 'transparent';
-                      e.currentTarget.style.color = '#cbd5e1';
+                      e.currentTarget.style.color = '#94a3b8';
                     }
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ color: active ? '#38bdf8' : '#94a3b8' }}>{item.icon}</span>
+                    <span style={{ color: active ? '#38bdf8' : '#94a3b8', display: 'flex', alignItems: 'center' }}>
+                      {item.icon}
+                    </span>
                     <span>{item.label}</span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {typeof count === 'number' && count > 0 && (
                     <span
                       style={{
-                        fontSize: '9px',
+                        fontSize: '11px',
                         fontWeight: 700,
-                        padding: '1px 5px',
-                        borderRadius: '4px',
-                        backgroundColor: active ? 'rgba(56, 189, 248, 0.15)' : 'rgba(255, 255, 255, 0.06)',
-                        color: active ? '#38bdf8' : '#64748b',
+                        minWidth: '20px',
+                        height: '20px',
+                        padding: '0 6px',
+                        borderRadius: '10px',
+                        backgroundColor: '#ef4444',
+                        color: '#ffffff',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                       }}
                     >
-                      {item.stage}
+                      {count}
                     </span>
-                    {typeof count === 'number' && count > 0 && (
-                      <span
-                        style={{
-                          fontSize: '11px',
-                          fontWeight: 700,
-                          padding: '1px 6px',
-                          borderRadius: '9999px',
-                          backgroundColor: '#dc2626',
-                          color: '#ffffff',
-                        }}
-                      >
-                        {count}
-                      </span>
-                    )}
-                  </div>
+                  )}
                 </button>
               );
             })}
@@ -328,91 +310,132 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                fontSize: '11px',
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                color: 'var(--color-primary-600)',
-                letterSpacing: '0.5px',
+                fontSize: '12px',
+                color: '#64748b',
                 marginBottom: '2px',
               }}
             >
-              <span>SAN JUAN DE LURIGANCHO</span>
-              <span style={{ color: '#cbd5e1' }}>•</span>
-              <span style={{ color: 'var(--color-text-muted)' }}>Subgerencia de Fiscalización</span>
-              <span style={{ color: '#cbd5e1' }}>•</span>
-              <span
-                style={{
-                  backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                  color: 'var(--color-primary-700)',
-                  padding: '1px 6px',
-                  borderRadius: '4px',
-                  fontSize: '10px',
-                  fontWeight: 800,
-                }}
-              >
-                {currentNav?.stage}
-              </span>
+              <span>Fiscalización Administrativa</span>
+              <span style={{ color: '#cbd5e1' }}>/</span>
+              <span style={{ color: '#0284c7', fontWeight: 600 }}>{currentNav?.label}</span>
             </div>
-            <h1 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--color-midnight-900)', margin: 0 }}>
+            <h1 style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
               {currentNav?.label}
             </h1>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            {totalPendientes > 0 && (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  color: '#b91c1c',
-                  backgroundColor: '#fef2f2',
-                  border: '1px solid #fecaca',
-                  padding: '5px 12px',
-                  borderRadius: 'var(--radius-pill)',
-                  boxShadow: '0 1px 3px rgba(220, 38, 38, 0.08)',
-                }}
-              >
-                <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#dc2626' }} />
-                {totalPendientes} pendientes
-              </div>
-            )}
-
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            {/* Estado de conexión */}
             <div
               style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '7px',
                 fontSize: '12px',
                 fontWeight: 500,
-                color: 'var(--color-text-secondary)',
-                backgroundColor: 'var(--color-bg-subtle)',
-                padding: '6px 14px',
-                borderRadius: 'var(--radius-pill)',
-                border: '1px solid var(--color-border)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
+                color: '#059669',
               }}
+              title="Conexión en vivo con el servidor"
             >
-              📅 {new Date().toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}
+              <span
+                style={{
+                  width: '7px',
+                  height: '7px',
+                  borderRadius: '50%',
+                  backgroundColor: '#10b981',
+                  boxShadow: '0 0 0 2px rgba(16, 185, 129, 0.2)',
+                }}
+              />
+              <span>Sistema en línea</span>
             </div>
 
+            {/* Fecha oficial */}
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px',
-                fontSize: '12px',
-                fontWeight: 700,
-                color: 'var(--color-success)',
-                backgroundColor: 'var(--color-success-bg)',
-                padding: '5px 12px',
-                borderRadius: 'var(--radius-pill)',
-                border: '1px solid var(--color-success-border)',
+                gap: '7px',
+                fontSize: '13px',
+                color: '#64748b',
+                borderLeft: '1px solid #e2e8f0',
+                paddingLeft: '16px',
               }}
             >
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--color-success)' }} />
-              En línea
+              <CalendarIcon size={15} color="#94a3b8" />
+              <span style={{ textTransform: 'capitalize' }}>
+                {new Date().toLocaleDateString('es-PE', {
+                  weekday: 'long',
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                })}
+              </span>
+            </div>
+
+            {/* Botón de Notificaciones con contador */}
+            <div
+              style={{
+                borderLeft: '1px solid #e2e8f0',
+                paddingLeft: '16px',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              <button
+                onClick={() => onSelectModule('expedientes')}
+                title={
+                  totalPendientes > 0
+                    ? `${totalPendientes} expedientes pendientes de validación`
+                    : 'Sin notificaciones pendientes'
+                }
+                style={{
+                  position: 'relative',
+                  backgroundColor: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  width: '36px',
+                  height: '36px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: '#64748b',
+                  transition: 'all 150ms ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f1f5f9';
+                  e.currentTarget.style.color = '#0f172a';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f8fafc';
+                  e.currentTarget.style.color = '#64748b';
+                }}
+              >
+                <BellIcon size={17} />
+                {totalPendientes > 0 && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: '-4px',
+                      right: '-4px',
+                      minWidth: '18px',
+                      height: '18px',
+                      padding: '0 4px',
+                      borderRadius: '9px',
+                      backgroundColor: '#ef4444',
+                      color: '#ffffff',
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: '2px solid #ffffff',
+                    }}
+                  >
+                    {totalPendientes}
+                  </span>
+                )}
+              </button>
             </div>
           </div>
         </header>

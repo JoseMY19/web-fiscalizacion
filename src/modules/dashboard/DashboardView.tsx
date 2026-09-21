@@ -98,8 +98,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
             Procedimiento Administrativo Sancionador
           </h2>
           <p style={{ fontSize: '13px', color: '#cbd5e1', lineHeight: '1.5' }}>
-            Monitoreo en tiempo real del ciclo sancionador municipal: validación formal de actas (SP2),
-            cédulas (SP3), instrucción IFI (SP4), resoluciones (SP5), impugnaciones (SP6/7) y cobranza coactiva (SP8).
+            Monitoreo en tiempo real del ciclo sancionador municipal: validación formal de actas,
+            cédulas de notificación, fase instructora, emisión de resoluciones, impugnaciones y cobranza coactiva.
           </p>
         </div>
         <div>
@@ -160,7 +160,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
               onClick={() => onNavigate('expedientes')}
               style={{ padding: 0, color: 'var(--color-primary-600)', fontSize: '12px' }}
             >
-              Ir a bandeja SP2 <ArrowRightIcon size={14} />
+              Ver expedientes pendientes <ArrowRightIcon size={14} />
             </Button>
           </div>
         </Card>

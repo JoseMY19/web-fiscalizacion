@@ -1,7 +1,7 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { CoactivaPagosApi } from '../../api';
 import { Card, Button, Input, Alert } from '../../components/common/Common';
-import { CreditCardIcon, GavelIcon, FileTextIcon } from '../../components/icons/Icons';
+import { CreditCardIcon, GavelIcon, FileTextIcon, ScaleIcon } from '../../components/icons/Icons';
 
 export const CoactivaPagosView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'coactiva' | 'pagos'>('coactiva');
@@ -235,8 +235,13 @@ export const CoactivaPagosView: React.FC = () => {
               marginBottom: '16px',
             }}
           >
-            ⚖️ <strong>Regla Legal No Negociable (§2.19):</strong> El pago del administrado extingue la sanción pecuniaria
-            (multa), pero <strong>NUNCA</strong> extingue ni revoca de pleno derecho las medidas complementarias de clausura o paralización.
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+              <span style={{ marginTop: '2px', flexShrink: 0 }}><ScaleIcon size={16} /></span>
+              <span>
+                <strong>Regla Legal No Negociable (§2.19):</strong> El pago del administrado extingue la sanción pecuniaria
+                (multa), pero <strong>NUNCA</strong> extingue ni revoca de pleno derecho las medidas complementarias de clausura o paralización.
+              </span>
+            </div>
           </div>
 
           <Input

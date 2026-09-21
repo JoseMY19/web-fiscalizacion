@@ -1,8 +1,8 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { IfiApi, ExpedienteIfiItem, PlanchazoData } from '../../api';
 import { socket } from '../../lib/socket';
 import { Card, Button, Badge, Modal, Input, Textarea, Alert, EmptyState, Spinner } from '../../components/common/Common';
-import { FileTextIcon, RefreshCwIcon, CheckCircleIcon, EyeIcon, PenToolIcon } from '../../components/icons/Icons';
+import { FileTextIcon, RefreshCwIcon, CheckCircleIcon, EyeIcon, PenToolIcon, CheckIcon } from '../../components/icons/Icons';
 
 export const IfiView: React.FC = () => {
   const [pendientes, setPendientes] = useState<ExpedienteIfiItem[]>([]);
@@ -304,11 +304,11 @@ export const IfiView: React.FC = () => {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <Badge variant="info">{e.estado}</Badge>
                         {e.tieneDescargo ? (
-                          <span style={{ fontSize: '11px', color: 'var(--color-success)', fontWeight: 600 }}>
-                            ✓ Descargo presentado
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#047857', fontWeight: 600 }}>
+                            <CheckIcon size={12} /> Descargo presentado
                           </span>
                         ) : (
-                          <span style={{ fontSize: '11px', color: 'var(--color-warning)', fontWeight: 500 }}>
+                          <span style={{ fontSize: '11px', color: '#b45309', fontWeight: 500 }}>
                             Sin descargo aún
                           </span>
                         )}

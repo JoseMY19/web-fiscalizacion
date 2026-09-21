@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { CautelaresApi, ConsultasApi, IntervencionSelectorItem, descargarDocumentoMedidaCautelar } from '../../api';
 import { Card, Button, Input, Textarea, Alert, Spinner } from '../../components/common/Common';
 import { ShieldAlertIcon, FileTextIcon } from '../../components/icons/Icons';
@@ -116,8 +116,13 @@ export const CautelaresView: React.FC = () => {
           marginBottom: '20px',
         }}
       >
-        💡 <strong>Diseño Jurídico del PAS:</strong> La medida cautelar cuelga directamente de la <strong>Intervención</strong>,
-        no del Expediente, porque la ley permite dictarla de urgencia incluso antes de la emisión de la Notificación de Cargo.
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+          <span style={{ marginTop: '2px', flexShrink: 0 }}><ShieldAlertIcon size={16} /></span>
+          <span>
+            <strong>Marco Jurídico del PAS:</strong> La medida cautelar vincula directamente a la <strong>Intervención</strong>,
+            no del Expediente, pues el marco legal faculta su adopción previa o simultánea a la Notificación de Cargo.
+          </span>
+        </div>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>

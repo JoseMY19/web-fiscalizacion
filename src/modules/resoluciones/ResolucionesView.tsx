@@ -1,8 +1,8 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ResolucionesApi, ExpedienteResolucionItem } from '../../api';
 import { socket } from '../../lib/socket';
 import { Card, Button, Badge, Modal, Input, Textarea, Alert, EmptyState, Spinner } from '../../components/common/Common';
-import { GavelIcon, RefreshCwIcon, CheckCircleIcon, SearchIcon, PenToolIcon } from '../../components/icons/Icons';
+import { GavelIcon, RefreshCwIcon, CheckCircleIcon, SearchIcon, PenToolIcon, ZapIcon } from '../../components/icons/Icons';
 
 export const ResolucionesView: React.FC = () => {
   const [pendientes, setPendientes] = useState<ExpedienteResolucionItem[]>([]);
@@ -424,8 +424,8 @@ export const ResolucionesView: React.FC = () => {
               3. Fundamentación Jurídica
             </label>
             <div style={{ marginBottom: '10px' }}>
-              <Button size="sm" variant="outline" onClick={handleGenerarSeccion}>
-                ⚡ Generar Sección Automática de Antecedentes
+              <Button size="sm" variant="outline" icon={<ZapIcon size={14} />} onClick={handleGenerarSeccion}>
+                Generar Sección Automática de Antecedentes
               </Button>
             </div>
             <Textarea

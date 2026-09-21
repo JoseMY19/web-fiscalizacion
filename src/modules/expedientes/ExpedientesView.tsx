@@ -15,9 +15,22 @@ import {
   EyeIcon,
   AlertTriangleIcon,
   PlusIcon,
+  FileTextIcon,
 } from '../../components/icons/Icons';
 import { ExpedienteDetalleModal } from './ExpedienteDetalleModal';
 import { socket } from '../../lib/socket';
+
+function formatEstado(estado: string): string {
+  const map: Record<string, string> = {
+    PENDIENTE_VALIDACION: 'Pendiente de validación',
+    VALIDADO: 'Validado',
+    OBSERVADO: 'Observado',
+    EN_TRAMITE: 'En trámite',
+    CONCLUIDO: 'Concluido',
+    ARCHIVADO: 'Archivado',
+  };
+  return map[estado] || estado.replace(/_/g, ' ');
+}
 
 export const ExpedientesView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'validar' | 'observadas' | 'digitalizar'>('validar');
@@ -243,9 +256,9 @@ export const ExpedientesView: React.FC = () => {
     try {
       const res = await ActasApi.verificarCorrelativo(tipo, numero.trim());
       if (res.disponible) {
-        setCorrelativoStatus(`✅ Correlativo ${numero} disponible en registro.`);
+        setCorrelativoStatus(`Correlativo ${numero} disponible en registro.`);
       } else {
-        setCorrelativoStatus(`❌ ALERTA: Correlativo ${numero} ya existe o está duplicado.`);
+        setCorrelativoStatus(`Alerta: El correlativo ${numero} ya existe o está duplicado.`);
       }
     } catch {
       setCorrelativoStatus('Error al validar correlativo.');
@@ -313,15 +326,15 @@ export const ExpedientesView: React.FC = () => {
       {/* Header Bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
         <div>
-          <h2 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--color-midnight-900)' }}>
-            Mesa de Control y Validación Formal (SP2)
+          <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a' }}>
+            Control y Validación Formal de Expedientes
           </h2>
-          <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '2px' }}>
-            Control de requisitos de validez del PAS, subsanación de actas observadas y digitalización de actas físicas.
+          <p style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
+            Revisión de requisitos de validez del PAS, subsanación y digitalización de actas físicas.
           </p>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <Button variant="secondary" icon={<RefreshCwIcon size={16} />} loading={loading} onClick={cargar}>
+          <Button variant="secondary" icon={<RefreshCwIcon size={15} />} loading={loading} onClick={cargar}>
             Actualizar
           </Button>
         </div>
@@ -330,26 +343,27 @@ export const ExpedientesView: React.FC = () => {
       {message && <Alert type={message.type}>{message.text}</Alert>}
 
       {/* Tabs Selector */}
-      <div style={{ display: 'flex', borderBottom: '1px solid var(--color-border)', marginBottom: '20px', gap: '12px' }}>
+      <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', marginBottom: '20px', gap: '8px' }}>
         <button
           onClick={() => setActiveTab('validar')}
           style={{
             padding: '10px 16px',
             border: 'none',
-            borderBottom: activeTab === 'validar' ? '2px solid var(--color-primary-600)' : '2px solid transparent',
+            borderBottom: activeTab === 'validar' ? '2px solid #0284c7' : '2px solid transparent',
             backgroundColor: 'transparent',
-            color: activeTab === 'validar' ? 'var(--color-primary-700)' : 'var(--color-text-muted)',
-            fontWeight: activeTab === 'validar' ? 700 : 500,
+            color: activeTab === 'validar' ? '#0369a1' : '#64748b',
+            fontWeight: activeTab === 'validar' ? 600 : 500,
             cursor: 'pointer',
             fontSize: '13px',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
+            transition: 'all 150ms ease',
           }}
         >
           <ExpedienteIcon size={16} />
-          Bandeja de Validación (SP2)
-          <span style={{ fontSize: '11px', padding: '1px 6px', borderRadius: '10px', backgroundColor: '#e0e7ff', color: '#3730a3' }}>
+          Bandeja de Validación
+          <span style={{ fontSize: '11px', fontWeight: 600, padding: '1px 7px', borderRadius: '10px', backgroundColor: '#e0f2fe', color: '#0369a1' }}>
             {expedientes.length}
           </span>
         </button>
@@ -358,21 +372,22 @@ export const ExpedientesView: React.FC = () => {
           style={{
             padding: '10px 16px',
             border: 'none',
-            borderBottom: activeTab === 'observadas' ? '2px solid var(--color-primary-600)' : '2px solid transparent',
+            borderBottom: activeTab === 'observadas' ? '2px solid #0284c7' : '2px solid transparent',
             backgroundColor: 'transparent',
-            color: activeTab === 'observadas' ? 'var(--color-primary-700)' : 'var(--color-text-muted)',
-            fontWeight: activeTab === 'observadas' ? 700 : 500,
+            color: activeTab === 'observadas' ? '#0369a1' : '#64748b',
+            fontWeight: activeTab === 'observadas' ? 600 : 500,
             cursor: 'pointer',
             fontSize: '13px',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
+            transition: 'all 150ms ease',
           }}
         >
           <AlertTriangleIcon size={16} />
-          Actas Observadas / Subsanación (V-01/02)
+          Actas Observadas
           {observadas.length > 0 && (
-            <span style={{ fontSize: '11px', padding: '1px 6px', borderRadius: '10px', backgroundColor: '#fee2e2', color: '#991b1b' }}>
+            <span style={{ fontSize: '11px', fontWeight: 600, padding: '1px 7px', borderRadius: '10px', backgroundColor: '#fee2e2', color: '#991b1b' }}>
               {observadas.length}
             </span>
           )}
@@ -382,19 +397,20 @@ export const ExpedientesView: React.FC = () => {
           style={{
             padding: '10px 16px',
             border: 'none',
-            borderBottom: activeTab === 'digitalizar' ? '2px solid var(--color-primary-600)' : '2px solid transparent',
+            borderBottom: activeTab === 'digitalizar' ? '2px solid #0284c7' : '2px solid transparent',
             backgroundColor: 'transparent',
-            color: activeTab === 'digitalizar' ? 'var(--color-primary-700)' : 'var(--color-text-muted)',
-            fontWeight: activeTab === 'digitalizar' ? 700 : 500,
+            color: activeTab === 'digitalizar' ? '#0369a1' : '#64748b',
+            fontWeight: activeTab === 'digitalizar' ? 600 : 500,
             cursor: 'pointer',
             fontSize: '13px',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
+            transition: 'all 150ms ease',
           }}
         >
           <PlusIcon size={16} />
-          Digitalizar Acta Física de Campo
+          Digitalizar Acta Física
         </button>
       </div>
 
@@ -402,34 +418,35 @@ export const ExpedientesView: React.FC = () => {
       {activeTab === 'validar' && (
         <Card>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', gap: '12px' }}>
-            <div style={{ position: 'relative', maxWidth: '360px', width: '100%' }}>
-              <span style={{ position: 'absolute', left: '12px', top: '10px', color: 'var(--color-text-light)' }}>
+            <div style={{ position: 'relative', maxWidth: '380px', width: '100%' }}>
+              <span style={{ position: 'absolute', left: '12px', top: '10px', color: '#94a3b8' }}>
                 <SearchIcon size={16} />
               </span>
               <input
                 type="text"
-                placeholder="Buscar por N° expediente o fiscalizador..."
+                placeholder="Buscar por N° expediente, infractor o fiscalizador..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 style={{
                   width: '100%',
                   padding: '8px 12px 8px 36px',
                   fontSize: '13px',
-                  borderRadius: 'var(--radius-sm)',
-                  border: '1px solid var(--color-border)',
+                  borderRadius: '6px',
+                  border: '1px solid #cbd5e1',
                   outline: 'none',
+                  backgroundColor: '#ffffff',
                 }}
               />
             </div>
-            <div style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
-              Pendientes de revisión: <strong>{filteredExpedientes.length}</strong>
+            <div style={{ fontSize: '12px', color: '#64748b' }}>
+              Mostrando <strong>{filteredExpedientes.length}</strong> expedientes pendientes
             </div>
           </div>
 
           {loading ? (
             <div style={{ padding: '40px', textAlign: 'center' }}>
               <Spinner size={32} />
-              <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '12px' }}>
+              <p style={{ fontSize: '13px', color: '#64748b', marginTop: '12px' }}>
                 Cargando expedientes pendientes de validación...
               </p>
             </div>
@@ -443,31 +460,31 @@ export const ExpedientesView: React.FC = () => {
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
                 <thead>
-                  <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid var(--color-border)' }}>
-                    <th style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--color-text-secondary)' }}>N° Expediente</th>
-                    <th style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--color-text-secondary)' }}>Fecha Intervención</th>
-                    <th style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--color-text-secondary)' }}>Fiscalizador</th>
-                    <th style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--color-text-secondary)' }}>Estado</th>
-                    <th style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--color-text-secondary)', textAlign: 'right' }}>Acciones</th>
+                  <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                    <th style={{ padding: '12px 16px', fontWeight: 600, color: '#475569' }}>N° Expediente</th>
+                    <th style={{ padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Fecha Intervención</th>
+                    <th style={{ padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Fiscalizador</th>
+                    <th style={{ padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Estado</th>
+                    <th style={{ padding: '12px 16px', fontWeight: 600, color: '#475569', textAlign: 'right' }}>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredExpedientes.map((exp) => (
                     <tr
                       key={exp.id}
-                      style={{ borderBottom: '1px solid var(--color-border)', transition: 'background 100ms' }}
+                      style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 100ms' }}
                       onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8fafc')}
                       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                     >
-                      <td style={{ padding: '14px 16px', fontWeight: 700, color: 'var(--color-midnight-900)' }}>
+                      <td style={{ padding: '14px 16px', fontWeight: 600, color: '#0f172a' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ color: 'var(--color-primary-600)' }}>
+                          <span style={{ color: '#0284c7' }}>
                             <ExpedienteIcon size={16} />
                           </span>
                           {exp.numeroExpediente}
                         </div>
                       </td>
-                      <td style={{ padding: '14px 16px', color: 'var(--color-text-secondary)' }}>
+                      <td style={{ padding: '14px 16px', color: '#475569' }}>
                         {exp.fechaHoraInicioIntervencion
                           ? new Date(exp.fechaHoraInicioIntervencion).toLocaleString('es-PE', {
                               day: '2-digit',
@@ -478,16 +495,18 @@ export const ExpedientesView: React.FC = () => {
                             })
                           : '---'}
                       </td>
-                      <td style={{ padding: '14px 16px', color: 'var(--color-text-secondary)' }}>
-                        {exp.fiscalizadorNombre || 'No asignado'}
+                      <td style={{ padding: '14px 16px', color: '#475569' }}>
+                        <div style={{ fontWeight: 600, color: '#0f172a' }}>{exp.fiscalizadorNombre || 'No asignado'}</div>
+                        <div style={{ fontSize: '11px', color: '#64748b' }}>Fiscalizador de Campo</div>
                       </td>
                       <td style={{ padding: '14px 16px' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
-                          <Badge variant="warning">{exp.estado}</Badge>
+                          <Badge variant="warning">{formatEstado(exp.estado)}</Badge>
                           {exp.fechaIngresoFisico && (
-                            <Badge variant="info">
-                              📄 Papel recibido: {new Date(exp.fechaIngresoFisico).toLocaleDateString('es-PE')}
-                            </Badge>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
+                              <FileTextIcon size={12} color="#94a3b8" />
+                              Ingreso físico: {new Date(exp.fechaIngresoFisico).toLocaleDateString('es-PE')}
+                            </div>
                           )}
                         </div>
                       </td>
@@ -505,7 +524,7 @@ export const ExpedientesView: React.FC = () => {
                               })
                             }
                           >
-                            360°
+                            Revisar
                           </Button>
                           <Button
                             variant="success"
@@ -586,8 +605,9 @@ export const ExpedientesView: React.FC = () => {
                         {obs.fechaObservacion ? new Date(obs.fechaObservacion).toLocaleDateString('es-PE') : 'Reciente'}
                       </td>
                       <td style={{ padding: '14px 16px', color: '#b91c1c', maxWidth: '400px' }}>
-                        <div style={{ backgroundColor: '#fef2f2', padding: '8px 12px', borderRadius: '6px', border: '1px solid #fecaca' }}>
-                          ⚠️ {obs.motivo}
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', backgroundColor: '#fff1f2', padding: '8px 12px', borderRadius: '6px', border: '1px solid #fecdd3', fontSize: '12px' }}>
+                          <span style={{ marginTop: '2px', flexShrink: 0 }}><AlertTriangleIcon size={15} color="#dc2626" /></span>
+                          <span>{obs.motivo}</span>
                         </div>
                       </td>
                       <td style={{ padding: '14px 16px', textAlign: 'right' }}>
@@ -604,7 +624,7 @@ export const ExpedientesView: React.FC = () => {
                               })
                             }
                           >
-                            360°
+                            Revisar
                           </Button>
                           <Button
                             variant="primary"
@@ -659,7 +679,7 @@ export const ExpedientesView: React.FC = () => {
                     textDecoration: 'underline',
                   }}
                 >
-                  🔍 Validar serie física
+                  Validar serie física en sistema
                 </button>
               </div>
 
@@ -683,7 +703,7 @@ export const ExpedientesView: React.FC = () => {
                     textDecoration: 'underline',
                   }}
                 >
-                  🔍 Validar serie física
+                  Validar serie física en sistema
                 </button>
               </div>
 

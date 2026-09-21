@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { ActasApi, ExpedientesApi } from '../../api';
 import { Card, Button, Badge, Input, Textarea, Alert } from '../../components/common/Common';
 import {
@@ -8,6 +8,8 @@ import {
   AlertTriangleIcon,
   EyeIcon,
   BuildingIcon,
+  PrinterIcon,
+  ShieldAlertIcon,
 } from '../../components/icons/Icons';
 
 interface DocumentoFisico {
@@ -519,8 +521,8 @@ export const DocumentosView: React.FC = () => {
               </div>
 
               <div style={{ marginTop: '20px', display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                <Button variant="outline" onClick={() => window.print()}>
-                  🖨️ Imprimir Carátula & Hoja de Ruta
+                <Button variant="outline" icon={<PrinterIcon size={15} />} onClick={() => window.print()}>
+                  Imprimir Carátula y Hoja de Ruta
                 </Button>
               </div>
             </div>
@@ -546,8 +548,13 @@ export const DocumentosView: React.FC = () => {
               marginBottom: '20px',
             }}
           >
-            🔒 <strong>Control Estricto de Series:</strong> Los talonarios físicos vienen pre-impresos por imprenta con numeración de serie.
-            Esta herramienta consulta el backend en tiempo real para evitar duplicidades o adulteración de actas.
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+              <span style={{ marginTop: '2px', flexShrink: 0 }}><ShieldAlertIcon size={16} /></span>
+              <span>
+                <strong>Control Estricto de Series:</strong> Los talonarios físicos vienen pre-impresos por imprenta con numeración de serie.
+                Esta herramienta consulta el sistema en tiempo real para evitar duplicidades o adulteración de actas.
+              </span>
+            </div>
           </div>
 
           <form onSubmit={handleVerificarCorrelativo} style={{ display: 'grid', gridTemplateColumns: '1.5fr 2fr auto', gap: '12px', alignItems: 'flex-end' }}>
