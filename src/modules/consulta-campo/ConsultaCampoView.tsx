@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { ConsultasApi, CierreCampoItem, abrirDocumento } from '../../api';
+import { ConsultasApi, CierreCampoItem, abrirDocumento, descargarDocumentoWord } from '../../api';
 import { Card, Button, Badge, Alert, EmptyState, Spinner } from '../../components/common/Common';
-import { EyeIcon, RefreshCwIcon } from '../../components/icons/Icons';
+import { EyeIcon, RefreshCwIcon, FileTextIcon } from '../../components/icons/Icons';
 
 /**
  * Solo consulta — sin bandeja de aprobar/observar. Las intervenciones de
@@ -82,14 +82,25 @@ export const ConsultaCampoView: React.FC = () => {
                   </td>
                   <td style={{ padding: '0.5rem' }}>{item.numeroCorrelativo ?? '—'}</td>
                   <td style={{ padding: '0.5rem', maxWidth: 320 }}>{item.resumen ?? '—'}</td>
-                  <td style={{ padding: '0.5rem' }}>
+                  <td style={{ padding: '0.5rem', display: 'flex', gap: '0.5rem' }}>
                     <Button
                       variant="outline"
                       size="sm"
                       disabled={!item.fotoActaId}
                       onClick={() => item.fotoActaId && abrirDocumento(item.fotoActaId)}
                     >
-                      Ver documento
+                      Ver foto
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      icon={<FileTextIcon size={14} />}
+                      disabled={!item.numeroCorrelativo}
+                      onClick={() =>
+                        descargarDocumentoWord(item.id, item.tipoActuacion === 'EXHORTACION' ? 'EXHORTACION' : 'FISCALIZACION')
+                      }
+                    >
+                      Descargar Word
                     </Button>
                   </td>
                 </tr>

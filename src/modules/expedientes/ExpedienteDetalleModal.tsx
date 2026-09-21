@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { IntervencionesApi, BundleIntervencion, abrirDocumento } from '../../api';
+import { IntervencionesApi, BundleIntervencion, abrirDocumento, descargarDocumentoWord } from '../../api';
 import { Modal, Button, Badge, Alert, Spinner } from '../../components/common/Common';
 import {
   ShieldAlertIcon,
@@ -308,10 +308,13 @@ export const ExpedienteDetalleModal: React.FC<ExpedienteDetalleModalProps> = ({
                         const foto = data.fotos?.find((f) => f.actaTipo === 'NOTIFICACION_CARGO');
                         return (
                           <Button variant="outline" size="sm" disabled={!foto} onClick={() => foto && abrirDocumento(foto.id)}>
-                            Ver documento
+                            Ver foto
                           </Button>
                         );
                       })()}
+                      <Button variant="outline" size="sm" onClick={() => descargarDocumentoWord(data.id, 'NOTIFICACION_CARGO')}>
+                        Descargar Excel
+                      </Button>
                     </div>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', fontSize: '12px' }}>
@@ -339,6 +342,12 @@ export const ExpedienteDetalleModal: React.FC<ExpedienteDetalleModalProps> = ({
                       <span style={{ color: 'var(--color-text-muted)' }}>Medida Accesoria:</span>{' '}
                       <span>{data.notificacionCargo.medidaComplementaria || 'Ninguna'}</span>
                     </div>
+                    {data.notificacionCargo.placaRodaje && (
+                      <div>
+                        <span style={{ color: 'var(--color-text-muted)' }}>Placa de Rodaje:</span>{' '}
+                        <span>{data.notificacionCargo.placaRodaje}</span>
+                      </div>
+                    )}
                   </div>
                   {data.notificacionCargo.seNegoFirmar && (
                     <div style={{ marginTop: '12px', padding: '10px', backgroundColor: 'var(--color-warning-bg)', borderRadius: '6px', fontSize: '12px', color: 'var(--color-warning-text)' }}>
@@ -360,10 +369,13 @@ export const ExpedienteDetalleModal: React.FC<ExpedienteDetalleModalProps> = ({
                         const foto = data.fotos?.find((f) => f.actaTipo === 'ACTA_FISCALIZACION');
                         return (
                           <Button variant="outline" size="sm" disabled={!foto} onClick={() => foto && abrirDocumento(foto.id)}>
-                            Ver documento
+                            Ver foto
                           </Button>
                         );
                       })()}
+                      <Button variant="outline" size="sm" onClick={() => descargarDocumentoWord(data.id, 'FISCALIZACION')}>
+                        Descargar Word
+                      </Button>
                     </div>
                   </div>
                   <div style={{ fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -399,8 +411,22 @@ export const ExpedienteDetalleModal: React.FC<ExpedienteDetalleModalProps> = ({
                         <div>
                           <strong>{m.tipoMedida}</strong> — Acta N° {m.numeroCorrelativo}
                           <div style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>{m.descripcion || 'Sin descripción adicional'} • {m.lugarEjecucion || 'En el predio'}</div>
+                          {m.observacionesAdministrado && (
+                            <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '2px', fontStyle: 'italic' }}>
+                              "{m.observacionesAdministrado}"
+                            </div>
+                          )}
                         </div>
-                        <Badge variant="danger">Ejecutada</Badge>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Badge variant="danger">Ejecutada</Badge>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => descargarDocumentoWord(data.id, 'MEDIDA_PROVISIONAL', m.numeroCorrelativo)}
+                          >
+                            Descargar Word
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>

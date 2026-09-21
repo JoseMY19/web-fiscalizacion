@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
 :root {
   /* ==========================================================================
@@ -144,8 +144,98 @@ button, input, textarea, select {
   margin: 0 auto;
 }
 
+/* ==========================================================================
+   BOTONES INSTITUCIONALES PULIDOS
+   ========================================================================== */
+.btn-interactive {
+  transition: all 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  user-select: none;
+}
+.btn-interactive:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+.btn-interactive:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* ==========================================================================
+   TOPBAR ELEVADA & SOMBRAS
+   ========================================================================== */
+.app-topbar {
+  height: 70px;
+  background-color: #ffffff;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 36px;
+  box-shadow: 0 2px 10px rgba(11, 19, 43, 0.04);
+  position: relative;
+  z-index: 20;
+}
+
+.app-topbar::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #1d4ed8 0%, #0ea5e9 40%, #10b981 75%, #f59e0b 100%);
+  opacity: 0.85;
+}
+
+/* ==========================================================================
+   LOGIN SCREEN DECORATIONS
+   ========================================================================== */
+.login-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f8fafc 0%, #eef2f6 100%);
+  position: relative;
+  overflow: hidden;
+  padding: 24px;
+}
+
+.login-decor-top {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: clamp(180px, 24vw, 360px);
+  max-width: 360px;
+  pointer-events: none;
+  z-index: 1;
+  user-select: none;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.04));
+}
+
+.login-decor-bottom {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  width: clamp(180px, 24vw, 360px);
+  max-width: 360px;
+  pointer-events: none;
+  z-index: 1;
+  user-select: none;
+  filter: drop-shadow(0 -4px 12px rgba(0, 0, 0, 0.04));
+}
+
 @media (max-width: 768px) {
   .page-body {
     padding: 16px;
+  }
+  .app-topbar {
+    padding: 0 16px;
+    height: 64px;
+  }
+  .login-decor-top {
+    width: 140px;
+  }
+  .login-decor-bottom {
+    width: 140px;
   }
 }

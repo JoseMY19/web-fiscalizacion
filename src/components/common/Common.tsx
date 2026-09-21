@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 
 // ============================================================================
 // BUTTON
@@ -18,37 +18,55 @@ export const Button: React.FC<ButtonProps> = ({
   icon,
   disabled,
   style,
+  className,
+  onMouseEnter,
+  onMouseLeave,
+  onMouseDown,
+  onMouseUp,
   ...props
 }) => {
+  const [isHovered, setIsHovered] = React.useState(false);
+  const [isActive, setIsActive] = React.useState(false);
+
   const getStyles = (): React.CSSProperties => {
-    let bg = 'var(--color-primary-600)';
+    let bg = '#1d4ed8';
     let color = '#ffffff';
     let border = 'none';
+    let shadow = '0 2px 6px rgba(29, 78, 216, 0.2)';
 
-    if (variant === 'secondary') {
-      bg = 'var(--color-bg-subtle)';
-      color = 'var(--color-text-main)';
-      border = '1px solid var(--color-border)';
+    if (variant === 'primary') {
+      bg = isHovered ? '#1e40af' : '#1d4ed8';
+      shadow = isHovered ? '0 6px 16px rgba(29, 78, 216, 0.35)' : '0 2px 6px rgba(29, 78, 216, 0.2)';
+    } else if (variant === 'secondary') {
+      bg = isHovered ? '#f8fafc' : '#ffffff';
+      color = '#0f172a';
+      border = '1px solid #cbd5e1';
+      shadow = '0 1px 3px rgba(0, 0, 0, 0.05)';
     } else if (variant === 'danger') {
-      bg = 'var(--color-danger)';
+      bg = isHovered ? '#b91c1c' : '#dc2626';
       color = '#ffffff';
+      shadow = isHovered ? '0 4px 12px rgba(220, 38, 38, 0.3)' : '0 2px 6px rgba(220, 38, 38, 0.2)';
     } else if (variant === 'warning') {
-      bg = 'var(--color-warning)';
+      bg = isHovered ? '#b45309' : '#d97706';
       color = '#ffffff';
+      shadow = isHovered ? '0 4px 12px rgba(217, 119, 6, 0.3)' : '0 2px 6px rgba(217, 119, 6, 0.2)';
     } else if (variant === 'success') {
-      bg = 'var(--color-success)';
+      bg = isHovered ? '#15803d' : '#16a34a';
       color = '#ffffff';
+      shadow = isHovered ? '0 4px 12px rgba(22, 163, 74, 0.3)' : '0 2px 6px rgba(22, 163, 74, 0.2)';
     } else if (variant === 'outline') {
-      bg = 'transparent';
-      color = 'var(--color-primary-600)';
-      border = '1px solid var(--color-primary-600)';
+      bg = isHovered ? '#eff6ff' : 'transparent';
+      color = '#1d4ed8';
+      border = '1px solid #1d4ed8';
+      shadow = 'none';
     } else if (variant === 'ghost') {
-      bg = 'transparent';
-      color = 'var(--color-text-secondary)';
+      bg = isHovered ? '#f1f5f9' : 'transparent';
+      color = '#334155';
+      shadow = 'none';
     }
 
     const padding = size === 'sm' ? '6px 12px' : size === 'lg' ? '12px 24px' : '9px 18px';
-    const fontSize = size === 'sm' ? '13px' : size === 'lg' ? '15px' : '14px';
+    const fontSize = size === 'sm' ? '12px' : size === 'lg' ? '15px' : '13px';
 
     return {
       display: 'inline-flex',
@@ -64,14 +82,37 @@ export const Button: React.FC<ButtonProps> = ({
       border,
       cursor: disabled || loading ? 'not-allowed' : 'pointer',
       opacity: disabled || loading ? 0.65 : 1,
-      transition: 'all var(--transition-fast)',
-      boxShadow: variant === 'primary' ? 'var(--shadow-sm)' : 'none',
+      transition: 'all 160ms cubic-bezier(0.4, 0, 0.2, 1)',
+      transform: !disabled && !loading && isActive ? 'translateY(0)' : !disabled && !loading && isHovered ? 'translateY(-1px)' : 'none',
+      boxShadow: shadow,
       ...style,
     };
   };
 
   return (
-    <button disabled={disabled || loading} style={getStyles()} {...props}>
+    <button
+      disabled={disabled || loading}
+      style={getStyles()}
+      className={`btn-interactive ${className || ''}`}
+      onMouseEnter={(e) => {
+        setIsHovered(true);
+        onMouseEnter?.(e);
+      }}
+      onMouseLeave={(e) => {
+        setIsHovered(false);
+        setIsActive(false);
+        onMouseLeave?.(e);
+      }}
+      onMouseDown={(e) => {
+        setIsActive(true);
+        onMouseDown?.(e);
+      }}
+      onMouseUp={(e) => {
+        setIsActive(false);
+        onMouseUp?.(e);
+      }}
+      {...props}
+    >
       {loading ? <Spinner size={16} color="currentColor" /> : icon}
       {children}
     </button>

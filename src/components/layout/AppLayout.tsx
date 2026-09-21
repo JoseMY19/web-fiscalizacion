@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import {
   DashboardIcon,
   ExpedienteIcon,
@@ -10,7 +10,6 @@ import {
   ShieldAlertIcon,
   CalendarIcon,
   LogOutIcon,
-  BuildingIcon,
   UserIcon,
   EyeIcon,
 } from '../icons/Icons';
@@ -87,6 +86,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   badgeCounts = {},
 }) => {
   const currentNav = navItems.find((n) => n.id === currentModule);
+  const totalPendientes = Object.values(badgeCounts).reduce<number>(
+    (acc, val) => (typeof val === 'number' ? acc + val : acc),
+    0
+  );
 
   return (
     <div className="app-container">
@@ -106,38 +109,46 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           zIndex: 100,
         }}
       >
-        {/* Brand Header */}
+        {/* Brand Header con Logo Oficial SJL */}
         <div
           style={{
-            padding: '24px 20px',
+            padding: '22px 20px 18px',
             borderBottom: '1px solid #1c2e59',
             display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
+            flexDirection: 'column',
+            gap: '10px',
           }}
         >
-          <div
-            style={{
-              width: '42px',
-              height: '42px',
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #1d4ed8 0%, #0ea5e9 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#ffffff',
-              boxShadow: '0 4px 12px rgba(37, 99, 235, 0.4)',
-            }}
-          >
-            <BuildingIcon size={22} />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img
+              src="/logo-sjl-white.png"
+              alt="Municipalidad de San Juan de Lurigancho - es momento de crecer"
+              style={{
+                height: '42px',
+                width: 'auto',
+                maxWidth: '210px',
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25))',
+              }}
+            />
           </div>
-          <div>
-            <div style={{ fontSize: '15px', fontWeight: 800, letterSpacing: '0.3px', color: '#ffffff' }}>
-              MDSJL <span style={{ color: '#38bdf8' }}>PAS</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.4px', color: '#38bdf8' }}>
+              MDSJL • FISCALIZACIÓN
             </div>
-            <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 500 }}>
-              Fiscalización & Sanciones
-            </div>
+            <span
+              style={{
+                fontSize: '9px',
+                fontWeight: 700,
+                color: '#94a3b8',
+                backgroundColor: 'rgba(56, 189, 248, 0.12)',
+                border: '1px solid rgba(56, 189, 248, 0.25)',
+                padding: '1px 6px',
+                borderRadius: '4px',
+              }}
+            >
+              PAS OFICINA
+            </span>
           </div>
         </div>
 
@@ -170,12 +181,15 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                     justifyContent: 'space-between',
                     padding: '10px 14px',
                     borderRadius: '8px',
-                    backgroundColor: active ? '#1c2e59' : 'transparent',
-                    color: active ? '#ffffff' : '#cbd5e1',
-                    border: active ? '1px solid #2a4175' : '1px solid transparent',
+                    backgroundColor: active ? '#162447' : 'transparent',
+                    color: active ? '#ffffff' : '#94a3b8',
+                    borderLeft: active ? '3px solid #38bdf8' : '3px solid transparent',
+                    borderTop: '1px solid transparent',
+                    borderRight: '1px solid transparent',
+                    borderBottom: '1px solid transparent',
                     cursor: 'pointer',
                     fontSize: '13px',
-                    fontWeight: active ? 600 : 500,
+                    fontWeight: active ? 700 : 500,
                     transition: 'all 150ms ease',
                     textAlign: 'left',
                     width: '100%',
@@ -307,50 +321,92 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       {/* ================================================================ */}
       <div className="main-content">
         {/* Topbar Header */}
-        <header
-          style={{
-            height: '68px',
-            backgroundColor: '#ffffff',
-            borderBottom: '1px solid var(--color-border)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 36px',
-            boxShadow: 'var(--shadow-xs)',
-          }}
-        >
+        <header className="app-topbar">
           <div>
-            <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--color-primary-600)', letterSpacing: '0.5px' }}>
-              Subgerencia de Fiscalización • {currentNav?.stage}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '11px',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                color: 'var(--color-primary-600)',
+                letterSpacing: '0.5px',
+                marginBottom: '2px',
+              }}
+            >
+              <span>SAN JUAN DE LURIGANCHO</span>
+              <span style={{ color: '#cbd5e1' }}>•</span>
+              <span style={{ color: 'var(--color-text-muted)' }}>Subgerencia de Fiscalización</span>
+              <span style={{ color: '#cbd5e1' }}>•</span>
+              <span
+                style={{
+                  backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                  color: 'var(--color-primary-700)',
+                  padding: '1px 6px',
+                  borderRadius: '4px',
+                  fontSize: '10px',
+                  fontWeight: 800,
+                }}
+              >
+                {currentNav?.stage}
+              </span>
             </div>
-            <h1 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--color-midnight-900)' }}>
+            <h1 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--color-midnight-900)', margin: 0 }}>
               {currentNav?.label}
             </h1>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            {totalPendientes > 0 && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  color: '#b91c1c',
+                  backgroundColor: '#fef2f2',
+                  border: '1px solid #fecaca',
+                  padding: '5px 12px',
+                  borderRadius: 'var(--radius-pill)',
+                  boxShadow: '0 1px 3px rgba(220, 38, 38, 0.08)',
+                }}
+              >
+                <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#dc2626' }} />
+                {totalPendientes} pendientes
+              </div>
+            )}
+
             <div
               style={{
                 fontSize: '12px',
-                color: 'var(--color-text-muted)',
+                fontWeight: 500,
+                color: 'var(--color-text-secondary)',
                 backgroundColor: 'var(--color-bg-subtle)',
-                padding: '6px 12px',
+                padding: '6px 14px',
                 borderRadius: 'var(--radius-pill)',
                 border: '1px solid var(--color-border)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
             >
               📅 {new Date().toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}
             </div>
+
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
                 fontSize: '12px',
-                fontWeight: 600,
+                fontWeight: 700,
                 color: 'var(--color-success)',
                 backgroundColor: 'var(--color-success-bg)',
-                padding: '4px 10px',
+                padding: '5px 12px',
                 borderRadius: 'var(--radius-pill)',
                 border: '1px solid var(--color-success-border)',
               }}

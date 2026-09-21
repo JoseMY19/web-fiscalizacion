@@ -1,16 +1,35 @@
-﻿import React, { useState } from 'react';
-import { CautelaresApi } from '../../api';
-import { Card, Button, Input, Textarea, Alert } from '../../components/common/Common';
-import { ShieldAlertIcon } from '../../components/icons/Icons';
+﻿import React, { useEffect, useState } from 'react';
+import { CautelaresApi, ConsultasApi, IntervencionSelectorItem, descargarDocumentoMedidaCautelar } from '../../api';
+import { Card, Button, Input, Textarea, Alert, Spinner } from '../../components/common/Common';
+import { ShieldAlertIcon, FileTextIcon } from '../../components/icons/Icons';
 
 export const CautelaresView: React.FC = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+  // Selector de intervenciones disponibles
+  const [intervenciones, setIntervenciones] = useState<IntervencionSelectorItem[]>([]);
+  const [loadingIntervenciones, setLoadingIntervenciones] = useState(true);
+
+  useEffect(() => {
+    ConsultasApi.getIntervencionesSelector()
+      .then((data) => setIntervenciones(Array.isArray(data) ? data : []))
+      .catch(() => setIntervenciones([]))
+      .finally(() => setLoadingIntervenciones(false));
+  }, []);
+
   // Estados Emitir
   const [intervencionId, setIntervencionId] = useState('');
   const [situacionGravedad, setSituacionGravedad] = useState('');
   const [resolucionCautelarTexto, setResolucionCautelarTexto] = useState('');
+  const [vistoAntecedentes, setVistoAntecedentes] = useState('');
+  const [inicialesFirma, setInicialesFirma] = useState('');
+  const [relatoHechos, setRelatoHechos] = useState('');
+  const [tipoMedidaCautelar, setTipoMedidaCautelar] = useState('');
+  const [modalidadEjecucion, setModalidadEjecucion] = useState('');
+  const [direccionNotificacion, setDireccionNotificacion] = useState('');
+  const [incluyeAdvertenciaUsurpacion, setIncluyeAdvertenciaUsurpacion] = useState(false);
+  const [incluyeResguardoSerenazgo, setIncluyeResguardoSerenazgo] = useState(false);
 
   // Estados Ejecución & Anexo
   const [medidaId, setMedidaId] = useState('');
@@ -23,7 +42,18 @@ export const CautelaresView: React.FC = () => {
     }
     setActionLoading(true);
     try {
-      const res = await CautelaresApi.emitir(intervencionId.trim(), situacionGravedad.trim(), resolucionCautelarTexto.trim());
+      const res = await CautelaresApi.emitir(intervencionId.trim(), {
+        situacionGravedad: situacionGravedad.trim(),
+        resolucionCautelarTexto: resolucionCautelarTexto.trim(),
+        vistoAntecedentes: vistoAntecedentes.trim() || undefined,
+        inicialesFirma: inicialesFirma.trim() || undefined,
+        relatoHechos: relatoHechos.trim() || undefined,
+        tipoMedidaCautelar: tipoMedidaCautelar.trim() || undefined,
+        modalidadEjecucion: modalidadEjecucion.trim() || undefined,
+        direccionNotificacion: direccionNotificacion.trim() || undefined,
+        incluyeAdvertenciaUsurpacion,
+        incluyeResguardoSerenazgo,
+      });
       setMessage({ type: 'success', text: `Medida Cautelar de Urgencia emitida con ID: ${res.id}` });
       if (res.id) setMedidaId(res.id);
     } catch (err: any) {
@@ -93,12 +123,25 @@ export const CautelaresView: React.FC = () => {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {/* Paso 1: Emitir */}
         <Card title="Paso 1: Emisión de la Resolución Cautelar">
-          <Input
-            label="ID de la Intervención de Fiscalización"
-            placeholder="Ej. 4cb90102-1234-5678-9abc-def012345678"
-            value={intervencionId}
-            onChange={(e) => setIntervencionId(e.target.value)}
-          />
+          <div className="form-group">
+            <label className="form-label form-label-required">Intervención de Fiscalización</label>
+            {loadingIntervenciones ? (
+              <div style={{ padding: '8px 0' }}>
+                <Spinner size={16} />
+              </div>
+            ) : (
+              <select className="form-input" value={intervencionId} onChange={(e) => setIntervencionId(e.target.value)}>
+                <option value="">— Seleccione una intervención —</option>
+                {intervenciones.map((i) => (
+                  <option key={i.id} value={i.id}>
+                    {new Date(i.fechaHoraInicio).toLocaleDateString('es-PE')} · {i.tipoActuacion} ·{' '}
+                    {i.administradoNombre ?? 'Sin administrado identificado'}
+                    {i.numeroExpediente ? ` · Exp. ${i.numeroExpediente}` : ''}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
 
           <Input
             label="Situación de Grave Riesgo / Urgencia"
@@ -108,12 +151,81 @@ export const CautelaresView: React.FC = () => {
           />
 
           <Textarea
+            label="VISTO — Antecedentes (opcional, solo para el documento Word)"
+            placeholder="Ej. El Acta de Constatación Nº..., Notificación Preventiva Nº..., el Informe N°..."
+            value={vistoAntecedentes}
+            onChange={(e) => setVistoAntecedentes(e.target.value)}
+            rows={2}
+          />
+
+          <Textarea
+            label="Relato de hechos del caso (opcional, solo para el documento Word)"
+            placeholder="Ej. Que, dentro de ese contexto se tiene que el policía municipal, en razón a sus funciones..."
+            value={relatoHechos}
+            onChange={(e) => setRelatoHechos(e.target.value)}
+            rows={3}
+          />
+
+          <Textarea
             label="Texto de la Resolución Cautelar (Redactada por la Autoridad)"
             placeholder="Escriba la orden cautelar expresa (clausura preventiva, decomiso de bienes perecibles, paralización inmediata de obra sin licencia)..."
             value={resolucionCautelarTexto}
             onChange={(e) => setResolucionCautelarTexto(e.target.value)}
             rows={4}
           />
+
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{ flex: 1 }}>
+              <Input
+                label="Tipo de Medida Cautelar (opcional, doc. Word)"
+                placeholder="Ej. PARALIZACIÓN, CLAUSURA, DECOMISO"
+                value={tipoMedidaCautelar}
+                onChange={(e) => setTipoMedidaCautelar(e.target.value)}
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <Input
+                label="Dirección de notificación (opcional, doc. Word)"
+                placeholder="Ej. MZ. C LOTE 3..."
+                value={direccionNotificacion}
+                onChange={(e) => setDireccionNotificacion(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <Textarea
+            label="Modalidad de ejecución (opcional, solo para el documento Word)"
+            placeholder="Ej. Colocando tres (03) bloques de concreto para asegurar el bloqueo de los accesos..."
+            value={modalidadEjecucion}
+            onChange={(e) => setModalidadEjecucion(e.target.value)}
+            rows={2}
+          />
+
+          <Input
+            label="Iniciales de quien redacta (opcional, solo para el documento Word)"
+            placeholder="Ej. ASAC/jlvn"
+            value={inicialesFirma}
+            onChange={(e) => setInicialesFirma(e.target.value)}
+          />
+
+          <div style={{ display: 'flex', gap: '20px', margin: '4px 0 16px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={incluyeAdvertenciaUsurpacion}
+                onChange={(e) => setIncluyeAdvertenciaUsurpacion(e.target.checked)}
+              />
+              Incluir advertencia penal por usurpación
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={incluyeResguardoSerenazgo}
+                onChange={(e) => setIncluyeResguardoSerenazgo(e.target.checked)}
+              />
+              Incluir resguardo de Serenazgo
+            </label>
+          </div>
 
           <Button variant="primary" icon={<ShieldAlertIcon size={16} />} loading={actionLoading} onClick={handleEmitir}>
             Emitir Medida Cautelar
@@ -128,6 +240,16 @@ export const CautelaresView: React.FC = () => {
             value={medidaId}
             onChange={(e) => setMedidaId(e.target.value)}
           />
+
+          <Button
+            variant="outline"
+            icon={<FileTextIcon size={16} />}
+            disabled={!medidaId.trim()}
+            onClick={() => descargarDocumentoMedidaCautelar(medidaId.trim())}
+            style={{ marginBottom: '16px' }}
+          >
+            Descargar Word de la Resolución
+          </Button>
 
           <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', marginBottom: '16px' }}>
             <div style={{ flex: 1 }}>

@@ -1,4 +1,6 @@
-﻿export const BASE_URL = 'http://localhost:3000';
+﻿// Override con VITE_API_BASE_URL para probar desde otra PC en la red local
+// (ver .env) — en desarrollo cae al backend local por defecto.
+export const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000';
 
 export function getToken(): string | null {
   return localStorage.getItem('pas-oficina:token');

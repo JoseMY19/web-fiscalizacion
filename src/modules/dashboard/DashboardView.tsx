@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ExpedientesApi,
   IfiApi,
@@ -73,24 +73,33 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
         }}
       >
         <div style={{ maxWidth: '650px' }}>
-          <div
-            style={{
-              fontSize: '12px',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              color: '#38bdf8',
-              marginBottom: '6px',
-            }}
-          >
-            Panel de Control Operativo
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+            <img
+              src="/logo-sjl-white.png"
+              alt="MDSJL"
+              style={{ height: '34px', width: 'auto', objectFit: 'contain' }}
+            />
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+                color: '#38bdf8',
+                backgroundColor: 'rgba(56, 189, 248, 0.12)',
+                padding: '2px 8px',
+                borderRadius: '4px',
+              }}
+            >
+              Control Operativo PAS
+            </span>
           </div>
           <h2 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '8px', color: '#ffffff' }}>
-            Procedimiento Administrativo Sancionador (PAS)
+            Procedimiento Administrativo Sancionador
           </h2>
-          <p style={{ fontSize: '14px', color: '#cbd5e1', lineHeight: '1.5' }}>
-            Monitoreo en tiempo real del ciclo sancionador municipal: desde la validación de actas levantadas en campo,
-            instrucción, emisión de resoluciones hasta la cobranza coactiva.
+          <p style={{ fontSize: '13px', color: '#cbd5e1', lineHeight: '1.5' }}>
+            Monitoreo en tiempo real del ciclo sancionador municipal: validación formal de actas (SP2),
+            cédulas (SP3), instrucción IFI (SP4), resoluciones (SP5), impugnaciones (SP6/7) y cobranza coactiva (SP8).
           </p>
         </div>
         <div>

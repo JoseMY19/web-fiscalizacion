@@ -482,7 +482,14 @@ export const ExpedientesView: React.FC = () => {
                         {exp.fiscalizadorNombre || 'No asignado'}
                       </td>
                       <td style={{ padding: '14px 16px' }}>
-                        <Badge variant="warning">{exp.estado}</Badge>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
+                          <Badge variant="warning">{exp.estado}</Badge>
+                          {exp.fechaIngresoFisico && (
+                            <Badge variant="info">
+                              📄 Papel recibido: {new Date(exp.fechaIngresoFisico).toLocaleDateString('es-PE')}
+                            </Badge>
+                          )}
+                        </div>
                       </td>
                       <td style={{ padding: '14px 16px', textAlign: 'right' }}>
                         <div style={{ display: 'inline-flex', gap: '8px' }}>
@@ -519,14 +526,16 @@ export const ExpedientesView: React.FC = () => {
                           >
                             Observar
                           </Button>
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            disabled={actionLoading}
-                            onClick={() => handleIngresoFisico(exp.id, exp.numeroExpediente)}
-                          >
-                            Ingreso Físico
-                          </Button>
+                          {!exp.fechaIngresoFisico && (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              disabled={actionLoading}
+                              onClick={() => handleIngresoFisico(exp.id, exp.numeroExpediente)}
+                            >
+                              Ingreso Físico
+                            </Button>
+                          )}
                         </div>
                       </td>
                     </tr>

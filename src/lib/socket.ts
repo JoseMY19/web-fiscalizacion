@@ -1,7 +1,5 @@
 import { io, Socket } from 'socket.io-client';
-import { getToken } from '../api/client';
-
-const BASE_URL = 'http://localhost:3000';
+import { getToken, BASE_URL } from '../api/client';
 
 /**
  * Canal adicional de aviso en vivo — nunca reemplaza al fetch de cada

@@ -50,6 +50,7 @@ export interface ExpedienteItem {
   fechaHoraInicioIntervencion: string;
   fiscalizadorNombre: string;
   createdAt: string;
+  fechaIngresoFisico: string | null;
 }
 
 export const ExpedientesApi = {
@@ -362,11 +363,24 @@ export const CoactivaPagosApi = {
 // ============================================================================
 // MEDIDAS CAUTELARES (ES2)
 // ============================================================================
+export interface EmitirMedidaCautelarPayload {
+  situacionGravedad: string;
+  resolucionCautelarTexto: string;
+  vistoAntecedentes?: string;
+  inicialesFirma?: string;
+  relatoHechos?: string;
+  tipoMedidaCautelar?: string;
+  modalidadEjecucion?: string;
+  direccionNotificacion?: string;
+  incluyeAdvertenciaUsurpacion?: boolean;
+  incluyeResguardoSerenazgo?: boolean;
+}
+
 export const CautelaresApi = {
-  emitir: (intervencionId: string, situacionGravedad: string, resolucionCautelarTexto: string) =>
+  emitir: (intervencionId: string, payload: EmitirMedidaCautelarPayload) =>
     apiClient<any>(`/medidas-cautelares/intervencion/${intervencionId}`, {
       method: 'POST',
-      body: JSON.stringify({ situacionGravedad, resolucionCautelarTexto }),
+      body: JSON.stringify(payload),
     }),
   registrarEjecucion: (id: string, fechaEjecucion: string) =>
     apiClient<{ ok: true }>(`/medidas-cautelares/${id}/ejecucion`, {
@@ -376,6 +390,24 @@ export const CautelaresApi = {
   anexarAExpediente: (id: string) =>
     apiClient<{ ok: true }>(`/medidas-cautelares/${id}/anexar`, { method: 'PATCH' }),
 };
+
+/** Descarga el Word de la Resolución de Medida Cautelar generado al vuelo. */
+export async function descargarDocumentoMedidaCautelar(id: string): Promise<void> {
+  const res = await fetch(`${BASE_URL}/medidas-cautelares/${id}/documento`, {
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+  if (!res.ok) {
+    alert('No se pudo generar el documento.');
+    return;
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const enlace = document.createElement('a');
+  enlace.href = url;
+  enlace.download = `medida-cautelar-${id}.docx`;
+  enlace.click();
+  URL.revokeObjectURL(url);
+}
 
 // ============================================================================
 // CONFIGURACIÓN, PLAZOS & CATÁLOGOS
@@ -474,6 +506,7 @@ export interface BundleIntervencion {
     baseCalculo: string;
     montoPasibleMulta?: number;
     medidaComplementaria?: string;
+    placaRodaje?: string;
     fechaDeteccion: string;
     fechaNotificacion?: string;
     modoNotificacion?: string;
@@ -497,6 +530,7 @@ export interface BundleIntervencion {
     tipoMedida: 'CLAUSURA' | 'PARALIZACION';
     descripcion?: string;
     lugarEjecucion?: string;
+    observacionesAdministrado?: string;
   }[];
   actasValorizacionObra: {
     numeroCorrelativo: string;
@@ -606,8 +640,18 @@ export interface CierreCampoItem {
   fotoActaId: string | null;
 }
 
+export interface IntervencionSelectorItem {
+  id: string;
+  fechaHoraInicio: string;
+  tipoActuacion: string;
+  fiscalizadorNombre: string;
+  administradoNombre: string | null;
+  numeroExpediente: string | null;
+}
+
 export const ConsultasApi = {
   getCierresCampo: () => apiClient<CierreCampoItem[]>('/consultas/cierres-campo'),
+  getIntervencionesSelector: () => apiClient<IntervencionSelectorItem[]>('/consultas/intervenciones-selector'),
 };
 
 /**
@@ -626,4 +670,37 @@ export async function abrirDocumento(fotoId: string): Promise<void> {
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);
   window.open(url, '_blank');
+}
+
+export type TipoActaDocumento = 'EXHORTACION' | 'FISCALIZACION' | 'MEDIDA_PROVISIONAL' | 'NOTIFICACION_CARGO';
+
+/**
+ * Descarga el documento real generado al vuelo por el backend (ver módulo
+ * documentos-generados) — .docx para las actas, .xlsx para Notificación
+ * de Cargo (su formato físico real es una cédula Excel). A diferencia de
+ * `abrirDocumento`, un navegador no puede "abrir" estos formatos inline
+ * como una imagen, así que se fuerza la descarga con un <a download>
+ * temporal.
+ */
+export async function descargarDocumentoWord(
+  intervencionId: string,
+  tipoActa: TipoActaDocumento,
+  medidaNumeroCorrelativo?: string,
+): Promise<void> {
+  const query = medidaNumeroCorrelativo ? `?medida=${encodeURIComponent(medidaNumeroCorrelativo)}` : '';
+  const res = await fetch(`${BASE_URL}/intervenciones/${intervencionId}/documento/${tipoActa}${query}`, {
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+  if (!res.ok) {
+    alert('No se pudo generar el documento.');
+    return;
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const extension = tipoActa === 'NOTIFICACION_CARGO' ? 'xlsx' : 'docx';
+  const enlace = document.createElement('a');
+  enlace.href = url;
+  enlace.download = `${tipoActa.toLowerCase()}-${intervencionId}.${extension}`;
+  enlace.click();
+  URL.revokeObjectURL(url);
 }
