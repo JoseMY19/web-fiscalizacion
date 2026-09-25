@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CoactivaPagosApi } from '../../api';
 import { Card, Button, Input, Alert } from '../../components/common/Common';
+import { hoyLocal } from '../../lib/fechas';
 import { CreditCardIcon, GavelIcon, FileTextIcon, ScaleIcon } from '../../components/icons/Icons';
 
 export const CoactivaPagosView: React.FC = () => {
@@ -11,19 +12,19 @@ export const CoactivaPagosView: React.FC = () => {
   // Estados Acto Firme
   const [expedienteId, setExpedienteId] = useState('');
   const [motivoFirmeza, setMotivoFirmeza] = useState<'VENCIMIENTO_PLAZO_RECURSOS' | 'APELACION_INFUNDADA'>('VENCIMIENTO_PLAZO_RECURSOS');
-  const [fechaFirmeza, setFechaFirmeza] = useState(new Date().toISOString().slice(0, 10));
-  const [fechaDerivacion, setFechaDerivacion] = useState(new Date().toISOString().slice(0, 10));
+  const [fechaFirmeza, setFechaFirmeza] = useState(hoyLocal());
+  const [fechaDerivacion, setFechaDerivacion] = useState(hoyLocal());
   const [requiereMedida, setRequiereMedida] = useState(false);
 
   // Estados Pagos
   const [resolucionIdPago, setResolucionIdPago] = useState('');
   const [montoPagado, setMontoPagado] = useState('');
-  const [fechaPago, setFechaPago] = useState(new Date().toISOString().slice(0, 10));
+  const [fechaPago, setFechaPago] = useState(hoyLocal());
   const [pagoResultado, setPagoResultado] = useState<any | null>(null);
 
   const handleDeclararFirme = async () => {
     if (!expedienteId.trim()) {
-      alert('Ingrese el ID del expediente.');
+      setMessage({ type: 'error', text: 'Ingrese el ID del expediente.' });
       return;
     }
     setActionLoading(true);
@@ -78,7 +79,7 @@ export const CoactivaPagosView: React.FC = () => {
 
   const handleRegistrarPago = async () => {
     if (!resolucionIdPago.trim() || !montoPagado) {
-      alert('Complete la resolución y el monto cancelado según comprobante.');
+      setMessage({ type: 'error', text: 'Complete la resolución y el monto cancelado según comprobante.' });
       return;
     }
     setActionLoading(true);

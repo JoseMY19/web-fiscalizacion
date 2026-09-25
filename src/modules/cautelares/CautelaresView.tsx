@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { CautelaresApi, ConsultasApi, IntervencionSelectorItem, descargarDocumentoMedidaCautelar } from '../../api';
 import { Card, Button, Input, Textarea, Alert, Spinner } from '../../components/common/Common';
+import { formatearFecha, hoyLocal } from '../../lib/fechas';
 import { ShieldAlertIcon, FileTextIcon } from '../../components/icons/Icons';
 
 export const CautelaresView: React.FC = () => {
@@ -33,11 +34,11 @@ export const CautelaresView: React.FC = () => {
 
   // Estados Ejecución & Anexo
   const [medidaId, setMedidaId] = useState('');
-  const [fechaEjecucion, setFechaEjecucion] = useState(new Date().toISOString().slice(0, 10));
+  const [fechaEjecucion, setFechaEjecucion] = useState(hoyLocal());
 
   const handleEmitir = async () => {
     if (!intervencionId.trim() || !situacionGravedad.trim() || !resolucionCautelarTexto.trim()) {
-      alert('Complete la intervención, la situación de gravedad y la resolución cautelar.');
+      setMessage({ type: 'error', text: 'Complete la intervención, la situación de gravedad y la resolución cautelar.' });
       return;
     }
     setActionLoading(true);
@@ -65,7 +66,7 @@ export const CautelaresView: React.FC = () => {
 
   const handleEjecucion = async () => {
     if (!medidaId.trim()) {
-      alert('Ingrese el ID de la medida cautelar.');
+      setMessage({ type: 'error', text: 'Ingrese el ID de la medida cautelar.' });
       return;
     }
     setActionLoading(true);
@@ -139,7 +140,7 @@ export const CautelaresView: React.FC = () => {
                 <option value="">— Seleccione una intervención —</option>
                 {intervenciones.map((i) => (
                   <option key={i.id} value={i.id}>
-                    {new Date(i.fechaHoraInicio).toLocaleDateString('es-PE')} · {i.tipoActuacion} ·{' '}
+                    {formatearFecha(i.fechaHoraInicio)} · {i.tipoActuacion} ·{' '}
                     {i.administradoNombre ?? 'Sin administrado identificado'}
                     {i.numeroExpediente ? ` · Exp. ${i.numeroExpediente}` : ''}
                   </option>

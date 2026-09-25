@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { RecursosApi, ReconsideracionPendienteItem, ApelacionPendienteItem } from '../../api';
 import { Card, Button, Input, Textarea, Alert, Badge, EmptyState } from '../../components/common/Common';
+import { formatearFecha, hoyLocal } from '../../lib/fechas';
 import { ScaleIcon, FileTextIcon, PenToolIcon, CheckIcon } from '../../components/icons/Icons';
 
 export const RecursosView: React.FC = () => {
@@ -28,7 +29,7 @@ export const RecursosView: React.FC = () => {
   // Estados Reconsideración
   const [resolucionIdRecon, setResolucionIdRecon] = useState('');
   const [reconsideracionId, setReconsideracionId] = useState('');
-  const [fechaPresentacionRecon, setFechaPresentacionRecon] = useState(new Date().toISOString().slice(0, 10));
+  const [fechaPresentacionRecon, setFechaPresentacionRecon] = useState(hoyLocal());
   const [nuevaPrueba, setNuevaPrueba] = useState(false);
   const [nuevaPruebaTexto, setNuevaPruebaTexto] = useState('');
   const [fechaSubsanacion, setFechaSubsanacion] = useState('');
@@ -44,7 +45,7 @@ export const RecursosView: React.FC = () => {
   // Handlers Reconsideración
   const handlePresentarReconsideracion = async () => {
     if (!resolucionIdRecon.trim()) {
-      alert('Ingrese el ID de la resolución sancionadora materia de reconsideración.');
+      setMessage({ type: 'error', text: 'Ingrese el ID de la resolución sancionadora materia de reconsideración.' });
       return;
     }
     setActionLoading(true);
@@ -66,7 +67,7 @@ export const RecursosView: React.FC = () => {
 
   const handleSubsanar = async () => {
     if (!reconsideracionId.trim() || !fechaSubsanacion) {
-      alert('Complete el ID de reconsideración y la fecha de subsanación.');
+      setMessage({ type: 'error', text: 'Complete el ID de reconsideración y la fecha de subsanación.' });
       return;
     }
     setActionLoading(true);
@@ -82,7 +83,7 @@ export const RecursosView: React.FC = () => {
 
   const handleEvaluarRecon = async (resultado: 'FUNDADA' | 'INFUNDADA') => {
     if (!reconsideracionId.trim() || !analisisRecon.trim()) {
-      alert('Debe especificar el ID de reconsideración y redactar el análisis de la prueba.');
+      setMessage({ type: 'error', text: 'Debe especificar el ID de reconsideración y redactar el análisis de la prueba.' });
       return;
     }
     setActionLoading(true);
@@ -104,7 +105,7 @@ export const RecursosView: React.FC = () => {
   // RSGSA recurrida como si fuera "la que la resuelve".
   const handleEmitirRsg = async () => {
     if (!reconsideracionId.trim()) {
-      alert('Complete el ID de la reconsideración.');
+      setMessage({ type: 'error', text: 'Complete el ID de la reconsideración.' });
       return;
     }
     setActionLoading(true);
@@ -124,7 +125,7 @@ export const RecursosView: React.FC = () => {
 
   const handleVincularResolucion = async () => {
     if (!reconsideracionId.trim() || !resolucionQueResuelveId.trim()) {
-      alert('Complete ambos IDs para vincular la resolución que resuelve el recurso.');
+      setMessage({ type: 'error', text: 'Complete ambos IDs para vincular la resolución que resuelve el recurso.' });
       return;
     }
     setActionLoading(true);
@@ -142,7 +143,7 @@ export const RecursosView: React.FC = () => {
   // Handlers Apelación
   const handlePresentarApelacion = async () => {
     if (!resolucionIdApel.trim()) {
-      alert('Ingrese el ID de la resolución contra la que se apela.');
+      setMessage({ type: 'error', text: 'Ingrese el ID de la resolución contra la que se apela.' });
       return;
     }
     setActionLoading(true);
@@ -160,7 +161,7 @@ export const RecursosView: React.FC = () => {
 
   const handleGenerarInformeGop = async () => {
     if (!apelacionId.trim()) {
-      alert('Ingrese el ID de la apelación.');
+      setMessage({ type: 'error', text: 'Ingrese el ID de la apelación.' });
       return;
     }
     setActionLoading(true);
@@ -191,7 +192,7 @@ export const RecursosView: React.FC = () => {
   const handleDecisionGop = async (decision: 'FUNDADA' | 'INFUNDADA' | 'NULIDAD') => {
     if (!apelacionId.trim()) return;
     if (decision === 'NULIDAD' && !motivoNulidad.trim()) {
-      alert('Debe indicar el motivo de la nulidad resuelta por GOP.');
+      setMessage({ type: 'error', text: 'Debe indicar el motivo de la nulidad resuelta por GOP.' });
       return;
     }
     setActionLoading(true);
@@ -287,7 +288,7 @@ export const RecursosView: React.FC = () => {
                     {pendientesRecon.map((r) => (
                       <tr key={r.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
                         <td style={{ padding: '10px 12px' }}>{r.numeroExpediente}</td>
-                        <td style={{ padding: '10px 12px' }}>{r.fechaPresentacion.slice(0, 10)}</td>
+                        <td style={{ padding: '10px 12px' }}>{formatearFecha(r.fechaPresentacion)}</td>
                         <td style={{ padding: '10px 12px' }}>{r.nuevaPrueba ? 'Sí' : 'No'}</td>
                         <td style={{ padding: '10px 12px' }}>
                           {r.faltaVincularResolucion ? (

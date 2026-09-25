@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ConfirmProvider } from './context/ConfirmContext';
 import { AppLayout, NavModule } from './components/layout/AppLayout';
 import { LoginView } from './modules/auth/LoginView';
 import { DashboardView } from './modules/dashboard/DashboardView';
@@ -14,6 +15,7 @@ import { RecursosView } from './modules/recursos/RecursosView';
 import { CoactivaPagosView } from './modules/coactiva-pagos/CoactivaPagosView';
 import { CautelaresView } from './modules/cautelares/CautelaresView';
 import { ConfiguracionView } from './modules/configuracion/ConfiguracionView';
+import { MapaIntervencionesView } from './modules/mapa/MapaIntervencionesView';
 import { ExpedientesApi, IfiApi, ResolucionesApi, ConfiguracionApi } from './api';
 import { Spinner } from './components/common/Common';
 import { socket } from './lib/socket';
@@ -102,6 +104,7 @@ function MainApp() {
         <Route path="/recursos" element={<RecursosView />} />
         <Route path="/coactiva-pagos" element={<CoactivaPagosView />} />
         <Route path="/cautelares" element={<CautelaresView />} />
+        <Route path="/mapa" element={<MapaIntervencionesView />} />
         <Route path="/configuracion" element={<ConfiguracionView />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
@@ -113,7 +116,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <MainApp />
+        <ConfirmProvider>
+          <MainApp />
+        </ConfirmProvider>
       </AuthProvider>
     </BrowserRouter>
   );

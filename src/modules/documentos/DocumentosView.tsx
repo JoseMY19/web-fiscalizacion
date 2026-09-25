@@ -111,7 +111,7 @@ export const DocumentosView: React.FC = () => {
   const handleRegistrarCustodia = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nuevoCorrelativo.trim()) {
-      alert('Debe ingresar el número correlativo preimpreso del acta.');
+      setMessage({ type: 'error', text: 'Debe ingresar el número correlativo preimpreso del acta.' });
       return;
     }
 
@@ -188,7 +188,7 @@ export const DocumentosView: React.FC = () => {
   const handleRegistrarExterno = (e: React.FormEvent) => {
     e.preventDefault();
     if (!remitenteExterno.trim() || !asuntoExterno.trim()) {
-      alert('Complete el remitente y el asunto del documento externo.');
+      setMessage({ type: 'error', text: 'Complete el remitente y el asunto del documento externo.' });
       return;
     }
 

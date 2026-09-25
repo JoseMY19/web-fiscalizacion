@@ -7,6 +7,9 @@ import {
   ActasApi,
 } from '../../api';
 import { Button, Badge, Modal, Input, Textarea, Alert, EmptyState, Spinner } from '../../components/common/Common';
+import { formatearFecha, formatearHora, hoyLocal } from '../../lib/fechas';
+import { useConfirm } from '../../context/ConfirmContext';
+import { generarUuid } from '../../lib/uuid';
 import {
   ExpedienteIcon,
   CheckCircleIcon,
@@ -33,6 +36,7 @@ function formatEstado(estado: string): string {
 }
 
 export const ExpedientesView: React.FC = () => {
+  const confirm = useConfirm();
   const [activeTab, setActiveTab] = useState<'validar' | 'observadas' | 'digitalizar'>('validar');
   const [expedientes, setExpedientes] = useState<ExpedienteItem[]>([]);
   const [observadas, setObservadas] = useState<IntervencionObservadaItem[]>([]);
@@ -128,7 +132,8 @@ export const ExpedientesView: React.FC = () => {
   }, []);
 
   const handleAprobar = async (id: string, numero: string) => {
-    if (!window.confirm(`¿Confirmas la aprobación del expediente ${numero}? Pasará a la fase de Instrucción (SP4).`)) return;
+    const ok = await confirm({ message: `¿Confirmas la aprobación del expediente ${numero}? Pasará a la fase de Instrucción (SP4).` });
+    if (!ok) return;
     setActionLoading(true);
     try {
       await ExpedientesApi.aprobar(id);
@@ -143,7 +148,7 @@ export const ExpedientesView: React.FC = () => {
 
   const handleObservarSubmit = async () => {
     if (!observacionesTexto.trim()) {
-      alert('Debes ingresar el motivo de la observación.');
+      setMessage({ type: 'error', text: 'Debes ingresar el motivo de la observación.' });
       return;
     }
     setActionLoading(true);
@@ -209,7 +214,7 @@ export const ExpedientesView: React.FC = () => {
 
   const handleEnviarCorreccion = async () => {
     if (!correccionForm.comentarioCorreccion.trim()) {
-      alert('El comentario de corrección es obligatorio (V-02). Debe detallar qué subsanó.');
+      setMessage({ type: 'error', text: 'El comentario de corrección es obligatorio (V-02). Debe detallar qué subsanó.' });
       return;
     }
     setActionLoading(true);
@@ -268,12 +273,12 @@ export const ExpedientesView: React.FC = () => {
   const handleCrearIntervencionManual = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!digitalizarForm.numeroNotificacionCargo || !digitalizarForm.hechosVerificados) {
-      alert('Complete los campos obligatorios del acta preimpresa.');
+      setMessage({ type: 'error', text: 'Complete los campos obligatorios del acta preimpresa.' });
       return;
     }
     setActionLoading(true);
     try {
-      const uuid = crypto.randomUUID();
+      const uuid = generarUuid();
       await IntervencionesApi.crear({
         id: uuid,
         fechaHoraInicio: new Date().toISOString(),
@@ -298,7 +303,7 @@ export const ExpedientesView: React.FC = () => {
           numeroCorrelativo: digitalizarForm.numeroNotificacionCargo,
           baseCalculo: 'UIT_FIJO',
           montoPasibleMulta: Number(digitalizarForm.montoPasibleMulta) || undefined,
-          fechaDeteccion: new Date().toISOString().split('T')[0],
+          fechaDeteccion: hoyLocal(),
         },
         testigos: [],
         actasMedidaProvisional: [],
@@ -645,19 +650,12 @@ export const ExpedientesView: React.FC = () => {
                           <td style={{ padding: '14px 20px', color: '#334155' }}>
                             <div style={{ fontWeight: 500 }}>
                               {exp.fechaHoraInicioIntervencion
-                                ? new Date(exp.fechaHoraInicioIntervencion).toLocaleDateString('es-PE', {
-                                    day: '2-digit',
-                                    month: '2-digit',
-                                    year: 'numeric',
-                                  })
+                                ? formatearFecha(exp.fechaHoraInicioIntervencion)
                                 : '---'}
                             </div>
                             <div style={{ fontSize: '11px', color: '#64748b' }}>
                               {exp.fechaHoraInicioIntervencion
-                                ? new Date(exp.fechaHoraInicioIntervencion).toLocaleTimeString('es-PE', {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                  }) + ' hrs'
+                                ? formatearHora(exp.fechaHoraInicioIntervencion) + ' hrs'
                                 : '---'}
                             </div>
                           </td>
@@ -692,7 +690,7 @@ export const ExpedientesView: React.FC = () => {
                               {exp.fechaIngresoFisico && (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#059669', fontWeight: 500, marginTop: '2px' }}>
                                   <FileTextIcon size={12} color="#059669" />
-                                  <span>Documento físico: {new Date(exp.fechaIngresoFisico).toLocaleDateString('es-PE')}</span>
+                                  <span>Documento físico: {formatearFecha(exp.fechaIngresoFisico)}</span>
                                 </div>
                               )}
                             </div>
@@ -792,7 +790,7 @@ export const ExpedientesView: React.FC = () => {
                         {obs.numeroExpediente}
                       </td>
                       <td style={{ padding: '14px 16px', color: 'var(--color-text-secondary)' }}>
-                        {obs.fechaObservacion ? new Date(obs.fechaObservacion).toLocaleDateString('es-PE') : 'Reciente'}
+                        {obs.fechaObservacion ? formatearFecha(obs.fechaObservacion) : 'Reciente'}
                       </td>
                       <td style={{ padding: '14px 16px', color: '#b91c1c', maxWidth: '400px' }}>
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', backgroundColor: '#fff1f2', padding: '8px 12px', borderRadius: '6px', border: '1px solid #fecdd3', fontSize: '12px' }}>

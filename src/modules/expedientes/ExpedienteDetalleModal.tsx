@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { IntervencionesApi, BundleIntervencion, abrirDocumento, descargarDocumentoWord } from '../../api';
 import { Modal, Button, Badge, Alert, Spinner } from '../../components/common/Common';
+import { formatearFecha, formatearFechaHora } from '../../lib/fechas';
 import {
   ShieldAlertIcon,
   CameraIcon,
@@ -111,7 +112,7 @@ export const ExpedienteDetalleModal: React.FC<ExpedienteDetalleModalProps> = ({
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, color: 'var(--color-midnight-800)' }}>
               <ClockIcon size={14} color="#64748b" />
-              <span>{new Date(data.fechaHoraInicio).toLocaleString('es-PE')}</span>
+              <span>{formatearFechaHora(data.fechaHoraInicio)}</span>
             </div>
           </div>
 
@@ -357,7 +358,7 @@ export const ExpedienteDetalleModal: React.FC<ExpedienteDetalleModalProps> = ({
                     </div>
                     <div>
                       <span style={{ color: 'var(--color-text-muted)' }}>Fecha Detección:</span>{' '}
-                      <span>{new Date(data.notificacionCargo.fechaDeteccion).toLocaleDateString('es-PE')}</span>
+                      <span>{formatearFecha(data.notificacionCargo.fechaDeteccion)}</span>
                     </div>
                     <div>
                       <span style={{ color: 'var(--color-text-muted)' }}>Receptor:</span>{' '}

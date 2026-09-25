@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ConsultasApi, CierreCampoItem, abrirDocumento, descargarDocumentoWord } from '../../api';
 import { Card, Button, Badge, Alert, EmptyState, Spinner } from '../../components/common/Common';
+import { formatearFechaHora } from '../../lib/fechas';
 import { EyeIcon, RefreshCwIcon, FileTextIcon } from '../../components/icons/Icons';
 
 /**
@@ -73,7 +74,7 @@ export const ConsultaCampoView: React.FC = () => {
             <tbody>
               {items.map((item) => (
                 <tr key={item.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                  <td style={{ padding: '0.5rem' }}>{new Date(item.fechaHoraInicio).toLocaleDateString()}</td>
+                  <td style={{ padding: '0.5rem' }}>{formatearFechaHora(item.fechaHoraInicio)}</td>
                   <td style={{ padding: '0.5rem' }}>{item.fiscalizadorNombre}</td>
                   <td style={{ padding: '0.5rem' }}>
                     <Badge variant={item.tipoActuacion === 'EXHORTACION' ? 'info' : 'neutral'}>

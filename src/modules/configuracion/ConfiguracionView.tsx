@@ -7,6 +7,8 @@ import {
   ParametroUitItem,
 } from '../../api';
 import { Card, Button, Badge, Input, Alert, EmptyState } from '../../components/common/Common';
+import { formatearFecha } from '../../lib/fechas';
+import { useConfirm } from '../../context/ConfirmContext';
 import {
   CalendarIcon,
   ClockIcon,
@@ -18,6 +20,7 @@ import {
 } from '../../components/icons/Icons';
 
 export const ConfiguracionView: React.FC = () => {
+  const confirm = useConfirm();
   const [activeTab, setActiveTab] = useState<'plazos' | 'feriados' | 'cuis' | 'uit' | 'seguridad'>('plazos');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -76,13 +79,13 @@ export const ConfiguracionView: React.FC = () => {
 
   const handleAgregarFeriado = async () => {
     if (!fechaFeriado || !descripcionFeriado.trim()) {
-      alert('Debe completar la fecha y el motivo del feriado o día no hábil.');
+      setMessage({ type: 'error', text: 'Debe completar la fecha y el motivo del feriado o día no hábil.' });
       return;
     }
     setLoading(true);
     try {
       await ConfiguracionApi.agregarFeriado(fechaFeriado, descripcionFeriado.trim());
-      setMessage({ type: 'success', text: `Feriado del ${fechaFeriado} registrado exitosamente.` });
+      setMessage({ type: 'success', text: `Feriado del ${formatearFecha(fechaFeriado)} registrado exitosamente.` });
       setFechaFeriado('');
       setDescripcionFeriado('');
       cargarDatos();
@@ -108,7 +111,11 @@ export const ConfiguracionView: React.FC = () => {
   };
 
   const handleRevocarTokens = async (userId: string, nombre: string) => {
-    if (!window.confirm(`¿Confirmas la revocación inmediata de tokens para ${nombre}? Se cerrarán todas sus sesiones activas en dispositivos móviles y web.`)) {
+    const ok = await confirm({
+      message: `¿Confirmas la revocación inmediata de tokens para ${nombre}? Se cerrarán todas sus sesiones activas en dispositivos móviles y web.`,
+      variant: 'danger',
+    });
+    if (!ok) {
       return;
     }
     setRevocandoId(userId);
@@ -273,7 +280,7 @@ export const ConfiguracionView: React.FC = () => {
                     <tr key={idx} style={{ borderBottom: '1px solid var(--color-border)' }}>
                       <td style={{ padding: '12px 16px', fontWeight: 700 }}>{item.numeroExpediente || item.expedienteId || '---'}</td>
                       <td style={{ padding: '12px 16px' }}>{item.estado || 'En trámite'}</td>
-                      <td style={{ padding: '12px 16px', color: 'var(--color-danger)' }}>{item.fechaLimite || 'Por vencer'}</td>
+                      <td style={{ padding: '12px 16px', color: 'var(--color-danger)' }}>{formatearFecha(item.fechaLimite, 'Por vencer')}</td>
                       <td style={{ padding: '12px 16px' }}><Badge variant="danger">ALERTA CRÍTICA</Badge></td>
                     </tr>
                   ))}
@@ -332,7 +339,7 @@ export const ConfiguracionView: React.FC = () => {
                     }}
                   >
                     <div>
-                      <strong>{f.fecha.slice(0, 10)}</strong> — {f.descripcion}
+                      <strong>{formatearFecha(f.fecha)}</strong> — {f.descripcion}
                     </div>
                     <Badge variant="neutral">No Hábil</Badge>
                   </div>
