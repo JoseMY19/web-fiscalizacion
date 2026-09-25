@@ -1,10 +1,14 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { NotificacionesApi, NotificacionItem, AuthApi } from '../../api';
 import { Card, Button, Badge, Modal, Input, Textarea, Alert, EmptyState, Spinner } from '../../components/common/Common';
+import { hoyLocal } from '../../lib/fechas';
 import { MailIcon, RefreshCwIcon, UserIcon, CheckCircleIcon } from '../../components/icons/Icons';
 import { socket } from '../../lib/socket';
 
+type Tab = 'pendientes' | 'asignadas';
+
 export const NotificacionesView: React.FC = () => {
+  const [tab, setTab] = useState<Tab>('pendientes');
   const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -21,15 +25,18 @@ export const NotificacionesView: React.FC = () => {
 
   // Modal Entrega Domiciliaria
   const [entregaModal, setEntregaModal] = useState<{ isOpen: boolean; id: string }>({ isOpen: false, id: '' });
-  const [fechaVisita, setFechaVisita] = useState(new Date().toISOString().slice(0, 10));
-  const [fechaEntregaEfectiva, setFechaEntregaEfectiva] = useState(new Date().toISOString().slice(0, 10));
+  const [fechaVisita, setFechaVisita] = useState(hoyLocal());
+  const [fechaEntregaEfectiva, setFechaEntregaEfectiva] = useState(hoyLocal());
   const [archivoEvidencia, setArchivoEvidencia] = useState<File | null>(null);
 
-  const cargar = async () => {
+  const cargar = async (tabActual: Tab = tab) => {
     setLoading(true);
     setMessage(null);
     try {
-      const data = await NotificacionesApi.getPendientesAsignacion();
+      const data =
+        tabActual === 'pendientes'
+          ? await NotificacionesApi.getPendientesAsignacion()
+          : await NotificacionesApi.getAsignadas();
       setNotificaciones(Array.isArray(data) ? data : []);
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message || 'Error al cargar notificaciones domiciliarias.' });
@@ -39,12 +46,13 @@ export const NotificacionesView: React.FC = () => {
   };
 
   useEffect(() => {
-    cargar();
-    socket.on('notificacion-domiciliaria:pendiente', cargar);
+    const recargar = () => cargar(tab);
+    cargar(tab);
+    socket.on('notificacion-domiciliaria:pendiente', recargar);
     return () => {
-      socket.off('notificacion-domiciliaria:pendiente', cargar);
+      socket.off('notificacion-domiciliaria:pendiente', recargar);
     };
-  }, []);
+  }, [tab]);
 
   useEffect(() => {
     if (!asignarModal.isOpen) return;
@@ -55,7 +63,7 @@ export const NotificacionesView: React.FC = () => {
 
   const handleAsignarSubmit = async () => {
     if (!notificadorId.trim()) {
-      alert('Debes seleccionar un notificador.');
+      setMessage({ type: 'error', text: 'Debes seleccionar un notificador.' });
       return;
     }
     setActionLoading(true);
@@ -64,7 +72,8 @@ export const NotificacionesView: React.FC = () => {
       setMessage({ type: 'success', text: 'Notificador asignado correctamente a la cédula.' });
       setAsignarModal({ isOpen: false, id: '' });
       setNotificadorId('');
-      cargar();
+      setTab('asignadas');
+      cargar('asignadas');
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message || 'Error al asignar notificador.' });
     } finally {
@@ -74,7 +83,7 @@ export const NotificacionesView: React.FC = () => {
 
   const handleReprogramarSubmit = async () => {
     if (!motivoReprogramacion.trim()) {
-      alert('Debes indicar el motivo de reprogramación (ej. domicilio cerrado, segunda visita).');
+      setMessage({ type: 'error', text: 'Debes indicar el motivo de reprogramación (ej. domicilio cerrado, segunda visita).' });
       return;
     }
     setActionLoading(true);
@@ -93,7 +102,7 @@ export const NotificacionesView: React.FC = () => {
 
   const handleEntregaSubmit = async () => {
     if (!archivoEvidencia) {
-      alert('Debe adjuntar el archivo o foto del cargo de notificación firmado.');
+      setMessage({ type: 'error', text: 'Debe adjuntar el archivo o foto del cargo de notificación firmado.' });
       return;
     }
     setActionLoading(true);
@@ -126,12 +135,21 @@ export const NotificacionesView: React.FC = () => {
             Asignación de cédulas de notificación de cargo (NC) no entregadas in situ para diligencia en domicilio.
           </p>
         </div>
-        <Button variant="secondary" icon={<RefreshCwIcon size={16} />} loading={loading} onClick={cargar}>
+        <Button variant="secondary" icon={<RefreshCwIcon size={16} />} loading={loading} onClick={() => cargar()}>
           Actualizar
         </Button>
       </div>
 
       {message && <Alert type={message.type}>{message.text}</Alert>}
+
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+        <Button variant={tab === 'pendientes' ? 'primary' : 'secondary'} size="sm" onClick={() => setTab('pendientes')}>
+          Pendientes de Asignación
+        </Button>
+        <Button variant={tab === 'asignadas' ? 'primary' : 'secondary'} size="sm" onClick={() => setTab('asignadas')}>
+          Asignadas — Esperando Visita/Entrega
+        </Button>
+      </div>
 
       <Card>
         {loading ? (
@@ -144,8 +162,12 @@ export const NotificacionesView: React.FC = () => {
         ) : notificaciones.length === 0 ? (
           <EmptyState
             icon={<CheckCircleIcon size={40} color="var(--color-success)" />}
-            title="Sin notificaciones domiciliarias pendientes"
-            description="Todas las notificaciones de cargo han sido asignadas o entregadas exitosamente."
+            title={tab === 'pendientes' ? 'Sin notificaciones domiciliarias pendientes' : 'Sin notificaciones asignadas'}
+            description={
+              tab === 'pendientes'
+                ? 'Todas las notificaciones de cargo han sido asignadas o entregadas exitosamente.'
+                : 'No hay cédulas asignadas a un notificador esperando visita o entrega en este momento.'
+            }
           />
         ) : (
           <div style={{ overflowX: 'auto' }}>
@@ -191,35 +213,40 @@ export const NotificacionesView: React.FC = () => {
                     </td>
                     <td style={{ padding: '14px 16px', textAlign: 'right' }}>
                       <div style={{ display: 'inline-flex', gap: '8px' }}>
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={() => {
-                            setAsignarModal({ isOpen: true, id: notif.id });
-                            setNotificadorId('');
-                          }}
-                        >
-                          Asignar
-                        </Button>
-                        <Button
-                          variant="warning"
-                          size="sm"
-                          onClick={() => {
-                            setReprogramarModal({ isOpen: true, id: notif.id });
-                            setMotivoReprogramacion('');
-                          }}
-                        >
-                          Reprogramar
-                        </Button>
-                        <Button
-                          variant="success"
-                          size="sm"
-                          onClick={() => {
-                            setEntregaModal({ isOpen: true, id: notif.id });
-                          }}
-                        >
-                          Registrar Entrega
-                        </Button>
+                        {tab === 'pendientes' ? (
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => {
+                              setAsignarModal({ isOpen: true, id: notif.id });
+                              setNotificadorId('');
+                            }}
+                          >
+                            Asignar
+                          </Button>
+                        ) : (
+                          <>
+                            <Button
+                              variant="warning"
+                              size="sm"
+                              onClick={() => {
+                                setReprogramarModal({ isOpen: true, id: notif.id });
+                                setMotivoReprogramacion('');
+                              }}
+                            >
+                              Reprogramar
+                            </Button>
+                            <Button
+                              variant="success"
+                              size="sm"
+                              onClick={() => {
+                                setEntregaModal({ isOpen: true, id: notif.id });
+                              }}
+                            >
+                              Registrar Entrega
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
