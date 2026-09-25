@@ -96,52 +96,28 @@ export const CoactivaPagosView: React.FC = () => {
 
   return (
     <div>
-      <div style={{ marginBottom: '20px' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--color-midnight-900)' }}>
+      <div className="mb-[20px]">
+        <h2 className="text-[18px] font-extrabold text-midnight-900">
           Acto Firme, Ejecución Coactiva & Control de Pagos (SP8 / ES1)
         </h2>
-        <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+        <p className="text-[13px] text-text-muted mt-[2px]">
           Declaratoria de firmeza para cobro coactivo forzoso y control administrativo de recaudación de multas.
         </p>
       </div>
 
       {message && <Alert type={message.type}>{message.text}</Alert>}
 
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+      <div className="flex gap-[8px] mb-[16px]">
         <button
           onClick={() => setActiveTab('coactiva')}
-          style={{
-            padding: '10px 20px',
-            fontSize: '13px',
-            fontWeight: 700,
-            borderRadius: 'var(--radius-sm)',
-            border: activeTab === 'coactiva' ? '1px solid var(--color-primary-600)' : '1px solid var(--color-border)',
-            backgroundColor: activeTab === 'coactiva' ? 'var(--color-primary-50)' : '#ffffff',
-            color: activeTab === 'coactiva' ? 'var(--color-primary-600)' : 'var(--color-text-secondary)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}
+          className={`py-[10px] px-[20px] text-[13px] font-bold rounded-sm cursor-pointer flex items-center gap-[8px] ${activeTab === 'coactiva' ? 'border border-primary-600' : 'border border-border'} ${activeTab === 'coactiva' ? 'bg-primary-50' : 'bg-[#ffffff]'} ${activeTab === 'coactiva' ? 'text-primary-600' : 'text-text-secondary'}`}
         >
           <GavelIcon size={16} />
           1. Acto Firme & Derivación Coactiva (SP8)
         </button>
         <button
           onClick={() => setActiveTab('pagos')}
-          style={{
-            padding: '10px 20px',
-            fontSize: '13px',
-            fontWeight: 700,
-            borderRadius: 'var(--radius-sm)',
-            border: activeTab === 'pagos' ? '1px solid var(--color-primary-600)' : '1px solid var(--color-border)',
-            backgroundColor: activeTab === 'pagos' ? 'var(--color-primary-50)' : '#ffffff',
-            color: activeTab === 'pagos' ? 'var(--color-primary-600)' : 'var(--color-text-secondary)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}
+          className={`py-[10px] px-[20px] text-[13px] font-bold rounded-sm cursor-pointer flex items-center gap-[8px] ${activeTab === 'pagos' ? 'border border-primary-600' : 'border border-border'} ${activeTab === 'pagos' ? 'bg-primary-50' : 'bg-[#ffffff]'} ${activeTab === 'pagos' ? 'text-primary-600' : 'text-text-secondary'}`}
         >
           <CreditCardIcon size={16} />
           2. Registro de Pagos de Multas (ES1)
@@ -149,9 +125,9 @@ export const CoactivaPagosView: React.FC = () => {
       </div>
 
       {activeTab === 'coactiva' ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="flex flex-col gap-[20px]">
           <Card title="Etapa 1: Declaratoria de Acto Firme">
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px' }}>
+            <div className="grid grid-cols-[2fr_1fr] gap-[16px]">
               <Input
                 label="ID del Expediente Sancionador"
                 placeholder="Ej. 3fa85f64-5717-4562-b3fc-2c963f66afa6"
@@ -166,14 +142,14 @@ export const CoactivaPagosView: React.FC = () => {
               />
             </div>
 
-            <div style={{ marginBottom: '14px' }}>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+            <div className="mb-[14px]">
+              <label className="block text-[13px] font-semibold mb-[6px]">
                 Causal de Firmeza Administrativa:
               </label>
               <select
                 value={motivoFirmeza}
                 onChange={(e) => setMotivoFirmeza(e.target.value as any)}
-                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--color-border)', fontSize: '13px' }}
+                className="w-full p-[10px] rounded-[6px] border border-border text-[13px]"
               >
                 <option value="VENCIMIENTO_PLAZO_RECURSOS">Vencimiento del Plazo Legal de Recursos (Sin Impugnación)</option>
                 <option value="APELACION_INFUNDADA">Apelación Declarada Infundada por GOP (Fin de Vía Administrativa)</option>
@@ -186,7 +162,7 @@ export const CoactivaPagosView: React.FC = () => {
           </Card>
 
           <Card title="Etapa 2: Emisión de Títulos de Ejecución y Derivación Coactiva">
-            <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+            <div className="flex gap-[12px] mb-[20px]">
               <Button variant="secondary" icon={<FileTextIcon size={16} />} loading={actionLoading} onClick={handleConstanciaMulta}>
                 Emitir Constancia de Multa Exigible
               </Button>
@@ -195,8 +171,8 @@ export const CoactivaPagosView: React.FC = () => {
               </Button>
             </div>
 
-            <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '16px' }}>
-              <h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '12px' }}>
+            <div className="border-t border-t-border pt-[16px]">
+              <h4 className="text-[14px] font-bold mb-[12px]">
                 Remisión Formal al Ejecutor Coactivo Municipal:
               </h4>
               <Input
@@ -205,8 +181,8 @@ export const CoactivaPagosView: React.FC = () => {
                 value={fechaDerivacion}
                 onChange={(e) => setFechaDerivacion(e.target.value)}
               />
-              <div style={{ marginBottom: '14px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
+              <div className="mb-[14px]">
+                <label className="flex items-center gap-[8px] text-[13px] cursor-pointer">
                   <input
                     type="checkbox"
                     checked={requiereMedida}
@@ -226,18 +202,10 @@ export const CoactivaPagosView: React.FC = () => {
         /* Tab 2: Pagos */
         <Card title="Registro Manual de Comprobantes de Pago de Multas">
           <div
-            style={{
-              backgroundColor: '#eff6ff',
-              padding: '12px 16px',
-              borderRadius: '8px',
-              border: '1px solid #bfdbfe',
-              color: '#1e3a8a',
-              fontSize: '13px',
-              marginBottom: '16px',
-            }}
+            className="bg-[#eff6ff] py-[12px] px-[16px] rounded-[8px] border border-[#bfdbfe] text-[#1e3a8a] text-[13px] mb-[16px]"
           >
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-              <span style={{ marginTop: '2px', flexShrink: 0 }}><ScaleIcon size={16} /></span>
+            <div className="flex items-start gap-[8px]">
+              <span className="mt-[2px] shrink-0"><ScaleIcon size={16} /></span>
               <span>
                 <strong>Regla Legal No Negociable (§2.19):</strong> El pago del administrado extingue la sanción pecuniaria
                 (multa), pero <strong>NUNCA</strong> extingue ni revoca de pleno derecho las medidas complementarias de clausura o paralización.
@@ -252,7 +220,7 @@ export const CoactivaPagosView: React.FC = () => {
             onChange={(e) => setResolucionIdPago(e.target.value)}
           />
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div className="grid grid-cols-[1fr_1fr] gap-[16px]">
             <Input
               label="Monto Pagado (S/)"
               placeholder="Ej. 1375.00"
@@ -274,8 +242,8 @@ export const CoactivaPagosView: React.FC = () => {
           </Button>
 
           {pagoResultado && (
-            <div style={{ marginTop: '16px', backgroundColor: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
-              <pre style={{ fontSize: '12px' }}>{JSON.stringify(pagoResultado, null, 2)}</pre>
+            <div className="mt-[16px] bg-[#f8fafc] p-[12px] rounded-[8px] border border-border">
+              <pre className="text-[12px]">{JSON.stringify(pagoResultado, null, 2)}</pre>
             </div>
           )}
         </Card>

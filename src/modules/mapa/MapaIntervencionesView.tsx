@@ -60,10 +60,10 @@ export const MapaIntervencionesView: React.FC = () => {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+      <div className="flex justify-between items-center mb-[1.5rem]">
         <div>
-          <h1 style={{ margin: 0, fontSize: '1.5rem' }}>Mapa de Cobertura</h1>
-          <p style={{ margin: '0.25rem 0 0', color: 'var(--color-text-muted)' }}>
+          <h1 className="m-0 text-[1.5rem] font-bold">Mapa de Cobertura</h1>
+          <p className="mt-[0.25rem] mx-0 mb-0 text-text-muted">
             Ubicación GPS real de las intervenciones ya sincronizadas — {items.length} punto{items.length === 1 ? '' : 's'} en el mapa.
           </p>
         </div>
@@ -76,7 +76,7 @@ export const MapaIntervencionesView: React.FC = () => {
 
       <Card>
         {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+          <div className="flex justify-center p-[2rem]">
             <Spinner />
           </div>
         ) : items.length === 0 ? (
@@ -87,30 +87,24 @@ export const MapaIntervencionesView: React.FC = () => {
           />
         ) : (
           <>
-            <div style={{ display: 'flex', gap: '16px', marginBottom: '12px', fontSize: '12px', color: 'var(--color-text-muted)' }}>
+            <div className="flex gap-[16px] mb-[12px] text-[12px] text-text-muted">
               {Object.entries(ETIQUETA_TIPO).map(([tipo, etiqueta]) => (
-                <div key={tipo} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div key={tipo} className="flex items-center gap-[6px]">
                   <span
-                    style={{
-                      width: '10px',
-                      height: '10px',
-                      borderRadius: '50%',
-                      backgroundColor: COLOR_POR_TIPO[tipo],
-                      display: 'inline-block',
-                    }}
+                    className="w-[10px] h-[10px] rounded-full inline-block" style={{ backgroundColor: COLOR_POR_TIPO[tipo] }}
                   />
                   {etiqueta}
                 </div>
               ))}
             </div>
 
-            <div style={{ height: '600px', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--color-border)' }}>
+            <div className="h-[600px] rounded-md overflow-hidden border border-border">
               <MapContainer
                 center={centro}
                 zoom={13}
                 bounds={bounds}
                 boundsOptions={{ padding: [40, 40] }}
-                style={{ height: '100%', width: '100%' }}
+                className="h-full! w-full!"
               >
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -129,7 +123,7 @@ export const MapaIntervencionesView: React.FC = () => {
                     }}
                   >
                     <Popup>
-                      <div style={{ fontSize: '13px', lineHeight: 1.5 }}>
+                      <div className="text-[13px] leading-[1.5]">
                         <strong>{ETIQUETA_TIPO[item.tipoActuacion] ?? item.tipoActuacion}</strong>
                         <br />
                         <strong>Fecha:</strong> {formatearFechaHora(item.fechaHoraInicio)}
@@ -149,7 +143,7 @@ export const MapaIntervencionesView: React.FC = () => {
                           </>
                         )}
                         {item.gpsPrecisionM !== null && (
-                          <span style={{ color: '#64748b' }}>Precisión GPS: ±{Math.round(item.gpsPrecisionM)} m</span>
+                          <span className="text-[#64748b]">Precisión GPS: ±{Math.round(item.gpsPrecisionM)} m</span>
                         )}
                       </div>
                     </Popup>

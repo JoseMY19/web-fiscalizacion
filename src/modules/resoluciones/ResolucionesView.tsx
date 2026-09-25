@@ -147,10 +147,10 @@ export const ResolucionesView: React.FC = () => {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', gap: '12px', flexWrap: 'wrap' }}>
+      <div className="flex items-center justify-between mb-[20px] gap-[12px] flex-wrap">
         <div>
-          <h2 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--color-midnight-900)' }}>Resoluciones (SP5)</h2>
-          <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '2px', maxWidth: '720px' }}>
+          <h2 className="text-[18px] font-extrabold text-midnight-900">Resoluciones (SP5)</h2>
+          <p className="text-[13px] text-text-muted mt-[2px] max-w-[720px]">
             La decisión oficial del caso. El tipo sale del IFI: si recomendó <strong>sancionar</strong> → RSGSA (multa y/o
             medida complementaria); si recomendó <strong>archivar</strong> → RSG (a favor del administrado). Se redacta,
             se entrega al Subgerente para su firma en papel, se registra la firma y se notifica.
@@ -164,12 +164,12 @@ export const ResolucionesView: React.FC = () => {
       {error && <Alert type="error">{error}</Alert>}
 
       {/* Buscador por N° de expediente: clic → lista de expedientes; escribir → filtra */}
-      <Card style={{ marginBottom: '20px', overflow: 'visible', position: 'relative', zIndex: 20 }}>
-        <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '8px', color: 'var(--color-midnight-900)' }}>
+      <Card className="mb-[20px]! overflow-visible! relative! z-[20]!">
+        <label className="block text-[13px] font-bold mb-[8px] text-midnight-900">
           Buscar por N° de expediente
         </label>
-        <div ref={buscadorRef} style={{ position: 'relative' }}>
-          <span style={{ position: 'absolute', left: '12px', top: '21px', transform: 'translateY(-50%)', color: 'var(--color-text-muted)', display: 'flex', pointerEvents: 'none' }}>
+        <div ref={buscadorRef} className="relative">
+          <span className="absolute left-[12px] top-[21px] [transform:translateY(-50%)] text-text-muted flex pointer-events-none">
             <SearchIcon size={16} />
           </span>
           <input
@@ -189,50 +189,31 @@ export const ResolucionesView: React.FC = () => {
             role="combobox"
             aria-expanded={listaAbierta}
             aria-autocomplete="list"
-            style={{
-              width: '100%',
-              padding: '10px 14px 10px 36px',
-              fontSize: '14px',
-              borderRadius: 'var(--radius-sm)',
-              border: `1px solid ${listaAbierta ? 'var(--color-primary-600)' : 'var(--color-border)'}`,
-              outline: 'none',
-            }}
+            className={`w-full py-[10px] pr-[14px] pl-[36px] text-[14px] rounded-sm outline-none border ${listaAbierta ? 'border-primary-600' : 'border-border'}`}
           />
 
           {listaAbierta && (
             <div
               role="listbox"
-              style={{
-                position: 'absolute',
-                top: 'calc(100% + 6px)',
-                left: 0,
-                right: 0,
-                zIndex: 50,
-                backgroundColor: '#ffffff',
-                border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-sm)',
-                boxShadow: 'var(--shadow-xl)',
-                maxHeight: '340px',
-                overflowY: 'auto',
-              }}
+              className="absolute top-[calc(100%_+_6px)] left-0 right-0 z-[50] bg-[#ffffff] border border-border rounded-sm shadow-xl max-h-[340px] overflow-y-auto"
             >
               {errorBusqueda ? (
-                <div style={{ padding: '12px' }}>
+                <div className="p-[12px]">
                   <Alert type="error">{errorBusqueda}</Alert>
                 </div>
               ) : buscando && resultados === null ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '14px', fontSize: '13px', color: 'var(--color-text-muted)' }}>
+                <div className="flex items-center gap-[8px] p-[14px] text-[13px] text-text-muted">
                   <Spinner size={16} /> Buscando…
                 </div>
               ) : resultados && resultados.length === 0 ? (
-                <p style={{ padding: '14px', fontSize: '13px', color: 'var(--color-text-muted)' }}>
+                <p className="p-[14px] text-[13px] text-text-muted">
                   {busqueda.trim()
                     ? `Ningún expediente con IFI notificado coincide con "${busqueda.trim()}". Si el IFI todavía no se notifica, el expediente está en la bandeja de IFI.`
                     : 'Todavía no hay expedientes con IFI notificado.'}
                 </p>
               ) : resultados ? (
                 <>
-                  <div style={{ padding: '8px 14px', fontSize: '11px', fontWeight: 600, color: 'var(--color-text-muted)', borderBottom: '1px solid var(--color-border)', backgroundColor: '#f8fafc' }}>
+                  <div className="py-[8px] px-[14px] text-[11px] font-semibold text-text-muted border-b border-b-border bg-[#f8fafc]">
                     {busqueda.trim()
                       ? `${resultados.length} resultado${resultados.length === 1 ? '' : 's'}`
                       : `Todos los expedientes disponibles (${resultados.length}) — escribe para filtrar`}
@@ -249,29 +230,16 @@ export const ResolucionesView: React.FC = () => {
                         aria-selected={activo}
                         onMouseEnter={() => setIndiceActivo(i)}
                         onClick={() => elegirResultado(f)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: '12px',
-                          width: '100%',
-                          padding: '10px 14px',
-                          border: 'none',
-                          borderBottom: '1px solid var(--color-border)',
-                          backgroundColor: activo ? 'var(--color-primary-50)' : '#ffffff',
-                          cursor: 'pointer',
-                          textAlign: 'left',
-                          fontSize: '13px',
-                        }}
+                        className={`flex items-center justify-between gap-[12px] w-full py-[10px] px-[14px] border-0 border-b border-b-border cursor-pointer text-left text-[13px] ${activo ? 'bg-primary-50' : 'bg-[#ffffff]'}`}
                       >
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, color: 'var(--color-midnight-900)' }}>
+                        <span className="flex items-center gap-[8px] font-bold text-midnight-900">
                           <GavelIcon size={15} color="var(--color-purple)" />
                           {f.numeroExpediente}
                           {f.numeroResolucion && (
-                            <span style={{ fontWeight: 500, fontSize: '11px', color: 'var(--color-text-muted)' }}>· Resolución N° {f.numeroResolucion}</span>
+                            <span className="font-medium text-[11px] text-text-muted">· Resolución N° {f.numeroResolucion}</span>
                           )}
                         </span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                        <span className="flex items-center gap-[6px] flex-wrap justify-end">
                           {tipo && <Badge variant={tipo === 'RSGSA' ? 'danger' : 'info'}>{tipo}</Badge>}
                           <Badge variant={varianteEtapa(f)}>{labelEtapa(f)}</Badge>
                         </span>
@@ -286,26 +254,14 @@ export const ResolucionesView: React.FC = () => {
       </Card>
 
       {/* Pestañas */}
-      <div style={{ display: 'flex', gap: '4px', borderBottom: '1px solid var(--color-border)', marginBottom: '0' }}>
+      <div className="flex gap-[4px] border-b border-b-border mb-0">
         {PESTANAS.map((p) => {
           const activa = p.clave === pestana;
           return (
             <button
               key={p.clave}
               onClick={() => setPestana(p.clave)}
-              style={{
-                padding: '10px 16px',
-                fontSize: '13px',
-                fontWeight: 700,
-                border: 'none',
-                borderBottom: activa ? '2px solid var(--color-primary-600)' : '2px solid transparent',
-                background: 'none',
-                color: activa ? 'var(--color-primary-600)' : 'var(--color-text-muted)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}
+              className={`py-[10px] px-[16px] text-[13px] font-bold border-0 bg-transparent cursor-pointer flex items-center gap-[8px] ${activa ? 'border-b-2 border-b-primary-600' : 'border-b-2 border-b-transparent'} ${activa ? 'text-primary-600' : 'text-text-muted'}`}
             >
               {p.titulo}
               <Badge variant={activa ? 'info' : 'neutral'}>{bandeja[p.clave].length}</Badge>
@@ -314,12 +270,12 @@ export const ResolucionesView: React.FC = () => {
         })}
       </div>
 
-      <Card style={{ borderTopLeftRadius: 0, borderTopRightRadius: 0, borderTop: 'none' }}>
-        {ayudaPestana && <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '12px' }}>{ayudaPestana}</p>}
+      <Card className="rounded-tl-none! rounded-tr-none! border-t-0!">
+        {ayudaPestana && <p className="text-[12px] text-text-muted mb-[12px]">{ayudaPestana}</p>}
         {loading && filas.length === 0 ? (
-          <div style={{ padding: '40px', textAlign: 'center' }}>
+          <div className="p-[40px] text-center">
             <Spinner size={32} />
-            <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '12px' }}>Cargando resoluciones…</p>
+            <p className="text-[13px] text-text-muted mt-[12px]">Cargando resoluciones…</p>
           </div>
         ) : filas.length === 0 ? (
           <EmptyState
@@ -354,15 +310,15 @@ const TablaResoluciones: React.FC<{
   filas: ExpedienteResolucionItem[];
   onVer: (f: { expedienteId: string; numeroExpediente: string }) => void;
 }> = ({ filas, onVer }) => (
-  <div style={{ overflowX: 'auto' }}>
-    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
+  <div className="overflow-x-auto">
+    <table className="w-full border-collapse text-[13px] text-left">
       <thead>
-        <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid var(--color-border)' }}>
-          <th style={{ padding: '10px 14px', fontWeight: 700 }}>N° Expediente</th>
-          <th style={{ padding: '10px 14px', fontWeight: 700 }}>Tipo</th>
-          <th style={{ padding: '10px 14px', fontWeight: 700 }}>Etapa</th>
-          <th style={{ padding: '10px 14px', fontWeight: 700 }}>Plazo</th>
-          <th style={{ padding: '10px 14px', fontWeight: 700, textAlign: 'right' }}></th>
+        <tr className="bg-[#f8fafc] border-b border-b-border">
+          <th className="py-[10px] px-[14px] font-bold">N° Expediente</th>
+          <th className="py-[10px] px-[14px] font-bold">Tipo</th>
+          <th className="py-[10px] px-[14px] font-bold">Etapa</th>
+          <th className="py-[10px] px-[14px] font-bold">Plazo</th>
+          <th className="py-[10px] px-[14px] font-bold text-right"></th>
         </tr>
       </thead>
       <tbody>
@@ -372,48 +328,48 @@ const TablaResoluciones: React.FC<{
           return (
             <tr
               key={f.expedienteId}
-              style={{ borderBottom: '1px solid var(--color-border)', backgroundColor: f.plazos.alertaAmpliacion ? '#fff1f2' : undefined }}
+              className={`border-b border-b-border ${f.plazos.alertaAmpliacion ? 'bg-[#fff1f2]' : ''}`}
             >
-              <td style={{ padding: '12px 14px', fontWeight: 700, color: 'var(--color-midnight-900)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <td className="py-[12px] px-[14px] font-bold text-midnight-900">
+                <div className="flex items-center gap-[8px]">
                   <GavelIcon size={16} color="var(--color-purple)" />
                   {f.numeroExpediente}
                 </div>
                 {f.numeroResolucion && (
-                  <div style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '3px', fontWeight: 500 }}>
+                  <div className="text-[11px] text-text-muted mt-[3px] font-medium">
                     Resolución N° {f.numeroResolucion}
                   </div>
                 )}
               </td>
-              <td style={{ padding: '12px 14px' }}>
-                {tipo ? <Badge variant={tipo === 'RSGSA' ? 'danger' : 'info'}>{NOMBRE_TIPO[tipo]}</Badge> : <span style={{ color: 'var(--color-text-muted)' }}>—</span>}
+              <td className="py-[12px] px-[14px]">
+                {tipo ? <Badge variant={tipo === 'RSGSA' ? 'danger' : 'info'}>{NOMBRE_TIPO[tipo]}</Badge> : <span className="text-text-muted">—</span>}
                 {f.archivoPorVicio && (
-                  <div style={{ fontSize: '11px', color: '#be123c', marginTop: '3px' }}>archivo por error de fondo</div>
+                  <div className="text-[11px] text-[#be123c] mt-[3px]">archivo por error de fondo</div>
                 )}
                 {f.tipoNoCoincideConIfi && (
-                  <div style={{ marginTop: '4px' }}>
+                  <div className="mt-[4px]">
                     <Badge variant="warning">Decisión distinta al IFI</Badge>
                   </div>
                 )}
-                {f.enParte && <div style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '3px' }}>sancionar en parte</div>}
+                {f.enParte && <div className="text-[11px] text-text-muted mt-[3px]">sancionar en parte</div>}
               </td>
-              <td style={{ padding: '12px 14px' }}>
+              <td className="py-[12px] px-[14px]">
                 <Badge variant={varianteEtapa(f)}>{labelEtapa(f)}</Badge>
               </td>
-              <td style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>
+              <td className="py-[12px] px-[14px] whitespace-nowrap">
                 {caducidad ? (
-                  <span style={{ fontWeight: 600, color: caducidad.urgente ? '#be123c' : 'var(--color-text-secondary)' }}>{caducidad.texto}</span>
+                  <span className={`font-semibold ${caducidad.urgente ? 'text-[#be123c]' : 'text-text-secondary'}`}>{caducidad.texto}</span>
                 ) : (
-                  <span style={{ color: 'var(--color-text-muted)' }}>—</span>
+                  <span className="text-text-muted">—</span>
                 )}
-                {f.plazos.ampliacionFirmada && <div style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '3px' }}>plazo ampliado (+3 meses)</div>}
+                {f.plazos.ampliacionFirmada && <div className="text-[11px] text-text-muted mt-[3px]">plazo ampliado (+3 meses)</div>}
               </td>
-              <td style={{ padding: '12px 14px', textAlign: 'right' }}>
+              <td className="py-[12px] px-[14px] text-right">
                 {f.plazos.alertaAmpliacion && (
                   <Button
                     variant="danger"
                     size="sm"
-                    style={{ marginRight: '8px' }}
+                    className="mr-[8px]!"
                     onClick={() => onVer({ expedienteId: f.expedienteId, numeroExpediente: f.numeroExpediente })}
                   >
                     {f.ampliacionEstado ? 'Ver RSG de ampliación' : 'Emitir RSG de ampliación'}

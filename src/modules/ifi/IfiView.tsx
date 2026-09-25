@@ -62,20 +62,11 @@ function calcularPaso(e: ExpedienteIfiItem): { pasoActualLabel: string; totalPas
 
 /** Puntos de progreso compactos para la fila de la tabla — sin abrir el panel. */
 const StepDots: React.FC<{ pasoNumero: number; totalPasos: number; truncado?: boolean }> = ({ pasoNumero, totalPasos, truncado }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+  <div className="flex items-center gap-[3px]">
     {Array.from({ length: totalPasos }).map((_, i) => (
       <span
         key={i}
-        style={{
-          width: 7,
-          height: 7,
-          borderRadius: '50%',
-          backgroundColor: truncado
-            ? '#be123c'
-            : i < pasoNumero
-            ? 'var(--color-primary-600)'
-            : '#e2e8f0',
-        }}
+        className={`w-[7px] h-[7px] rounded-full ${truncado ? 'bg-[#be123c]' : i < pasoNumero ? 'bg-primary-600' : 'bg-[#e2e8f0]'}`}
       />
     ))}
   </div>
@@ -129,25 +120,15 @@ const LABEL_FOTO_ACTA: Record<string, string> = {
   MEDIDA_PROVISIONAL: 'Foto del Acta de Medida Provisional',
 };
 
-const estiloTarjetaEvidencia: React.CSSProperties = {
-  backgroundColor: '#f8fafc',
-  padding: '12px',
-  borderRadius: '8px',
-  border: '1px solid var(--color-border)',
-};
+const estiloTarjetaEvidencia = 'bg-[#f8fafc] p-[12px] rounded-[8px] border border-border';
 
-const estiloTituloEvidencia: React.CSSProperties = {
-  fontWeight: 700,
-  color: 'var(--color-midnight-900)',
-  marginBottom: '8px',
-  fontSize: '13px',
-};
+const estiloTituloEvidencia = 'font-bold text-midnight-900 mb-[8px] text-[13px]';
 
-const NoRegistrado: React.FC = () => <span style={{ color: 'var(--color-text-muted)', fontStyle: 'italic' }}>No registrado</span>;
+const NoRegistrado: React.FC = () => <span className="text-text-muted italic">No registrado</span>;
 
 /** Fila etiqueta/valor. Valor vacío → "No registrado", nunca texto inventado. */
 const DatoEvidencia: React.FC<{ label: string; valor: string | null | undefined }> = ({ label, valor }) => (
-  <div style={{ marginBottom: '4px' }}>
+  <div className="mb-[4px]">
     <strong>{label}:</strong> {valor && valor.trim() ? valor : <NoRegistrado />}
   </div>
 );
@@ -531,12 +512,12 @@ export const IfiView: React.FC = () => {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+      <div className="flex items-center justify-between mb-[20px]">
         <div>
-          <h2 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--color-midnight-900)' }}>
+          <h2 className="text-[18px] font-extrabold text-midnight-900">
             Fase de Instrucción e Informe Final (IFI - SP4)
           </h2>
-          <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+          <p className="text-[13px] text-text-muted mt-[2px]">
             Control de descargos, hechos y base legal, análisis fáctico y propuesta instructora.
           </p>
         </div>
@@ -548,34 +529,16 @@ export const IfiView: React.FC = () => {
       {message && <Alert type={message.type}>{message.text}</Alert>}
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+      <div className="flex gap-[8px] mb-[16px]">
         <button
           onClick={() => setActiveTab('pendientes')}
-          style={{
-            padding: '8px 18px',
-            fontSize: '13px',
-            fontWeight: 600,
-            borderRadius: 'var(--radius-sm)',
-            border: activeTab === 'pendientes' ? '1px solid var(--color-primary-600)' : '1px solid var(--color-border)',
-            backgroundColor: activeTab === 'pendientes' ? 'var(--color-primary-50)' : '#ffffff',
-            color: activeTab === 'pendientes' ? 'var(--color-primary-600)' : 'var(--color-text-secondary)',
-            cursor: 'pointer',
-          }}
+          className={`py-[8px] px-[18px] text-[13px] font-semibold rounded-sm cursor-pointer ${activeTab === 'pendientes' ? 'border border-primary-600' : 'border border-border'} ${activeTab === 'pendientes' ? 'bg-primary-50' : 'bg-[#ffffff]'} ${activeTab === 'pendientes' ? 'text-primary-600' : 'text-text-secondary'}`}
         >
           Expedientes en Instrucción ({pendientes.length})
         </button>
         <button
           onClick={() => setActiveTab('esperando')}
-          style={{
-            padding: '8px 18px',
-            fontSize: '13px',
-            fontWeight: 600,
-            borderRadius: 'var(--radius-sm)',
-            border: activeTab === 'esperando' ? '1px solid var(--color-primary-600)' : '1px solid var(--color-border)',
-            backgroundColor: activeTab === 'esperando' ? 'var(--color-primary-50)' : '#ffffff',
-            color: activeTab === 'esperando' ? 'var(--color-primary-600)' : 'var(--color-text-secondary)',
-            cursor: 'pointer',
-          }}
+          className={`py-[8px] px-[18px] text-[13px] font-semibold rounded-sm cursor-pointer ${activeTab === 'esperando' ? 'border border-primary-600' : 'border border-border'} ${activeTab === 'esperando' ? 'bg-primary-50' : 'bg-[#ffffff]'} ${activeTab === 'esperando' ? 'text-primary-600' : 'text-text-secondary'}`}
         >
           Esperando Notificación NC ({esperando.length})
         </button>
@@ -583,9 +546,9 @@ export const IfiView: React.FC = () => {
 
       <Card>
         {loading ? (
-          <div style={{ padding: '40px', textAlign: 'center' }}>
+          <div className="p-[40px] text-center">
             <Spinner size={32} />
-            <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '12px' }}>
+            <p className="text-[13px] text-text-muted mt-[12px]">
               Cargando expedientes de instrucción...
             </p>
           </div>
@@ -593,19 +556,19 @@ export const IfiView: React.FC = () => {
           esperando.length === 0 ? (
             <EmptyState title="No hay expedientes en espera de notificación" />
           ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-[13px] text-left">
                 <thead>
-                  <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid var(--color-border)' }}>
-                    <th style={{ padding: '12px 16px', fontWeight: 700 }}>N° Expediente</th>
-                    <th style={{ padding: '12px 16px', fontWeight: 700 }}>Condición Legal</th>
+                  <tr className="bg-[#f8fafc] border-b border-b-border">
+                    <th className="py-[12px] px-[16px] font-bold">N° Expediente</th>
+                    <th className="py-[12px] px-[16px] font-bold">Condición Legal</th>
                   </tr>
                 </thead>
                 <tbody>
                   {esperando.map((e) => (
-                    <tr key={e.expedienteId} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                      <td style={{ padding: '14px 16px', fontWeight: 700 }}>{e.numeroExpediente}</td>
-                      <td style={{ padding: '14px 16px', color: 'var(--color-text-muted)', fontSize: '12px' }}>
+                    <tr key={e.expedienteId} className="border-b border-b-border">
+                      <td className="py-[14px] px-[16px] font-bold">{e.numeroExpediente}</td>
+                      <td className="py-[14px] px-[16px] text-text-muted text-[12px]">
                         ⏳ Bloqueado por regla de negocio hasta que la Notificación de Cargo sea efectivamente diligenciada.
                       </td>
                     </tr>
@@ -621,14 +584,14 @@ export const IfiView: React.FC = () => {
             description="No hay expedientes pendientes de instrucción en este momento."
           />
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-[13px] text-left">
               <thead>
-                <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid var(--color-border)' }}>
-                  <th style={{ padding: '12px 16px', fontWeight: 700 }}>N° Expediente</th>
-                  <th style={{ padding: '12px 16px', fontWeight: 700 }}>Estado IFI</th>
-                  <th style={{ padding: '12px 16px', fontWeight: 700 }}>Avance</th>
-                  <th style={{ padding: '12px 16px', fontWeight: 700 }}></th>
+                <tr className="bg-[#f8fafc] border-b border-b-border">
+                  <th className="py-[12px] px-[16px] font-bold">N° Expediente</th>
+                  <th className="py-[12px] px-[16px] font-bold">Estado IFI</th>
+                  <th className="py-[12px] px-[16px] font-bold">Avance</th>
+                  <th className="py-[12px] px-[16px] font-bold"></th>
                 </tr>
               </thead>
               <tbody>
@@ -636,33 +599,33 @@ export const IfiView: React.FC = () => {
                   const { pasoActualLabel, totalPasos, pasoNumero } = calcularPaso(e);
                   const esCaminoVicio = e.imputacionCorrecta === false;
                   return (
-                    <tr key={e.expedienteId} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                      <td style={{ padding: '14px 16px', fontWeight: 700, color: 'var(--color-midnight-900)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <tr key={e.expedienteId} className="border-b border-b-border">
+                      <td className="py-[14px] px-[16px] font-bold text-midnight-900">
+                        <div className="flex items-center gap-[8px]">
                           <FileTextIcon size={16} color="var(--color-primary-600)" />
                           {e.numeroExpediente}
                         </div>
-                        <div style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '4px' }}>
+                        <div className="text-[11px] text-text-muted mt-[4px]">
                           ID: {e.expedienteId.slice(0, 8)}...
                         </div>
                       </td>
 
-                      <td style={{ padding: '14px 16px' }}>
+                      <td className="py-[14px] px-[16px]">
                         <Badge variant={e.ifiEstado === 'NOTIFICADO' ? 'success' : e.ifiEstado === 'EMITIDO' ? 'info' : 'neutral'}>
                           {labelEstadoIfi(e)}
                         </Badge>
                       </td>
 
-                      <td style={{ padding: '14px 16px' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          <span style={{ fontSize: '12px', fontWeight: 600, color: esCaminoVicio ? '#be123c' : 'var(--color-text-secondary)' }}>
+                      <td className="py-[14px] px-[16px]">
+                        <div className="flex flex-col gap-[6px]">
+                          <span className={`text-[12px] font-semibold ${esCaminoVicio ? 'text-[#be123c]' : 'text-text-secondary'}`}>
                             {`Paso ${pasoNumero} de ${totalPasos}: ${pasoActualLabel}`}
                           </span>
                           <StepDots pasoNumero={pasoNumero} totalPasos={totalPasos} truncado={false} />
                         </div>
                       </td>
 
-                      <td style={{ padding: '14px 16px' }}>
+                      <td className="py-[14px] px-[16px]">
                         <Button variant="primary" size="sm" icon={<EyeIcon size={14} />} onClick={() => setDetalleExp(e)}>
                           Ver expediente
                         </Button>
@@ -753,24 +716,24 @@ export const IfiView: React.FC = () => {
       >
         {/* ---------- Evidencia ---------- */}
         {cargandoEvidencia ? (
-          <div style={{ padding: '24px', textAlign: 'center' }}>
+          <div className="p-[24px] text-center">
             <Spinner size={28} />
-            <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '10px' }}>Cargando evidencia del expediente...</p>
+            <p className="text-[13px] text-text-muted mt-[10px]">Cargando evidencia del expediente...</p>
           </div>
         ) : errorEvidencia ? (
           <Alert type="error">{errorEvidencia}</Alert>
         ) : evidencia ? (
-          <div style={{ fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '18px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '12px' }}>
+          <div className="text-[13px] flex flex-col gap-[12px] mb-[18px]">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-[12px]">
               {/* A quién se dirigió la NC — pregunta 1 */}
-              <div style={estiloTarjetaEvidencia}>
-                <h4 style={estiloTituloEvidencia}>A quién se dirigió la Notificación de Cargo</h4>
+              <div className={estiloTarjetaEvidencia}>
+                <h4 className={estiloTituloEvidencia}>A quién se dirigió la Notificación de Cargo</h4>
                 {!evidencia.administrado ? (
-                  <p style={{ color: 'var(--color-text-muted)' }}>No hay datos del administrado registrados en la intervención.</p>
+                  <p className="text-text-muted">No hay datos del administrado registrados en la intervención.</p>
                 ) : (
                   <>
                     {!evidencia.administrado.identificado && (
-                      <div style={{ marginBottom: '6px' }}>
+                      <div className="mb-[6px]">
                         <Badge variant="warning">Administrado NO identificado en campo</Badge>
                       </div>
                     )}
@@ -785,12 +748,12 @@ export const IfiView: React.FC = () => {
                     <DatoEvidencia label="Giro / uso" valor={evidencia.administrado.giroUso} />
                   </>
                 )}
-                <div style={{ borderTop: '1px solid var(--color-border)', marginTop: '8px', paddingTop: '8px' }}>
+                <div className="border-t border-t-border mt-[8px] pt-[8px]">
                   {!evidencia.notificacionCargo ? (
-                    <p style={{ color: 'var(--color-text-muted)' }}>La intervención no tiene Notificación de Cargo registrada.</p>
+                    <p className="text-text-muted">La intervención no tiene Notificación de Cargo registrada.</p>
                   ) : (
                     <>
-                      <div style={{ fontWeight: 600, marginBottom: '4px' }}>
+                      <div className="font-semibold mb-[4px]">
                         Quién recibió la NC N° {evidencia.notificacionCargo.numeroCorrelativo}
                       </div>
                       <DatoEvidencia label="Receptor" valor={evidencia.notificacionCargo.receptorNombre} />
@@ -810,17 +773,17 @@ export const IfiView: React.FC = () => {
               </div>
 
               {/* Infracción imputada — pregunta 2 */}
-              <div style={estiloTarjetaEvidencia}>
-                <h4 style={estiloTituloEvidencia}>Infracción imputada</h4>
+              <div className={estiloTarjetaEvidencia}>
+                <h4 className={estiloTituloEvidencia}>Infracción imputada</h4>
                 {evidencia.codigosCuis.length === 0 ? (
-                  <p style={{ color: 'var(--color-text-muted)' }}>No hay código de infracción registrado.</p>
+                  <p className="text-text-muted">No hay código de infracción registrado.</p>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div className="flex flex-col gap-[8px]">
                     {evidencia.codigosCuis.map((c, i) => (
                       <div key={`${c.codigoNormativo}-${i}`}>
                         <Badge variant="info">{c.codigoNormativo}</Badge>
-                        <div style={{ marginTop: '4px' }}>{c.descripcion?.trim() ? c.descripcion : <NoRegistrado />}</div>
-                        <div style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+                        <div className="mt-[4px]">{c.descripcion?.trim() ? c.descripcion : <NoRegistrado />}</div>
+                        <div className="text-[11px] text-text-muted mt-[2px]">
                           Fuente normativa: {c.fuenteNormativa?.trim() ? c.fuenteNormativa : 'No registrada'}
                         </div>
                       </div>
@@ -831,49 +794,43 @@ export const IfiView: React.FC = () => {
             </div>
 
             {/* Hechos verificados — pregunta 3 */}
-            <div style={estiloTarjetaEvidencia}>
-              <h4 style={estiloTituloEvidencia}>
+            <div className={estiloTarjetaEvidencia}>
+              <h4 className={estiloTituloEvidencia}>
                 Hechos verificados
                 {evidencia.actaFiscalizacion && (
-                  <span style={{ fontWeight: 400, color: 'var(--color-text-muted)' }}>
+                  <span className="font-normal text-text-muted">
                     {' '}
                     — Acta de Fiscalización N° {evidencia.actaFiscalizacion.numeroCorrelativo}
                   </span>
                 )}
               </h4>
               {!evidencia.actaFiscalizacion ? (
-                <p style={{ color: 'var(--color-text-muted)' }}>Esta intervención no tiene Acta de Fiscalización registrada.</p>
+                <p className="text-text-muted">Esta intervención no tiene Acta de Fiscalización registrada.</p>
               ) : (
                 <>
                   <p
-                    style={{
-                      backgroundColor: '#fdfdfd',
-                      padding: '10px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--color-border)',
-                      whiteSpace: 'pre-wrap',
-                    }}
+                    className="bg-[#fdfdfd] p-[10px] rounded-[6px] border border-border whitespace-pre-wrap"
                   >
                     {evidencia.actaFiscalizacion.hechosVerificados?.trim() ? evidencia.actaFiscalizacion.hechosVerificados : <NoRegistrado />}
                   </p>
                   {evidencia.actaFiscalizacion.observacionesAdministrado?.trim() && (
-                    <div style={{ marginTop: '8px' }}>
+                    <div className="mt-[8px]">
                       <strong>Observaciones del administrado:</strong>
-                      <p style={{ whiteSpace: 'pre-wrap', marginTop: '2px' }}>{evidencia.actaFiscalizacion.observacionesAdministrado}</p>
+                      <p className="whitespace-pre-wrap mt-[2px]">{evidencia.actaFiscalizacion.observacionesAdministrado}</p>
                     </div>
                   )}
                 </>
               )}
-              <div style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '8px' }}>
+              <div className="text-[11px] text-text-muted mt-[8px]">
                 Intervención del {formatearFechaHora(evidencia.intervencion.fechaHoraInicio)} · Dirección:{' '}
                 {evidencia.intervencion.direccionAproximada?.trim() ? evidencia.intervencion.direccionAproximada : 'No registrada'}
               </div>
             </div>
 
             {/* Evidencia documental */}
-            <div style={estiloTarjetaEvidencia}>
-              <h4 style={estiloTituloEvidencia}>Evidencia</h4>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            <div className={estiloTarjetaEvidencia}>
+              <h4 className={estiloTituloEvidencia}>Evidencia</h4>
+              <div className="flex flex-wrap gap-[8px]">
                 {fotosEvidencia.map((f, i) => (
                   <Button key={f.id} variant="outline" size="sm" icon={<EyeIcon size={14} />} onClick={() => abrirDocumento(f.id)}>
                     {f.actaTipo ? LABEL_FOTO_ACTA[f.actaTipo] ?? `Foto (${f.actaTipo})` : `Foto de evidencia ${i + 1}`}
@@ -901,17 +858,17 @@ export const IfiView: React.FC = () => {
                 )}
               </div>
               {fotosEvidencia.length === 0 && (
-                <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '6px' }}>
+                <p className="text-[12px] text-text-muted mt-[6px]">
                   No hay fotos registradas para esta intervención.
                 </p>
               )}
 
-              <div style={{ marginTop: '10px' }}>
-                <div style={{ fontWeight: 600, marginBottom: '4px' }}>Documentos adjuntos del IFI</div>
+              <div className="mt-[10px]">
+                <div className="font-semibold mb-[4px]">Documentos adjuntos del IFI</div>
                 {documentosEvidencia.length === 0 ? (
-                  <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>Todavía no hay documentos adjuntos.</p>
+                  <p className="text-[12px] text-text-muted">Todavía no hay documentos adjuntos.</p>
                 ) : (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  <div className="flex flex-wrap gap-[8px]">
                     {documentosEvidencia.map((d) => (
                       <Button key={d.id} variant="outline" size="sm" icon={<EyeIcon size={14} />} onClick={() => abrirDocumentoIfi(d.id)}>
                         {d.descripcion}
@@ -920,7 +877,7 @@ export const IfiView: React.FC = () => {
                   </div>
                 )}
               </div>
-              <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '8px' }}>
+              <p className="text-[11px] text-text-muted mt-[8px]">
                 Los registros externos (DJ de Rentas, SUNARP, Licencias de Funcionamiento) por ahora se consultan fuera
                 del sistema. Si te sirven como prueba, súbelos como documento adjunto del IFI (botón "Documentos
                 adjuntos" en el detalle del expediente).
@@ -930,17 +887,17 @@ export const IfiView: React.FC = () => {
         ) : null}
 
         {/* ---------- Checklist de apoyo (no se guarda) ---------- */}
-        <div style={{ ...estiloTarjetaEvidencia, backgroundColor: '#ffffff', marginBottom: '16px' }}>
-          <h4 style={estiloTituloEvidencia}>Revisión rápida</h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div className={`${estiloTarjetaEvidencia} bg-[#ffffff]! mb-[16px]`}>
+          <h4 className={estiloTituloEvidencia}>Revisión rápida</h4>
+          <div className="flex flex-col gap-[10px]">
             {PREGUNTAS_CHECKLIST.map((p) => (
-              <div key={p.clave} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
-                <div style={{ fontSize: '13px' }}>
-                  <div style={{ fontWeight: 600 }}>{p.pregunta}</div>
-                  <div style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>{p.ayuda}</div>
+              <div key={p.clave} className="flex justify-between items-start gap-[12px]">
+                <div className="text-[13px]">
+                  <div className="font-semibold">{p.pregunta}</div>
+                  <div className="text-[11px] text-text-muted">{p.ayuda}</div>
                 </div>
-                <div style={{ display: 'flex', gap: '12px', flexShrink: 0 }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', cursor: 'pointer' }}>
+                <div className="flex gap-[12px] shrink-0">
+                  <label className="flex items-center gap-[4px] text-[13px] cursor-pointer">
                     <input
                       type="radio"
                       name={`chk-${p.clave}`}
@@ -949,7 +906,7 @@ export const IfiView: React.FC = () => {
                     />
                     Sí
                   </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', cursor: 'pointer' }}>
+                  <label className="flex items-center gap-[4px] text-[13px] cursor-pointer">
                     <input
                       type="radio"
                       name={`chk-${p.clave}`}
@@ -963,28 +920,28 @@ export const IfiView: React.FC = () => {
             ))}
           </div>
           {preguntasEnNo.length > 0 ? (
-            <p style={{ fontSize: '12px', color: '#be123c', marginTop: '10px' }}>
+            <p className="text-[12px] text-[#be123c] mt-[10px]">
               Sugerencia: marcamos "No" abajo porque respondiste "No" a:{' '}
               {preguntasEnNo.map((p) => p.pregunta).join(' / ')}
             </p>
           ) : checklistCompletoEnSi ? (
-            <p style={{ fontSize: '12px', color: 'var(--color-success)', marginTop: '10px' }}>
+            <p className="text-[12px] text-success mt-[10px]">
               Sugerencia: todas las respuestas son "Sí", marcamos "Sí, es correcta" abajo.
             </p>
           ) : null}
-          <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '6px' }}>
+          <p className="text-[11px] text-text-muted mt-[6px]">
             Esta revisión solo sugiere una respuesta, no se guarda. La decisión final es la de abajo.
           </p>
         </div>
 
         {/* ---------- Decisión ---------- */}
         {errorImputacion && <Alert type="error">{errorImputacion}</Alert>}
-        <div style={{ marginBottom: '12px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}>
+        <div className="mb-[12px]">
+          <label className="block text-[13px] font-semibold mb-[8px]">
             ¿La Notificación de Cargo está bien dirigida y bien tipificada?
           </label>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', cursor: 'pointer' }}>
+          <div className="flex flex-col gap-[8px]">
+            <label className="flex items-center gap-[6px] text-[13px] cursor-pointer">
               <input
                 type="radio"
                 name="imputacion"
@@ -996,7 +953,7 @@ export const IfiView: React.FC = () => {
               />
               Sí, es correcta
             </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', cursor: 'pointer' }}>
+            <label className="flex items-center gap-[6px] text-[13px] cursor-pointer">
               <input
                 type="radio"
                 name="imputacion"
@@ -1009,7 +966,7 @@ export const IfiView: React.FC = () => {
               No, tiene un error de fondo que no se puede corregir
             </label>
           </div>
-          <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '8px' }}>
+          <p className="text-[11px] text-text-muted mt-[8px]">
             Si eliges "No", el caso se archiva y se pierde la multa (regla legal). Los errores menores de tipeo (un
             dígito del DNI, una fecha) no van aquí: se corrigen en la validación del expediente.
           </p>
@@ -1039,8 +996,8 @@ export const IfiView: React.FC = () => {
         }
       >
         {planchazoModal.data && (
-          <div style={{ fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div style={{ backgroundColor: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
+          <div className="text-[13px] flex flex-col gap-[14px]">
+            <div className="bg-[#f8fafc] p-[12px] rounded-[8px] border border-border">
               <strong>Administrado:</strong> {planchazoModal.data.datosHeredados.administrado?.nombresRazonSocial || '(no identificado)'}<br />
               <strong>N° Expediente:</strong> {planchazoModal.data.datosHeredados.numeroExpediente}<br />
               <strong>Código(s) infracción:</strong>{' '}
@@ -1051,21 +1008,21 @@ export const IfiView: React.FC = () => {
                 : '(sin código registrado)'}
             </div>
             <div>
-              <h4 style={{ fontWeight: 700, color: 'var(--color-midnight-900)', marginBottom: '4px' }}>Antecedentes:</h4>
-              <p style={{ backgroundColor: '#fdfdfd', padding: '10px', borderRadius: '6px', border: '1px solid var(--color-border)', whiteSpace: 'pre-wrap' }}>
+              <h4 className="font-bold text-midnight-900 mb-[4px]">Antecedentes:</h4>
+              <p className="bg-[#fdfdfd] p-[10px] rounded-[6px] border border-border whitespace-pre-wrap">
                 {planchazoModal.data.antecedentes}
               </p>
             </div>
             <div>
-              <h4 style={{ fontWeight: 700, color: 'var(--color-midnight-900)', marginBottom: '4px' }}>Marco Normativo:</h4>
-              <p style={{ backgroundColor: '#fdfdfd', padding: '10px', borderRadius: '6px', border: '1px solid var(--color-border)', whiteSpace: 'pre-wrap' }}>
+              <h4 className="font-bold text-midnight-900 mb-[4px]">Marco Normativo:</h4>
+              <p className="bg-[#fdfdfd] p-[10px] rounded-[6px] border border-border whitespace-pre-wrap">
                 {planchazoModal.data.marcoNormativo}
               </p>
             </div>
             {planchazoModal.data.transcripcionActa && (
               <div>
-                <h4 style={{ fontWeight: 700, color: 'var(--color-midnight-900)', marginBottom: '4px' }}>Transcripción del Acta:</h4>
-                <p style={{ backgroundColor: '#fdfdfd', padding: '10px', borderRadius: '6px', border: '1px solid var(--color-border)', whiteSpace: 'pre-wrap' }}>
+                <h4 className="font-bold text-midnight-900 mb-[4px]">Transcripción del Acta:</h4>
+                <p className="bg-[#fdfdfd] p-[10px] rounded-[6px] border border-border whitespace-pre-wrap">
                   {planchazoModal.data.transcripcionActa}
                 </p>
               </div>
@@ -1097,7 +1054,7 @@ export const IfiView: React.FC = () => {
           onChange={(e) => setAnalisisTexto(e.target.value)}
           rows={6}
         />
-        <div style={{ marginTop: '12px' }}>
+        <div className="mt-[12px]">
           <Textarea
             label="Base normativa adicional (opcional)"
             placeholder="Leyes o decretos que el marco normativo automático (catálogo CUIS) no cubre — ej. Ley de Canes, Ley General de Salud, normas del MTC, otra ordenanza específica..."
@@ -1105,7 +1062,7 @@ export const IfiView: React.FC = () => {
             onChange={(e) => setBasesLegalesTexto(e.target.value)}
             rows={3}
           />
-          <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '4px' }}>
+          <p className="text-[11px] text-text-muted mt-[4px]">
             Se muestra aparte del marco normativo automático — nunca lo reemplaza.
           </p>
         </div>
@@ -1133,7 +1090,7 @@ export const IfiView: React.FC = () => {
           value={numeroInforme}
           onChange={(e) => setNumeroInforme(e.target.value)}
         />
-        <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '8px' }}>
+        <p className="text-[12px] text-text-muted mt-[8px]">
           Es el número que la oficina le asigna a este informe (ej. 756-2026-MDSJL/GOP-SFSA-JLVN). Lo escribe el instructor; el sistema no lo genera.
         </p>
       </Modal>
@@ -1176,37 +1133,29 @@ export const IfiView: React.FC = () => {
           </Button>
         }
       >
-        <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '12px' }}>
+        <p className="text-[12px] text-text-muted mb-[12px]">
           Memos de otras áreas, descargos con anexos, fotos adicionales u otros documentos de terceros —
           más allá de lo que ya trae automáticamente el acta y la NC.
         </p>
 
         {cargandoDocumentos ? (
-          <div style={{ padding: '16px', textAlign: 'center' }}>
+          <div className="p-[16px] text-center">
             <Spinner size={24} />
           </div>
         ) : documentos.length === 0 ? (
-          <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '16px' }}>
+          <p className="text-[13px] text-text-muted mb-[16px]">
             Todavía no hay documentos adjuntos.
           </p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+          <div className="flex flex-col gap-[8px] mb-[16px]">
             {documentos.map((d) => (
               <div
                 key={d.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '8px 12px',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: '6px',
-                  fontSize: '13px',
-                }}
+                className="flex items-center justify-between py-[8px] px-[12px] border border-border rounded-[6px] text-[13px]"
               >
                 <div>
-                  <div style={{ fontWeight: 600 }}>{d.descripcion}</div>
-                  <div style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>
+                  <div className="font-semibold">{d.descripcion}</div>
+                  <div className="text-[11px] text-text-muted">
                     {d.nombreOriginal} · {formatearFechaHora(d.subidoEn)}
                   </div>
                 </div>
@@ -1218,21 +1167,21 @@ export const IfiView: React.FC = () => {
           </div>
         )}
 
-        <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '12px' }}>
+        <div className="border-t border-t-border pt-[12px]">
           <Input
             label="¿Qué es este documento? (ej. Memo N°142-2026-SGGRD)"
             value={nuevaDescripcion}
             onChange={(e) => setNuevaDescripcion(e.target.value)}
           />
-          <div className="form-group">
-            <label className="form-label">Archivo</label>
+          <div>
+            <label>Archivo</label>
             <input
               type="file"
               onChange={(e) => setNuevoArchivo(e.target.files?.[0] ?? null)}
-              style={{ fontSize: '13px' }}
+              className="text-[13px]"
             />
           </div>
-          <Button variant="primary" size="sm" loading={subiendoDocumento} onClick={handleSubirDocumento} style={{ marginTop: '8px' }}>
+          <Button variant="primary" size="sm" loading={subiendoDocumento} onClick={handleSubirDocumento} className="mt-[8px]!">
             Adjuntar documento
           </Button>
         </div>
@@ -1297,11 +1246,11 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
       titulo: 'Descargo del administrado',
       estado: e.recibioDescargo ? 'completado' : 'actual',
       descripcion: e.recibioDescargo ? (
-        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#047857', fontWeight: 600 }}>
+        <span className="flex items-center gap-[4px] text-[#047857] font-semibold">
           <CheckIcon size={12} /> Descargo presentado y registrado.
         </span>
       ) : (
-        <span style={{ color: '#b45309' }}>Sin descargo aún. Paso informativo — no bloquea el resto del flujo.</span>
+        <span className="text-[#b45309]">Sin descargo aún. Paso informativo — no bloquea el resto del flujo.</span>
       ),
       accion: e.recibioDescargo
         ? undefined
@@ -1314,13 +1263,13 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
       titulo: 'Sanear imputación de cargos',
       estado: imputacionSaneada ? 'completado' : lista.every((s) => s.estado === 'completado') ? 'actual' : 'pendiente',
       descripcion: !imputacionSaneada ? (
-        <span style={{ color: 'var(--color-text-muted)' }}>Define si la imputación de cargos es jurídicamente correcta.</span>
+        <span className="text-text-muted">Define si la imputación de cargos es jurídicamente correcta.</span>
       ) : esCorrecta ? (
-        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#047857', fontWeight: 600 }}>
+        <span className="flex items-center gap-[4px] text-[#047857] font-semibold">
           <CheckIcon size={12} /> Imputación saneada como correcta.
         </span>
       ) : (
-        <span style={{ color: '#be123c', fontWeight: 600 }}>
+        <span className="text-[#be123c] font-semibold">
           Imputación declarada VICIADA (vicio trascendente insubsanable) — recomendación fijada automáticamente en
           ARCHIVAR. Esta decisión no se puede corregir (regla legal, no un error a arreglar).
         </span>
@@ -1345,11 +1294,11 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
         titulo: 'Análisis — fundamentar el archivo',
         estado: e.tieneAnalisis ? 'completado' : 'actual',
         descripcion: e.tieneAnalisis ? (
-          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#047857', fontWeight: 600 }}>
+          <span className="flex items-center gap-[4px] text-[#047857] font-semibold">
             <CheckIcon size={12} /> Fundamentación de archivo redactada.
           </span>
         ) : (
-          <span style={{ color: 'var(--color-text-muted)' }}>
+          <span className="text-text-muted">
             Redacta la fundamentación del archivo (puede citar el motivo del vicio ya registrado) — texto libre
             del instructor, nunca generado por el sistema.
           </span>
@@ -1362,13 +1311,13 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
         titulo: 'Firmar IFI',
         estado: yaFirmadoVicio ? 'completado' : puedeFirmarVicio ? 'actual' : 'pendiente',
         descripcion: yaFirmadoVicio ? (
-          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#047857', fontWeight: 600 }}>
+          <span className="flex items-center gap-[4px] text-[#047857] font-semibold">
             <CheckIcon size={12} /> Firmado{e.numeroInforme ? ` — N° Informe ${e.numeroInforme}` : ''}.
           </span>
         ) : puedeFirmarVicio ? (
-          <span style={{ color: 'var(--color-text-muted)' }}>Al firmar se pide el N° del Informe Final de Instrucción (el número que la oficina le asigna, ej. 756-2026-MDSJL/GOP-SFSA-JLVN).</span>
+          <span className="text-text-muted">Al firmar se pide el N° del Informe Final de Instrucción (el número que la oficina le asigna, ej. 756-2026-MDSJL/GOP-SFSA-JLVN).</span>
         ) : (
-          <span style={{ color: 'var(--color-text-muted)' }}>Disponible después de redactar el análisis.</span>
+          <span className="text-text-muted">Disponible después de redactar el análisis.</span>
         ),
         accion: yaFirmadoVicio || !puedeFirmarVicio ? undefined : { label: 'Firmar', onClick: onAbrirFirmar, variant: 'primary', icon: <PenToolIcon size={14} /> },
       });
@@ -1378,9 +1327,9 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
         titulo: 'Descargar IFI (Word)',
         estado: yaFirmadoVicio ? 'actual' : 'pendiente',
         descripcion: yaFirmadoVicio ? (
-          <span style={{ color: 'var(--color-text-muted)' }}>Genera el documento Word al vuelo con los datos actuales.</span>
+          <span className="text-text-muted">Genera el documento Word al vuelo con los datos actuales.</span>
         ) : (
-          <span style={{ color: 'var(--color-text-muted)' }}>Disponible después de firmar.</span>
+          <span className="text-text-muted">Disponible después de firmar.</span>
         ),
         accion: yaFirmadoVicio
           ? { label: 'Descargar IFI (Word)', onClick: onDescargarDocumento, variant: 'outline', icon: <PrinterIcon size={14} />, loading: descargandoDocumento }
@@ -1393,13 +1342,13 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
         estado: e.ifiEstado === 'NOTIFICADO' ? 'completado' : e.ifiEstado === 'EMITIDO' ? 'actual' : 'pendiente',
         descripcion:
           e.ifiEstado === 'NOTIFICADO' ? (
-            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#047857', fontWeight: 600 }}>
+            <span className="flex items-center gap-[4px] text-[#047857] font-semibold">
               <CheckIcon size={12} /> Notificado.
             </span>
           ) : e.ifiEstado === 'EMITIDO' ? (
-            <span style={{ color: 'var(--color-text-muted)' }}>Registra la fecha en que se notificó el archivo al administrado.</span>
+            <span className="text-text-muted">Registra la fecha en que se notificó el archivo al administrado.</span>
           ) : (
-            <span style={{ color: 'var(--color-text-muted)' }}>Disponible después de firmar.</span>
+            <span className="text-text-muted">Disponible después de firmar.</span>
           ),
         accion: e.ifiEstado === 'EMITIDO' ? { label: 'Notificar', onClick: onAbrirNotificar, variant: 'primary' } : undefined,
       });
@@ -1413,13 +1362,13 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
       titulo: 'Hechos y Base Legal',
       estado: !esCorrecta ? 'pendiente' : e.tieneSeccionAutomatica ? 'completado' : 'actual',
       descripcion: !esCorrecta ? (
-        <span style={{ color: 'var(--color-text-muted)' }}>Disponible una vez saneada la imputación como correcta.</span>
+        <span className="text-text-muted">Disponible una vez saneada la imputación como correcta.</span>
       ) : e.tieneSeccionAutomatica ? (
-        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#047857', fontWeight: 600 }}>
+        <span className="flex items-center gap-[4px] text-[#047857] font-semibold">
           <CheckIcon size={12} /> Generado. Se puede regenerar si cambiaron los datos fuente.
         </span>
       ) : (
-        <span style={{ color: 'var(--color-text-muted)' }}>
+        <span className="text-text-muted">
           Antecedentes, marco normativo y transcripción del acta, generados automáticamente con los datos del
           expediente.
         </span>
@@ -1441,13 +1390,13 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
       titulo: 'Análisis del instructor',
       estado: !e.tieneSeccionAutomatica ? 'pendiente' : e.tieneAnalisis ? 'completado' : 'actual',
       descripcion: !e.tieneSeccionAutomatica ? (
-        <span style={{ color: 'var(--color-text-muted)' }}>Disponible después de generar Hechos y Base Legal.</span>
+        <span className="text-text-muted">Disponible después de generar Hechos y Base Legal.</span>
       ) : e.tieneAnalisis ? (
-        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#047857', fontWeight: 600 }}>
+        <span className="flex items-center gap-[4px] text-[#047857] font-semibold">
           <CheckIcon size={12} /> Análisis redactado.
         </span>
       ) : (
-        <span style={{ color: 'var(--color-text-muted)' }}>Criterio jurídico del instructor — texto libre, nunca generado por el sistema.</span>
+        <span className="text-text-muted">Criterio jurídico del instructor — texto libre, nunca generado por el sistema.</span>
       ),
       accion: !e.tieneSeccionAutomatica
         ? undefined
@@ -1460,13 +1409,13 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
       titulo: 'Recomendación',
       estado: !e.tieneAnalisis ? 'pendiente' : e.recomendacion ? 'completado' : 'actual',
       descripcion: !e.tieneAnalisis ? (
-        <span style={{ color: 'var(--color-text-muted)' }}>Disponible después de redactar el análisis.</span>
+        <span className="text-text-muted">Disponible después de redactar el análisis.</span>
       ) : e.recomendacion ? (
-        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#047857', fontWeight: 600 }}>
+        <span className="flex items-center gap-[4px] text-[#047857] font-semibold">
           <CheckIcon size={12} /> {e.recomendacion}
         </span>
       ) : (
-        <span style={{ color: 'var(--color-text-muted)' }}>Decide si se recomienda sancionar o archivar el expediente.</span>
+        <span className="text-text-muted">Decide si se recomienda sancionar o archivar el expediente.</span>
       ),
       accion:
         !e.tieneAnalisis || e.recomendacion
@@ -1483,13 +1432,13 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
       titulo: 'Firmar IFI',
       estado: yaFirmado ? 'completado' : puedeFirmar ? 'actual' : 'pendiente',
       descripcion: yaFirmado ? (
-        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#047857', fontWeight: 600 }}>
+        <span className="flex items-center gap-[4px] text-[#047857] font-semibold">
           <CheckIcon size={12} /> Firmado{e.numeroInforme ? ` — N° Informe ${e.numeroInforme}` : ''}.
         </span>
       ) : puedeFirmar ? (
-        <span style={{ color: 'var(--color-text-muted)' }}>Al firmar se pide el N° del Informe Final de Instrucción (el número que la oficina le asigna, ej. 756-2026-MDSJL/GOP-SFSA-JLVN).</span>
+        <span className="text-text-muted">Al firmar se pide el N° del Informe Final de Instrucción (el número que la oficina le asigna, ej. 756-2026-MDSJL/GOP-SFSA-JLVN).</span>
       ) : (
-        <span style={{ color: 'var(--color-text-muted)' }}>Disponible después de tener análisis y recomendación.</span>
+        <span className="text-text-muted">Disponible después de tener análisis y recomendación.</span>
       ),
       accion: yaFirmado || !puedeFirmar ? undefined : { label: 'Firmar', onClick: onAbrirFirmar, variant: 'primary', icon: <PenToolIcon size={14} /> },
     });
@@ -1500,9 +1449,9 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
       titulo: 'Descargar IFI (Word)',
       estado: yaFirmado ? 'actual' : 'pendiente',
       descripcion: yaFirmado ? (
-        <span style={{ color: 'var(--color-text-muted)' }}>Genera el documento Word al vuelo con los datos actuales del IFI.</span>
+        <span className="text-text-muted">Genera el documento Word al vuelo con los datos actuales del IFI.</span>
       ) : (
-        <span style={{ color: 'var(--color-text-muted)' }}>Disponible después de firmar.</span>
+        <span className="text-text-muted">Disponible después de firmar.</span>
       ),
       accion: yaFirmado
         ? { label: 'Descargar IFI (Word)', onClick: onDescargarDocumento, variant: 'outline', icon: <PrinterIcon size={14} />, loading: descargandoDocumento }
@@ -1516,13 +1465,13 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
       estado: e.ifiEstado === 'NOTIFICADO' ? 'completado' : e.ifiEstado === 'EMITIDO' ? 'actual' : 'pendiente',
       descripcion:
         e.ifiEstado === 'NOTIFICADO' ? (
-          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#047857', fontWeight: 600 }}>
+          <span className="flex items-center gap-[4px] text-[#047857] font-semibold">
             <CheckIcon size={12} /> Notificado.
           </span>
         ) : e.ifiEstado === 'EMITIDO' ? (
-          <span style={{ color: 'var(--color-text-muted)' }}>Registra la fecha real de entrega al administrado.</span>
+          <span className="text-text-muted">Registra la fecha real de entrega al administrado.</span>
         ) : (
-          <span style={{ color: 'var(--color-text-muted)' }}>Disponible después de firmar el IFI.</span>
+          <span className="text-text-muted">Disponible después de firmar el IFI.</span>
         ),
       accion:
         e.ifiEstado === 'EMITIDO' ? { label: 'Notificar', onClick: onAbrirNotificar, variant: 'primary' } : undefined,
@@ -1533,50 +1482,39 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
 
   return (
     <Modal isOpen onClose={onClose} title={`Expediente ${e.numeroExpediente} — Detalle de instrucción`} maxWidth="680px">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+      <div className="flex flex-col gap-0">
         {steps.map((step, idx) => (
-          <div key={step.numero} style={{ display: 'flex', gap: '14px' }}>
+          <div key={step.numero} className="flex gap-[14px]">
             {/* Círculo + línea conectora */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div className="flex flex-col items-center">
               <div
-                style={{
-                  width: 26,
-                  height: 26,
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  flexShrink: 0,
-                  backgroundColor:
-                    step.estado === 'completado'
-                      ? '#047857'
-                      : step.estado === 'actual'
-                      ? 'var(--color-primary-600)'
-                      : step.estado === 'no-aplica'
-                      ? '#be123c'
-                      : '#e2e8f0',
-                  color: step.estado === 'pendiente' ? '#64748b' : '#ffffff',
-                }}
+                className={`w-[26px] h-[26px] rounded-full flex items-center justify-center text-[12px] font-bold shrink-0 ${step.estado === 'pendiente' ? 'text-[#64748b]' : 'text-[#ffffff]'} ${
+ step.estado === 'completado'
+ ? 'bg-[#047857]'
+ : step.estado === 'actual'
+ ? 'bg-primary-600'
+ : step.estado === 'no-aplica'
+ ? 'bg-[#be123c]'
+ : 'bg-[#e2e8f0]'
+ }`}
               >
                 {step.estado === 'completado' ? <CheckIcon size={13} /> : step.numero}
               </div>
               {idx < steps.length - 1 && (
-                <div style={{ width: 2, flex: 1, minHeight: '24px', backgroundColor: step.estado === 'completado' ? '#047857' : '#e2e8f0' }} />
+                <div className={`w-[2px] flex-1 min-h-[24px] ${step.estado === 'completado' ? 'bg-[#047857]' : 'bg-[#e2e8f0]'}`} />
               )}
             </div>
 
             {/* Contenido del paso */}
-            <div style={{ paddingBottom: '20px', flex: 1 }}>
-              <div style={{ fontSize: '13px', fontWeight: 700, color: step.estado === 'pendiente' ? '#94a3b8' : 'var(--color-midnight-900)' }}>
+            <div className="pb-[20px] flex-1">
+              <div className={`text-[13px] font-bold ${step.estado === 'pendiente' ? 'text-[#94a3b8]' : 'text-midnight-900'}`}>
                 {step.titulo}
               </div>
-              <div style={{ fontSize: '12px', marginTop: '4px', marginBottom: step.accion || step.accionSecundaria ? '8px' : 0 }}>
+              <div className={`text-[12px] mt-[4px] ${step.accion || step.accionSecundaria ? 'mb-[8px]' : 'mb-0'}`}>
                 {step.descripcion}
               </div>
               {(step.accion || step.accionSecundaria) && (
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div className="flex gap-[8px]">
                   {step.accion && (
                     <Button variant={step.accion.variant || 'primary'} size="sm" icon={step.accion.icon} loading={step.accion.loading} onClick={step.accion.onClick}>
                       {step.accion.label}
@@ -1594,10 +1532,10 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
         ))}
 
         {/* Documentos adjuntos — no es secuencial, disponible en paralelo siempre */}
-        <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="border-t border-t-border pt-[16px] flex items-center justify-between">
           <div>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-midnight-900)' }}>Documentos Adjuntos</div>
-            <div style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>Memos, evidencia adicional — se puede usar en cualquier momento.</div>
+            <div className="text-[13px] font-bold text-midnight-900">Documentos Adjuntos</div>
+            <div className="text-[11px] text-text-muted">Memos, evidencia adicional — se puede usar en cualquier momento.</div>
           </div>
           <Button variant="secondary" size="sm" icon={<FileTextIcon size={14} />} onClick={onAbrirDocumentos}>
             Ver documentos

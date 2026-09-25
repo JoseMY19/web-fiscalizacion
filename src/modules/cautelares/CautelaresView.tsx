@@ -95,11 +95,11 @@ export const CautelaresView: React.FC = () => {
 
   return (
     <div>
-      <div style={{ marginBottom: '20px' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--color-midnight-900)' }}>
+      <div className="mb-[20px]">
+        <h2 className="text-[18px] font-extrabold text-midnight-900">
           Medidas Cautelares Previas y de Urgencia (ES2)
         </h2>
-        <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+        <p className="text-[13px] text-text-muted mt-[2px]">
           Adopción preventiva de medidas urgentes de paralización, clausura preventiva o decomiso para cautelar el interés público.
         </p>
       </div>
@@ -107,18 +107,10 @@ export const CautelaresView: React.FC = () => {
       {message && <Alert type={message.type}>{message.text}</Alert>}
 
       <div
-        style={{
-          backgroundColor: '#eff6ff',
-          padding: '12px 16px',
-          borderRadius: '8px',
-          border: '1px solid #bfdbfe',
-          color: '#1e3a8a',
-          fontSize: '13px',
-          marginBottom: '20px',
-        }}
+        className="bg-[#eff6ff] py-[12px] px-[16px] rounded-[8px] border border-[#bfdbfe] text-[#1e3a8a] text-[13px] mb-[20px]"
       >
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-          <span style={{ marginTop: '2px', flexShrink: 0 }}><ShieldAlertIcon size={16} /></span>
+        <div className="flex items-start gap-[8px]">
+          <span className="mt-[2px] shrink-0"><ShieldAlertIcon size={16} /></span>
           <span>
             <strong>Marco Jurídico del PAS:</strong> La medida cautelar vincula directamente a la <strong>Intervención</strong>,
             no del Expediente, pues el marco legal faculta su adopción previa o simultánea a la Notificación de Cargo.
@@ -126,17 +118,17 @@ export const CautelaresView: React.FC = () => {
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <div className="flex flex-col gap-[20px]">
         {/* Paso 1: Emitir */}
         <Card title="Paso 1: Emisión de la Resolución Cautelar">
-          <div className="form-group">
-            <label className="form-label form-label-required">Intervención de Fiscalización</label>
+          <div>
+            <label>Intervención de Fiscalización</label>
             {loadingIntervenciones ? (
-              <div style={{ padding: '8px 0' }}>
+              <div className="py-[8px] px-0">
                 <Spinner size={16} />
               </div>
             ) : (
-              <select className="form-input" value={intervencionId} onChange={(e) => setIntervencionId(e.target.value)}>
+              <select value={intervencionId} onChange={(e) => setIntervencionId(e.target.value)}>
                 <option value="">— Seleccione una intervención —</option>
                 {intervenciones.map((i) => (
                   <option key={i.id} value={i.id}>
@@ -180,8 +172,8 @@ export const CautelaresView: React.FC = () => {
             rows={4}
           />
 
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <div style={{ flex: 1 }}>
+          <div className="flex gap-[12px]">
+            <div className="flex-1">
               <Input
                 label="Tipo de Medida Cautelar (opcional, doc. Word)"
                 placeholder="Ej. PARALIZACIÓN, CLAUSURA, DECOMISO"
@@ -189,7 +181,7 @@ export const CautelaresView: React.FC = () => {
                 onChange={(e) => setTipoMedidaCautelar(e.target.value)}
               />
             </div>
-            <div style={{ flex: 1 }}>
+            <div className="flex-1">
               <Input
                 label="Dirección de notificación (opcional, doc. Word)"
                 placeholder="Ej. MZ. C LOTE 3..."
@@ -214,8 +206,8 @@ export const CautelaresView: React.FC = () => {
             onChange={(e) => setInicialesFirma(e.target.value)}
           />
 
-          <div style={{ display: 'flex', gap: '20px', margin: '4px 0 16px' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', cursor: 'pointer' }}>
+          <div className="flex gap-[20px] mt-[4px] mx-0 mb-[16px]">
+            <label className="flex items-center gap-[6px] text-[13px] cursor-pointer">
               <input
                 type="checkbox"
                 checked={incluyeAdvertenciaUsurpacion}
@@ -223,7 +215,7 @@ export const CautelaresView: React.FC = () => {
               />
               Incluir advertencia penal por usurpación
             </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', cursor: 'pointer' }}>
+            <label className="flex items-center gap-[6px] text-[13px] cursor-pointer">
               <input
                 type="checkbox"
                 checked={incluyeResguardoSerenazgo}
@@ -252,13 +244,13 @@ export const CautelaresView: React.FC = () => {
             icon={<FileTextIcon size={16} />}
             disabled={!medidaId.trim()}
             onClick={() => descargarDocumentoMedidaCautelar(medidaId.trim())}
-            style={{ marginBottom: '16px' }}
+            className="mb-[16px]!"
           >
             Descargar Word de la Resolución
           </Button>
 
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', marginBottom: '16px' }}>
-            <div style={{ flex: 1 }}>
+          <div className="flex gap-[12px] items-end mb-[16px]">
+            <div className="flex-1">
               <Input
                 type="date"
                 label="Fecha de la Diligencia de Ejecución Material"
@@ -266,13 +258,13 @@ export const CautelaresView: React.FC = () => {
                 onChange={(e) => setFechaEjecucion(e.target.value)}
               />
             </div>
-            <Button variant="secondary" loading={actionLoading} onClick={handleEjecucion} style={{ marginBottom: '14px' }}>
+            <Button variant="secondary" loading={actionLoading} onClick={handleEjecucion} className="mb-[14px]!">
               Registrar Ejecución
             </Button>
           </div>
 
-          <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '16px' }}>
-            <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '12px' }}>
+          <div className="border-t border-t-border pt-[16px]">
+            <p className="text-[13px] text-text-secondary mb-[12px]">
               Una vez generado el Expediente administrativo del PAS, anexe formalmente el cuaderno cautelar:
             </p>
             <Button variant="outline" loading={actionLoading} onClick={handleAnexar}>

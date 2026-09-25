@@ -56,39 +56,16 @@ interface UsuarioOpcion {
   nombres: string;
 }
 
-const estiloBloque: React.CSSProperties = {
-  backgroundColor: '#f8fafc',
-  padding: '12px 14px',
-  borderRadius: '8px',
-  border: '1px solid var(--color-border)',
-  fontSize: '13px',
-};
+const estiloBloque = 'bg-[#f8fafc] py-[12px] px-[14px] rounded-[8px] border border-border text-[13px]';
 
-const estiloTituloSeccion: React.CSSProperties = {
-  fontSize: '13px',
-  fontWeight: 800,
-  color: 'var(--color-midnight-900)',
-  marginBottom: '10px',
-  textTransform: 'uppercase',
-  letterSpacing: '0.4px',
-};
+const estiloTituloSeccion = 'text-[13px] font-extrabold text-midnight-900 mb-[10px] uppercase tracking-[0.4px]';
 
-const estiloTextoLargo: React.CSSProperties = {
-  whiteSpace: 'pre-wrap',
-  backgroundColor: '#ffffff',
-  border: '1px solid var(--color-border)',
-  borderRadius: '6px',
-  padding: '10px 12px',
-  fontSize: '12px',
-  lineHeight: 1.5,
-  maxHeight: '260px',
-  overflowY: 'auto',
-};
+const estiloTextoLargo = 'whitespace-pre-wrap bg-[#ffffff] border border-border rounded-[6px] py-[10px] px-[12px] text-[12px] leading-[1.5] max-h-[260px] overflow-y-auto';
 
-const Muted: React.FC<{ children: React.ReactNode }> = ({ children }) => <span style={{ color: 'var(--color-text-muted)' }}>{children}</span>;
+const Muted: React.FC<{ children: React.ReactNode }> = ({ children }) => <span className="text-text-muted">{children}</span>;
 
 const Hecho: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#047857', fontWeight: 600 }}>
+  <span className="inline-flex items-center gap-[4px] text-[#047857] font-semibold">
     <CheckIcon size={12} /> {children}
   </span>
 );
@@ -301,7 +278,7 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
         {errorCarga ? (
           <Alert type="error">{errorCarga}</Alert>
         ) : (
-          <div style={{ padding: '40px', textAlign: 'center' }}>
+          <div className="p-[40px] text-center">
             <Spinner size={32} />
           </div>
         )}
@@ -323,7 +300,7 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
   /** Botón "Editar" de un paso completado (solo si la resolución sigue editable). */
   const botonEditar = (clave: string) =>
     editable ? (
-      <div style={{ marginTop: '8px' }}>
+      <div className="mt-[8px]">
         <Button size="sm" variant="outline" onClick={() => abrirEdicion(clave)}>
           Editar
         </Button>
@@ -331,7 +308,7 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
     ) : null;
   const botonCancelar = (clave: string, completado: boolean) =>
     completado && editando.has(clave) ? (
-      <Button size="sm" variant="secondary" onClick={() => cerrarEdicion(clave)} style={{ marginLeft: '8px' }}>
+      <Button size="sm" variant="secondary" onClick={() => cerrarEdicion(clave)} className="ml-[8px]!">
         Cancelar
       </Button>
     ) : null;
@@ -568,9 +545,9 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
     ),
     contenido:
       puedeDecidir && (!r || editando.has('decision')) ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div className="flex flex-col gap-[8px]">
           {opcionesDecision.map((o) => (
-            <label key={o} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
+            <label key={o} className="flex items-center gap-[8px] text-[13px]">
               <input type="radio" name="decision-resolucion" checked={decisionSel === o} onChange={() => setDecisionSel(o)} />
               {LABEL_DECISION[o]}
               {sugerida === o && <Badge variant="info">sugerida por el IFI</Badge>}
@@ -593,7 +570,7 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
         </div>
       ) : r ? (
         <div>
-          {r.motivoDiscrepanciaIfi && <div style={estiloBloque}>Motivo para apartarse del IFI: {r.motivoDiscrepanciaIfi}</div>}
+          {r.motivoDiscrepanciaIfi && <div className={estiloBloque}>Motivo para apartarse del IFI: {r.motivoDiscrepanciaIfi}</div>}
           {botonEditar('decision')}
         </div>
       ) : undefined,
@@ -619,8 +596,8 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
         <Muted>Se heredan del IFI: antecedentes, marco normativo y transcripción del acta.</Muted>
       ),
       contenido: (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <div className="flex flex-col gap-[8px]">
+          <div className="flex gap-[8px] flex-wrap">
             {editable && (
               <Button
                 size="sm"
@@ -661,7 +638,7 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
     ),
     contenido: !r ? undefined : conForm('descargoPost', !!r.descargoPosteriorTexto) ? (
       <div>
-        <div style={{ width: '220px' }}>
+        <div className="w-[220px]">
           <Input type="date" label="Fecha de presentación" value={descargoPostFecha} max={hoy} onChange={(e) => setDescargoPostFecha(e.target.value)} />
         </div>
         <Textarea label="Resumen del descargo" value={descargoPostTexto} onChange={(e) => setDescargoPostTexto(e.target.value)} rows={5} />
@@ -669,7 +646,7 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
           Guardar descargo
         </Button>
         {r.descargoPosteriorTexto && (
-          <Button size="sm" variant="secondary" style={{ marginLeft: '8px' }} onClick={() => guardarDescargoPosterior(true)}>
+          <Button size="sm" variant="secondary" className="ml-[8px]!" onClick={() => guardarDescargoPosterior(true)}>
             Quitar
           </Button>
         )}
@@ -677,7 +654,7 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
       </div>
     ) : r.descargoPosteriorTexto ? (
       <div>
-        <div style={estiloTextoLargo}>{r.descargoPosteriorTexto}</div>
+        <div className={estiloTextoLargo}>{r.descargoPosteriorTexto}</div>
         {botonEditar('descargoPost')}
       </div>
     ) : undefined,
@@ -703,7 +680,7 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
     contenido: !r ? undefined : conForm('analisis', !!r.analisisTexto) ? (
       <div>
         {d.ifi?.archivoPorVicio && d.ifi.motivoVicioTrascendente && (
-          <Alert type="info" style={{ marginBottom: '8px' }}>
+          <Alert type="info" className="mb-[8px]!">
             Motivo del vicio registrado en el IFI: {d.ifi.motivoVicioTrascendente}
           </Alert>
         )}
@@ -726,7 +703,7 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
       </div>
     ) : r.analisisTexto ? (
       <div>
-        <div style={estiloTextoLargo}>{r.analisisTexto}</div>
+        <div className={estiloTextoLargo}>{r.analisisTexto}</div>
         {botonEditar('analisis')}
       </div>
     ) : undefined,
@@ -763,15 +740,15 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
       ),
       contenido: conForm('montos', tieneMonto) ? (
         <div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
-            <div style={{ marginBottom: '14px' }}>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '6px' }}>
+          <div className="grid grid-cols-[1fr_1fr_1fr] gap-[12px]">
+            <div className="mb-[14px]">
+              <label className="block text-[13px] font-semibold text-text-secondary mb-[6px]">
                 Tipo de infracción
               </label>
               <select
                 value={tipoInfraccion}
                 onChange={(e) => setTipoInfraccion(e.target.value as TipoInfraccion | '')}
-                style={{ width: '100%', padding: '9px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', fontSize: '13px' }}
+                className="w-full py-[9px] px-[12px] rounded-sm border border-border text-[13px]"
               >
                 <option value="">— Elegir —</option>
                 {(Object.keys(LABEL_INFRACCION) as TipoInfraccion[]).map((t) => (
@@ -784,10 +761,10 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
             <Input label="% UIT" type="number" min={0} step="0.01" placeholder="Ej. 200" value={porcentajeUit} onChange={(e) => setPorcentajeUit(e.target.value)} />
             <Input label="Multa sin descuento (S/)" type="number" min={0} step="0.01" placeholder="Ej. 11000.00" value={montoSin} onChange={(e) => setMontoSin(e.target.value)} />
           </div>
-          <div style={{ ...estiloBloque, marginBottom: '8px' }}>
+          <div className={`${estiloBloque} mb-[8px]`}>
             Monto con descuento:{' '}
             {vistaPrevia ? <strong>{vistaPrevia}</strong> : <Muted>elige el tipo de infracción e ingresa la multa para calcularlo.</Muted>}
-            <div style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '4px' }}>Lo calcula el sistema al guardar; no se escribe a mano.</div>
+            <div className="text-[11px] text-text-muted mt-[4px]">Lo calcula el sistema al guardar; no se escribe a mano.</div>
           </div>
           <Button size="sm" variant="outline" loading={accionEnCurso === 'montos'} onClick={guardarMontos}>
             Guardar monto
@@ -796,10 +773,10 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
         </div>
       ) : tieneMonto ? (
         <div>
-          <div style={estiloBloque}>
+          <div className={estiloBloque}>
             Infracción: <strong>{r?.tipoInfraccion ? LABEL_INFRACCION[r.tipoInfraccion] : '—'}</strong> · % UIT:{' '}
             <strong>{r?.porcentajeUit != null ? `${r.porcentajeUit}%` : '—'}</strong> · Multa: <strong>{montoTexto(r?.montoSinDescuento ?? null)}</strong>
-            <div style={{ marginTop: '4px' }}>
+            <div className="mt-[4px]">
               Con descuento (art. 43 Ord. 464):{' '}
               {calculoGuardado ? <strong>{calculoGuardado}</strong> : <Muted>falta el tipo de infracción o la multa.</Muted>}
             </div>
@@ -845,7 +822,7 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
         </div>
       ) : r?.medidaComplementaria ? (
         <div>
-          <div style={estiloBloque}>{r.medidaComplementaria}</div>
+          <div className={estiloBloque}>{r.medidaComplementaria}</div>
           {botonEditar('medida')}
         </div>
       ) : undefined,
@@ -872,12 +849,12 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
         </Muted>
       ),
       contenido: conForm('retiro', !!retiro?.confirmada) ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Responsable</label>
+        <div className="flex flex-col gap-[8px]">
+          <label className="text-[13px] font-semibold text-text-secondary">Responsable</label>
           <select
             value={responsableId}
             onChange={(e) => setResponsableId(e.target.value)}
-            style={{ padding: '9px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', fontSize: '13px' }}
+            className="py-[9px] px-[12px] rounded-sm border border-border text-[13px]"
           >
             <option value="">— Elegir usuario —</option>
             {responsableId && !responsableEnLista && (
@@ -889,7 +866,7 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
               </option>
             ))}
           </select>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
+          <label className="flex items-center gap-[8px] text-[13px]">
             <input type="checkbox" checked={retiroConfirmado} onChange={(e) => setRetiroConfirmado(e.target.checked)} />
             Confirmo que la multa ya fue retirada del estado de cuenta
           </label>
@@ -902,7 +879,7 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
         </div>
       ) : retiro?.confirmada ? (
         <div>
-          <div style={estiloBloque}>
+          <div className={estiloBloque}>
             Responsable: <strong>{retiro.responsableNombre ?? '—'}</strong>
             {retiro.fechaConfirmacion ? ` · Confirmado el ${fechaCorta(retiro.fechaConfirmacion)}` : ''}
           </div>
@@ -928,7 +905,7 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
         </Badge>
       </span>
     ) : !plazos.esperaDescargoVencida ? (
-      <span style={{ color: '#b45309' }}>
+      <span className="text-[#b45309]">
         Bloqueado: corre el plazo de 5 días hábiles para el descargo contra el IFI (IFI notificado el{' '}
         {fechaCorta(d.ifi?.fechaNotificacion)}; vence el {fechaCorta(plazos.finEsperaDescargoIfi)}
         {plazos.diasHabilesEsperaRestantes ? ` — faltan ${plazos.diasHabilesEsperaRestantes} días hábiles` : ' — hoy es el último día'}). Se
@@ -940,8 +917,8 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
       <Muted>Registra la fecha real en que le entregaste el documento al Subgerente. Desde ahí el contenido queda bloqueado.</Muted>
     ),
     contenido: puedeEnviar ? (
-      <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-        <div style={{ width: '220px' }}>
+      <div className="flex gap-[12px] items-end flex-wrap">
+        <div className="w-[220px]">
           <Input
             type="date"
             label="Fecha de entrega al Subgerente"
@@ -951,15 +928,15 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
             onChange={(e) => setFechaEnvio(e.target.value)}
           />
         </div>
-        <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={descargarResolucion} style={{ marginBottom: '14px' }}>
+        <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={descargarResolucion} className="mb-[14px]!">
           Descargar resolución (Word)
         </Button>
-        <Button size="sm" icon={<PenToolIcon size={14} />} loading={accionEnCurso === 'enviar'} onClick={enviarAFirma} style={{ marginBottom: '14px' }}>
+        <Button size="sm" icon={<PenToolIcon size={14} />} loading={accionEnCurso === 'enviar'} onClick={enviarAFirma} className="mb-[14px]!">
           Registrar envío a firma
         </Button>
       </div>
     ) : enFirma ? (
-      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+      <div className="flex gap-[8px] flex-wrap">
         <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={descargarResolucion}>
           Descargar resolución (Word)
         </Button>
@@ -993,8 +970,8 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
       <Muted>Disponible después de enviar a firma.</Muted>
     ),
     contenido: enFirma ? (
-      <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-        <div style={{ width: '200px' }}>
+      <div className="flex gap-[12px] items-end flex-wrap">
+        <div className="w-[200px]">
           <Input
             type="date"
             label="Fecha de firma"
@@ -1004,7 +981,7 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
             onChange={(e) => setFechaFirma(e.target.value)}
           />
         </div>
-        <div style={{ flex: 1, minWidth: '220px' }}>
+        <div className="flex-1 min-w-[220px]">
           <Input
             label="N° de resolución (opcional)"
             placeholder="Tal como figura en el documento firmado"
@@ -1012,7 +989,7 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
             onChange={(e) => setNumeroResolucion(e.target.value)}
           />
         </div>
-        <Button size="sm" variant="success" icon={<PenToolIcon size={14} />} loading={accionEnCurso === 'firmar'} onClick={registrarFirma} style={{ marginBottom: '14px' }}>
+        <Button size="sm" variant="success" icon={<PenToolIcon size={14} />} loading={accionEnCurso === 'firmar'} onClick={registrarFirma} className="mb-[14px]!">
           Registrar firma
         </Button>
       </div>
@@ -1034,8 +1011,8 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
       ),
     contenido:
       r?.estado === 'EMITIDA' ? (
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-          <div style={{ width: '220px' }}>
+        <div className="flex gap-[12px] items-end flex-wrap">
+          <div className="w-[220px]">
             <Input
               type="date"
               label="Fecha de notificación"
@@ -1045,7 +1022,7 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
               onChange={(e) => setFechaNotificacion(e.target.value)}
             />
           </div>
-          <Button size="sm" variant="success" loading={accionEnCurso === 'notificar'} onClick={notificar} style={{ marginBottom: '14px' }}>
+          <Button size="sm" variant="success" loading={accionEnCurso === 'notificar'} onClick={notificar} className="mb-[14px]!">
             Registrar notificación
           </Button>
         </div>
@@ -1069,9 +1046,9 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
     >
       {/* Mensajes DENTRO del panel, fijos arriba mientras se hace scroll. */}
       {mensaje && (
-        <div style={{ position: 'sticky', top: 0, zIndex: 2, backgroundColor: '#ffffff', paddingBottom: '4px', marginBottom: '8px' }}>
-          <div onClick={() => setMensaje(null)} title="Clic para cerrar" style={{ cursor: 'pointer' }}>
-            <Alert type={mensaje.type} style={{ marginBottom: 0 }}>
+        <div className="sticky top-0 z-[2] bg-[#ffffff] pb-[4px] mb-[8px]">
+          <div onClick={() => setMensaje(null)} title="Clic para cerrar" className="cursor-pointer">
+            <Alert type={mensaje.type} className="mb-0!">
               {mensaje.text}
             </Alert>
           </div>
@@ -1080,19 +1057,19 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
       {errorCarga && <Alert type="error">{errorCarga}</Alert>}
 
       {/* 1. RESUMEN */}
-      <section style={{ marginBottom: '20px' }}>
-        <div style={estiloTituloSeccion}>Resumen</div>
+      <section className="mb-[20px]">
+        <div className={estiloTituloSeccion}>Resumen</div>
 
         {tipo && (
-          <div style={{ ...estiloBloque, marginBottom: '10px', backgroundColor: esRsg ? '#f0f9ff' : '#fff1f2' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '6px' }}>
+          <div className={`${estiloBloque} mb-[10px] ${esRsg ? 'bg-[#f0f9ff]!' : 'bg-[#fff1f2]!'}`}>
+            <div className="flex items-center gap-[8px] flex-wrap mb-[6px]">
               <Badge variant={esRsg ? 'info' : 'danger'} size="md">
                 {NOMBRE_TIPO[tipo]}
               </Badge>
               <Badge variant={varianteEtapa(d)}>{labelEtapa({ ...d, resolucionId: r?.id ?? null })}</Badge>
-              {d.ifi?.archivoPorVicio && <span style={{ fontSize: '12px', color: '#be123c', fontWeight: 600 }}>Archivo por error de fondo (vicio trascendente)</span>}
+              {d.ifi?.archivoPorVicio && <span className="text-[12px] text-[#be123c] font-semibold">Archivo por error de fondo (vicio trascendente)</span>}
             </div>
-            <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
+            <div className="text-[12px] text-text-secondary">
               {EXPLICACION_TIPO[tipo]} Sugerido por el IFI; el abogado puede decidir distinto escribiendo el motivo.
               {r?.enParte ? ' Decisión: sancionar en parte (sin medida complementaria).' : ''}
             </div>
@@ -1105,13 +1082,13 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
           </Alert>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '10px' }}>
-          <div style={estiloBloque}>
-            <div style={{ fontWeight: 700, marginBottom: '4px' }}>Administrado</div>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-[10px]">
+          <div className={estiloBloque}>
+            <div className="font-bold mb-[4px]">Administrado</div>
             {d.administrado?.identificado && d.administrado.nombresRazonSocial ? (
               <>
                 <div>{d.administrado.nombresRazonSocial}</div>
-                <div style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
+                <div className="text-[12px] text-text-muted">
                   {d.administrado.tipoDocumento ?? 'Doc.'} {d.administrado.numeroDocumento ?? '—'}
                   {d.administrado.domicilio ? ` · ${d.administrado.domicilio}` : ''}
                 </div>
@@ -1120,29 +1097,29 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
               <Muted>No identificado en campo</Muted>
             )}
           </div>
-          <div style={estiloBloque}>
-            <div style={{ fontWeight: 700, marginBottom: '4px' }}>Infracción</div>
+          <div className={estiloBloque}>
+            <div className="font-bold mb-[4px]">Infracción</div>
             {d.infracciones.length === 0 ? (
               <Muted>No registrada</Muted>
             ) : (
               d.infracciones.map((i, idx) => (
-                <div key={idx} style={{ fontSize: '12px', marginBottom: '2px' }}>
+                <div key={idx} className="text-[12px] mb-[2px]">
                   <strong>{i.codigoNormativo}</strong>
                   {i.descripcion ? ` — ${i.descripcion}` : ''}
                 </div>
               ))
             )}
           </div>
-          <div style={estiloBloque}>
-            <div style={{ fontWeight: 700, marginBottom: '4px' }}>Plazos</div>
-            <div style={{ fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+          <div className={estiloBloque}>
+            <div className="font-bold mb-[4px]">Plazos</div>
+            <div className="text-[12px] flex flex-col gap-[3px]">
               <div>
                 Descargo contra el IFI:{' '}
                 {plazos.finEsperaDescargoIfi ? (
                   plazos.esperaDescargoVencida ? (
-                    <span style={{ color: '#047857', fontWeight: 600 }}>venció el {fechaCorta(plazos.finEsperaDescargoIfi)}</span>
+                    <span className="text-[#047857] font-semibold">venció el {fechaCorta(plazos.finEsperaDescargoIfi)}</span>
                   ) : (
-                    <span style={{ color: '#b45309', fontWeight: 600 }}>
+                    <span className="text-[#b45309] font-semibold">
                       vence el {fechaCorta(plazos.finEsperaDescargoIfi)}
                       {plazos.diasHabilesEsperaRestantes ? ` (faltan ${plazos.diasHabilesEsperaRestantes} días hábiles)` : ' (hoy)'}
                     </span>
@@ -1156,7 +1133,7 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
                 {r?.estado === 'NOTIFICADA' ? (
                   <Muted>detenida (resolución notificada)</Muted>
                 ) : caducidad ? (
-                  <span style={{ color: caducidad.urgente ? '#be123c' : 'inherit', fontWeight: caducidad.urgente ? 700 : 400 }}>
+                  <span className={`${caducidad.urgente ? 'text-[#be123c]' : 'text-inherit'} ${caducidad.urgente ? 'font-bold' : 'font-normal'}`}>
                     {caducidad.texto} ({fechaCorta(plazos.fechaCaducidad)}){plazos.ampliacionFirmada ? ' — ampliado +3 meses' : ''}
                   </span>
                 ) : (
@@ -1186,9 +1163,9 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
       )}
 
       {/* 2. DOCUMENTOS DEL EXPEDIENTE */}
-      <section style={{ marginBottom: '20px' }}>
-        <div style={estiloTituloSeccion}>Documentos del expediente</div>
-        <div style={{ border: '1px solid var(--color-border)', borderRadius: '8px', overflow: 'hidden' }}>
+      <section className="mb-[20px]">
+        <div className={estiloTituloSeccion}>Documentos del expediente</div>
+        <div className="border border-border rounded-[8px] overflow-hidden">
           {d.tieneActaFiscalizacion && (
             <FilaDocumento titulo="Acta de Fiscalización (Word)">
               <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={() => descargarDocumentoWord(d.intervencionId, 'FISCALIZACION')}>
@@ -1240,7 +1217,7 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
             <FilaDocumento
               titulo="Descargo del administrado (texto)"
               detalle={d.ifi.fechaRecepcionDescargo ? `Recibido el ${fechaCorta(d.ifi.fechaRecepcionDescargo)}` : undefined}
-              expandido={verDescargo ? <div style={estiloTextoLargo}>{d.ifi.descargoTexto?.trim() || 'Sin texto registrado.'}</div> : undefined}
+              expandido={verDescargo ? <div className={estiloTextoLargo}>{d.ifi.descargoTexto?.trim() || 'Sin texto registrado.'}</div> : undefined}
             >
               <Button size="sm" variant="outline" icon={<EyeIcon size={14} />} onClick={() => setVerDescargo((v) => !v)}>
                 {verDescargo ? 'Ocultar' : 'Ver'}
@@ -1253,22 +1230,22 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
               detalle={r.analisisTexto ? 'El Word se genera con la plantilla real (RSGSA / RSG).' : 'El Word se habilita cuando esté redactado el análisis.'}
               expandido={
                 verTextoResolucion ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div className="flex flex-col gap-[8px]">
                     {r.seccionAutomatica ? (
                       <BloqueAntecedentes heredado={antecedentes?.heredadoDelIfi ?? null} archivoPorVicio={!!d.ifi?.archivoPorVicio} />
                     ) : (
                       <Muted>Antecedentes todavía no generados.</Muted>
                     )}
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: '12px', marginBottom: '4px' }}>{esRsg ? 'Desarrollo' : 'Análisis'}</div>
-                      {r.analisisTexto ? <div style={estiloTextoLargo}>{r.analisisTexto}</div> : <Muted>Todavía no redactado.</Muted>}
+                      <div className="font-bold text-[12px] mb-[4px]">{esRsg ? 'Desarrollo' : 'Análisis'}</div>
+                      {r.analisisTexto ? <div className={estiloTextoLargo}>{r.analisisTexto}</div> : <Muted>Todavía no redactado.</Muted>}
                     </div>
                   </div>
                 ) : undefined
               }
             >
               {r.analisisTexto && (
-                <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={descargarResolucion} style={{ marginRight: '6px' }}>
+                <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={descargarResolucion} className="mr-[6px]!">
                   Word
                 </Button>
               )}
@@ -1282,7 +1259,7 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
 
       {/* 3. PASOS DE LA RESOLUCIÓN */}
       <section>
-        <div style={estiloTituloSeccion}>Pasos de la resolución</div>
+        <div className={estiloTituloSeccion}>Pasos de la resolución</div>
         <Stepper pasos={pasos} />
       </section>
     </Modal>
@@ -1316,24 +1293,20 @@ const TarjetaAmpliacion: React.FC<{
   const a = d.ampliacion;
   const finNueve = soloFechaIso(p.fechaCaducidadOriginal);
   const nueveVencidos = !!finNueve && hoy >= finNueve;
-  const fila: React.CSSProperties = { display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap', marginTop: '8px' };
+  const fila = 'flex gap-[12px] items-end flex-wrap mt-[8px]';
   return (
-    <section style={{ marginBottom: '20px' }}>
-      <div style={estiloTituloSeccion}>Ampliación de plazo (RSG)</div>
+    <section className="mb-[20px]">
+      <div className={estiloTituloSeccion}>Ampliación de plazo (RSG)</div>
       <div
-        style={{
-          ...estiloBloque,
-          backgroundColor: p.alertaAmpliacion ? '#fff1f2' : '#f8fafc',
-          borderColor: p.alertaAmpliacion ? '#fda4af' : 'var(--color-border)',
-        }}
+        className={`${estiloBloque} ${p.alertaAmpliacion ? 'bg-[#fff1f2]! border-[#fda4af]!' : ''}`}
       >
-        <div style={{ fontSize: '12px', marginBottom: '6px' }}>
+        <div className="text-[12px] mb-[6px]">
           Da 3 meses más, contados desde que vencen los 9 meses ({fechaCorta(p.fechaCaducidadOriginal)}): nuevo límite{' '}
           <strong>{fechaCorta(p.fechaCaducidadConAmpliacion)}</strong>. Es opcional y solo se puede emitir y firmar antes del{' '}
           {fechaCorta(p.fechaCaducidadOriginal)}. Cuenta desde que se registra la firma.
         </div>
         {p.alertaAmpliacion && (
-          <div style={{ color: '#be123c', fontWeight: 700, fontSize: '12px', marginBottom: '6px' }}>
+          <div className="text-[#be123c] font-bold text-[12px] mb-[6px]">
             Faltan {p.diasParaCaducidad} días para caducar y no hay resolución final firmada. El Subgerente tarda 12 a 15 días en firmar.
           </div>
         )}
@@ -1346,8 +1319,8 @@ const TarjetaAmpliacion: React.FC<{
             </Button>
           )
         ) : (
-          <div style={{ fontSize: '12px' }}>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div className="text-[12px]">
+            <div className="flex gap-[8px] items-center flex-wrap">
               <Badge variant={a.estado === 'NOTIFICADA' ? 'neutral' : a.estado === 'EMITIDA' ? 'success' : a.fechaEnvioFirma ? 'purple' : 'info'}>
                 {a.estado === 'NOTIFICADA' ? 'Notificada' : a.estado === 'EMITIDA' ? 'Firmada, falta notificar' : a.fechaEnvioFirma ? 'En firma' : 'En elaboración'}
               </Badge>
@@ -1355,7 +1328,7 @@ const TarjetaAmpliacion: React.FC<{
                 Descargar RSG de ampliación (Word)
               </Button>
             </div>
-            {a.fechaEnvioFirma && <div style={{ marginTop: '6px' }}>Entregada al Subgerente el {fechaCorta(a.fechaEnvioFirma)}.</div>}
+            {a.fechaEnvioFirma && <div className="mt-[6px]">Entregada al Subgerente el {fechaCorta(a.fechaEnvioFirma)}.</div>}
             {a.fechaFirma && (
               <div>
                 Firmada el {fechaCorta(a.fechaFirma)}
@@ -1365,18 +1338,18 @@ const TarjetaAmpliacion: React.FC<{
             {a.fechaNotificacion && <div>Notificada el {fechaCorta(a.fechaNotificacion)}.</div>}
 
             {a.estado === 'EN_ELABORACION' && !a.fechaEnvioFirma && !nueveVencidos && (
-              <div style={fila}>
-                <div style={{ width: '220px' }}>
+              <div className={fila}>
+                <div className="w-[220px]">
                   <Input type="date" label="Fecha de entrega al Subgerente" value={fechas.ampFechaEnvio} max={hoy} onChange={(e) => setters.setAmpFechaEnvio(e.target.value)} />
                 </div>
-                <Button size="sm" icon={<PenToolIcon size={14} />} loading={accionEnCurso === 'ampEnviar'} onClick={acciones.enviarAmpliacion} style={{ marginBottom: '14px' }}>
+                <Button size="sm" icon={<PenToolIcon size={14} />} loading={accionEnCurso === 'ampEnviar'} onClick={acciones.enviarAmpliacion} className="mb-[14px]!">
                   Registrar envío a firma
                 </Button>
               </div>
             )}
             {a.estado === 'EN_ELABORACION' && a.fechaEnvioFirma && !nueveVencidos && (
-              <div style={fila}>
-                <div style={{ width: '200px' }}>
+              <div className={fila}>
+                <div className="w-[200px]">
                   <Input
                     type="date"
                     label="Fecha de firma"
@@ -1386,20 +1359,20 @@ const TarjetaAmpliacion: React.FC<{
                     onChange={(e) => setters.setAmpFechaFirma(e.target.value)}
                   />
                 </div>
-                <div style={{ flex: 1, minWidth: '200px' }}>
+                <div className="flex-1 min-w-[200px]">
                   <Input label="N° de resolución (opcional)" placeholder="Tal como figura en el papel" value={fechas.ampNumero} onChange={(e) => setters.setAmpNumero(e.target.value)} />
                 </div>
-                <Button size="sm" variant="success" loading={accionEnCurso === 'ampFirmar'} onClick={acciones.firmarAmpliacion} style={{ marginBottom: '14px' }}>
+                <Button size="sm" variant="success" loading={accionEnCurso === 'ampFirmar'} onClick={acciones.firmarAmpliacion} className="mb-[14px]!">
                   Registrar firma
                 </Button>
               </div>
             )}
             {a.estado === 'EN_ELABORACION' && nueveVencidos && (
-              <div style={{ color: '#be123c', marginTop: '6px' }}>Vencieron los 9 meses sin firmarse la ampliación: ya no se puede registrar.</div>
+              <div className="text-[#be123c] mt-[6px]">Vencieron los 9 meses sin firmarse la ampliación: ya no se puede registrar.</div>
             )}
             {a.estado === 'EMITIDA' && (
-              <div style={fila}>
-                <div style={{ width: '220px' }}>
+              <div className={fila}>
+                <div className="w-[220px]">
                   <Input
                     type="date"
                     label="Fecha de notificación"
@@ -1409,7 +1382,7 @@ const TarjetaAmpliacion: React.FC<{
                     onChange={(e) => setters.setAmpFechaNotificacion(e.target.value)}
                   />
                 </div>
-                <Button size="sm" variant="success" loading={accionEnCurso === 'ampNotificar'} onClick={acciones.notificarAmpliacion} style={{ marginBottom: '14px' }}>
+                <Button size="sm" variant="success" loading={accionEnCurso === 'ampNotificar'} onClick={acciones.notificarAmpliacion} className="mb-[14px]!">
                   Registrar notificación
                 </Button>
               </div>
@@ -1427,22 +1400,22 @@ const FilaDocumento: React.FC<{ titulo: string; detalle?: string; expandido?: Re
   expandido,
   children,
 }) => (
-  <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--color-border)', fontSize: '13px' }}>
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+  <div className="py-[10px] px-[14px] border-b border-b-border text-[13px]">
+    <div className="flex items-center justify-between gap-[12px]">
       <div>
-        <div style={{ fontWeight: 600, color: 'var(--color-midnight-900)' }}>{titulo}</div>
-        {detalle && <div style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>{detalle}</div>}
+        <div className="font-semibold text-midnight-900">{titulo}</div>
+        {detalle && <div className="text-[11px] text-text-muted">{detalle}</div>}
       </div>
-      <div style={{ flexShrink: 0 }}>{children}</div>
+      <div className="shrink-0">{children}</div>
     </div>
-    {expandido && <div style={{ marginTop: '10px' }}>{expandido}</div>}
+    {expandido && <div className="mt-[10px]">{expandido}</div>}
   </div>
 );
 
 const BloqueAntecedentes: React.FC<{ heredado: any | null; archivoPorVicio: boolean }> = ({ heredado, archivoPorVicio }) => {
   if (!heredado) {
     return (
-      <div style={estiloTextoLargo}>
+      <div className={estiloTextoLargo}>
         {archivoPorVicio
           ? 'El IFI archivó por vicio trascendente: no hay hechos ni base legal que heredar. El desarrollo de la RSG cita el vicio directamente.'
           : 'El IFI no tenía antecedentes generados para heredar.'}
@@ -1455,13 +1428,13 @@ const BloqueAntecedentes: React.FC<{ heredado: any | null; archivoPorVicio: bool
     { titulo: 'Transcripción del acta', texto: heredado.transcripcionActa },
   ];
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+    <div className="flex flex-col gap-[8px]">
       {partes
         .filter((p) => p.texto && String(p.texto).trim())
         .map((p) => (
           <div key={p.titulo}>
-            <div style={{ fontWeight: 700, fontSize: '12px', marginBottom: '4px' }}>{p.titulo}</div>
-            <div style={estiloTextoLargo}>{String(p.texto)}</div>
+            <div className="font-bold text-[12px] mb-[4px]">{p.titulo}</div>
+            <div className={estiloTextoLargo}>{String(p.texto)}</div>
           </div>
         ))}
     </div>
@@ -1470,43 +1443,32 @@ const BloqueAntecedentes: React.FC<{ heredado: any | null; archivoPorVicio: bool
 
 /** Mismo diseño visual que el stepper del panel de IFI (IfiView.tsx). */
 const Stepper: React.FC<{ pasos: StepDef[] }> = ({ pasos }) => (
-  <div style={{ display: 'flex', flexDirection: 'column' }}>
+  <div className="flex flex-col">
     {pasos.map((paso, idx) => (
-      <div key={paso.clave} style={{ display: 'flex', gap: '14px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div key={paso.clave} className="flex gap-[14px]">
+        <div className="flex flex-col items-center">
           <div
-            style={{
-              width: 26,
-              height: 26,
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '12px',
-              fontWeight: 700,
-              flexShrink: 0,
-              backgroundColor:
-                paso.estado === 'completado'
-                  ? '#047857'
-                  : paso.estado === 'actual'
-                  ? 'var(--color-primary-600)'
-                  : paso.estado === 'opcional'
-                  ? '#fef3c7'
-                  : '#e2e8f0',
-              color: paso.estado === 'pendiente' ? '#64748b' : paso.estado === 'opcional' ? '#92400e' : '#ffffff',
-            }}
+            className={`w-[26px] h-[26px] rounded-full flex items-center justify-center text-[12px] font-bold shrink-0 ${
+              paso.estado === 'completado'
+                ? 'bg-[#047857]'
+                : paso.estado === 'actual'
+                ? 'bg-primary-600'
+                : paso.estado === 'opcional'
+                ? 'bg-[#fef3c7]'
+                : 'bg-[#e2e8f0]'
+            } ${paso.estado === 'pendiente' ? 'text-[#64748b]' : paso.estado === 'opcional' ? 'text-[#92400e]' : 'text-[#ffffff]'}`}
           >
             {paso.estado === 'completado' ? <CheckIcon size={13} /> : idx + 1}
           </div>
           {idx < pasos.length - 1 && (
-            <div style={{ width: 2, flex: 1, minHeight: '24px', backgroundColor: paso.estado === 'completado' ? '#047857' : '#e2e8f0' }} />
+            <div className={`w-[2px] flex-1 min-h-[24px] ${paso.estado === 'completado' ? 'bg-[#047857]' : 'bg-[#e2e8f0]'}`} />
           )}
         </div>
-        <div style={{ paddingBottom: '20px', flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: '13px', fontWeight: 700, color: paso.estado === 'pendiente' ? '#94a3b8' : 'var(--color-midnight-900)' }}>
+        <div className="pb-[20px] flex-1 min-w-0">
+          <div className={`text-[13px] font-bold ${paso.estado === 'pendiente' ? 'text-[#94a3b8]' : 'text-midnight-900'}`}>
             {paso.titulo}
           </div>
-          <div style={{ fontSize: '12px', marginTop: '4px', marginBottom: paso.contenido ? '8px' : 0 }}>{paso.descripcion}</div>
+          <div className={`text-[12px] mt-[4px] ${paso.contenido ? 'mb-[8px]' : 'mb-0'}`}>{paso.descripcion}</div>
           {paso.contenido}
         </div>
       </div>

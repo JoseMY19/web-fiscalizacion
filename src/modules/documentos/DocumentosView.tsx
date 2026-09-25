@@ -210,12 +210,12 @@ export const DocumentosView: React.FC = () => {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+      <div className="flex items-center justify-between mb-[20px]">
         <div>
-          <h2 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--color-midnight-900)' }}>
+          <h2 className="text-[18px] font-extrabold text-midnight-900">
             Control Documentario, Foliado & Archivo Central
           </h2>
-          <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+          <p className="text-[13px] text-text-muted mt-[2px]">
             Custodia formal de actas físicas preimpresas (SP2-T04), foliado de expedientes y mesa de partes externa (BPMN N1-E04).
           </p>
         </div>
@@ -224,22 +224,10 @@ export const DocumentosView: React.FC = () => {
       {message && <Alert type={message.type}>{message.text}</Alert>}
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
+      <div className="flex gap-[8px] mb-[16px] flex-wrap">
         <button
           onClick={() => setActiveTab('custodia')}
-          style={{
-            padding: '10px 18px',
-            fontSize: '13px',
-            fontWeight: 700,
-            borderRadius: 'var(--radius-sm)',
-            border: activeTab === 'custodia' ? '1px solid var(--color-primary-600)' : '1px solid var(--color-border)',
-            backgroundColor: activeTab === 'custodia' ? 'var(--color-primary-50)' : '#ffffff',
-            color: activeTab === 'custodia' ? 'var(--color-primary-600)' : 'var(--color-text-secondary)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}
+          className={`py-[10px] px-[18px] text-[13px] font-bold rounded-sm cursor-pointer flex items-center gap-[8px] ${activeTab === 'custodia' ? 'border border-primary-600' : 'border border-border'} ${activeTab === 'custodia' ? 'bg-primary-50' : 'bg-[#ffffff]'} ${activeTab === 'custodia' ? 'text-primary-600' : 'text-text-secondary'}`}
         >
           <FileTextIcon size={16} />
           1. Custodia & Ingreso de Actas Físicas (SP2-T04)
@@ -247,19 +235,7 @@ export const DocumentosView: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('dossier')}
-          style={{
-            padding: '10px 18px',
-            fontSize: '13px',
-            fontWeight: 700,
-            borderRadius: 'var(--radius-sm)',
-            border: activeTab === 'dossier' ? '1px solid var(--color-primary-600)' : '1px solid var(--color-border)',
-            backgroundColor: activeTab === 'dossier' ? 'var(--color-primary-50)' : '#ffffff',
-            color: activeTab === 'dossier' ? 'var(--color-primary-600)' : 'var(--color-text-secondary)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}
+          className={`py-[10px] px-[18px] text-[13px] font-bold rounded-sm cursor-pointer flex items-center gap-[8px] ${activeTab === 'dossier' ? 'border border-primary-600' : 'border border-border'} ${activeTab === 'dossier' ? 'bg-primary-50' : 'bg-[#ffffff]'} ${activeTab === 'dossier' ? 'text-primary-600' : 'text-text-secondary'}`}
         >
           <EyeIcon size={16} />
           2. Expediente Electrónico & Dossier Foliado
@@ -267,19 +243,7 @@ export const DocumentosView: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('correlativos')}
-          style={{
-            padding: '10px 18px',
-            fontSize: '13px',
-            fontWeight: 700,
-            borderRadius: 'var(--radius-sm)',
-            border: activeTab === 'correlativos' ? '1px solid var(--color-primary-600)' : '1px solid var(--color-border)',
-            backgroundColor: activeTab === 'correlativos' ? 'var(--color-primary-50)' : '#ffffff',
-            color: activeTab === 'correlativos' ? 'var(--color-primary-600)' : 'var(--color-text-secondary)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}
+          className={`py-[10px] px-[18px] text-[13px] font-bold rounded-sm cursor-pointer flex items-center gap-[8px] ${activeTab === 'correlativos' ? 'border border-primary-600' : 'border border-border'} ${activeTab === 'correlativos' ? 'bg-primary-50' : 'bg-[#ffffff]'} ${activeTab === 'correlativos' ? 'text-primary-600' : 'text-text-secondary'}`}
         >
           <CheckCircleIcon size={16} />
           3. Validador de Correlativos de Serie
@@ -287,19 +251,7 @@ export const DocumentosView: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('externos')}
-          style={{
-            padding: '10px 18px',
-            fontSize: '13px',
-            fontWeight: 700,
-            borderRadius: 'var(--radius-sm)',
-            border: activeTab === 'externos' ? '1px solid var(--color-primary-600)' : '1px solid var(--color-border)',
-            backgroundColor: activeTab === 'externos' ? 'var(--color-primary-50)' : '#ffffff',
-            color: activeTab === 'externos' ? 'var(--color-primary-600)' : 'var(--color-text-secondary)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}
+          className={`py-[10px] px-[18px] text-[13px] font-bold rounded-sm cursor-pointer flex items-center gap-[8px] ${activeTab === 'externos' ? 'border border-primary-600' : 'border border-border'} ${activeTab === 'externos' ? 'bg-primary-50' : 'bg-[#ffffff]'} ${activeTab === 'externos' ? 'text-primary-600' : 'text-text-secondary'}`}
         >
           <BuildingIcon size={16} />
           4. Mesa de Partes: Documentos Externos (N1-E04)
@@ -308,17 +260,17 @@ export const DocumentosView: React.FC = () => {
 
       {/* Tab 1: Custodia y Foliado Físico */}
       {activeTab === 'custodia' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: '20px' }}>
+        <div className="grid grid-cols-[1fr_1.6fr] gap-[20px]">
           <Card title="Registrar Ingreso de Acta Física a Custodia">
             <form onSubmit={handleRegistrarCustodia}>
-              <div style={{ marginBottom: '14px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+              <div className="mb-[14px]">
+                <label className="block text-[13px] font-semibold mb-[6px]">
                   Tipo de Documento / Formato Físico
                 </label>
                 <select
                   value={nuevoTipoActa}
                   onChange={(e) => setNuevoTipoActa(e.target.value)}
-                  style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--color-border)', fontSize: '13px' }}
+                  className="w-full p-[10px] rounded-[6px] border border-border text-[13px]"
                 >
                   <option value="ACTA_FISCALIZACION">Acta de Fiscalización (AF)</option>
                   <option value="NOTIFICACION_CARGO">Notificación de Cargo (NC)</option>
@@ -335,7 +287,7 @@ export const DocumentosView: React.FC = () => {
                 required
               />
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="grid grid-cols-[1fr_1fr] gap-[12px]">
                 <Input
                   label="N° de Folios"
                   type="number"
@@ -343,14 +295,14 @@ export const DocumentosView: React.FC = () => {
                   value={nuevosFolios}
                   onChange={(e) => setNuevosFolios(e.target.value)}
                 />
-                <div style={{ marginBottom: '14px' }}>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+                <div className="mb-[14px]">
+                  <label className="block text-[13px] font-semibold mb-[6px]">
                     Estado del Documento
                   </label>
                   <select
                     value={nuevoEstadoFisico}
                     onChange={(e) => setNuevoEstadoFisico(e.target.value as any)}
-                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--color-border)', fontSize: '13px' }}
+                    className="w-full p-[10px] rounded-[6px] border border-border text-[13px]"
                   >
                     <option value="CONFORME">Conforme</option>
                     <option value="DETERIORADO">Deteriorado</option>
@@ -381,40 +333,40 @@ export const DocumentosView: React.FC = () => {
                 rows={2}
               />
 
-              <Button type="submit" variant="primary" loading={actionLoading} style={{ width: '100%' }}>
+              <Button type="submit" variant="primary" loading={actionLoading} className="w-full!">
                 Registrar en Libro de Custodia
               </Button>
             </form>
           </Card>
 
           <Card title="Libro de Control Documentario y Actas en Archivo">
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-[13px] text-left">
                 <thead>
-                  <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid var(--color-border)' }}>
-                    <th style={{ padding: '12px 14px' }}>Correlativo</th>
-                    <th style={{ padding: '12px 14px' }}>Tipo</th>
-                    <th style={{ padding: '12px 14px' }}>Folios</th>
-                    <th style={{ padding: '12px 14px' }}>Ubicación</th>
-                    <th style={{ padding: '12px 14px' }}>Estado</th>
+                  <tr className="bg-[#f8fafc] border-b border-b-border">
+                    <th className="py-[12px] px-[14px]">Correlativo</th>
+                    <th className="py-[12px] px-[14px]">Tipo</th>
+                    <th className="py-[12px] px-[14px]">Folios</th>
+                    <th className="py-[12px] px-[14px]">Ubicación</th>
+                    <th className="py-[12px] px-[14px]">Estado</th>
                   </tr>
                 </thead>
                 <tbody>
                   {documentosCustodia.map((d) => (
-                    <tr key={d.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                      <td style={{ padding: '12px 14px', fontWeight: 700, color: 'var(--color-primary-600)' }}>
+                    <tr key={d.id} className="border-b border-b-border">
+                      <td className="py-[12px] px-[14px] font-bold text-primary-600">
                         {d.numeroCorrelativo}
                       </td>
-                      <td style={{ padding: '12px 14px', fontSize: '12px' }}>
+                      <td className="py-[12px] px-[14px] text-[12px]">
                         {d.tipoActa.replace('_', ' ')}
                       </td>
-                      <td style={{ padding: '12px 14px' }}>
-                        <span style={{ fontWeight: 600 }}>{d.folios}</span> f.
+                      <td className="py-[12px] px-[14px]">
+                        <span className="font-semibold">{d.folios}</span> f.
                       </td>
-                      <td style={{ padding: '12px 14px', color: 'var(--color-text-secondary)', fontSize: '12px' }}>
+                      <td className="py-[12px] px-[14px] text-text-secondary text-[12px]">
                         {d.ubicacionArchivo}
                       </td>
-                      <td style={{ padding: '12px 14px' }}>
+                      <td className="py-[12px] px-[14px]">
                         <Badge variant={d.estadoFisico === 'CONFORME' ? 'success' : 'warning'}>
                           {d.estadoFisico}
                         </Badge>
@@ -431,19 +383,13 @@ export const DocumentosView: React.FC = () => {
       {/* Tab 2: Dossier / Visor de Expediente */}
       {activeTab === 'dossier' && (
         <Card title="Dossier Documentario del Expediente Sancionador">
-          <form onSubmit={handleBuscarDossier} style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+          <form onSubmit={handleBuscarDossier} className="flex gap-[12px] mb-[20px]">
             <input
               type="text"
               placeholder="Buscar por N° Expediente (ej. EXP-2026-0042) o RUC/DNI..."
               value={expedienteBusqueda}
               onChange={(e) => setExpedienteBusqueda(e.target.value)}
-              style={{
-                flex: 1,
-                padding: '10px 14px',
-                fontSize: '13px',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--color-border)',
-              }}
+              className="flex-1 py-[10px] px-[14px] text-[13px] rounded-sm border border-border"
             />
             <Button type="submit" variant="primary" icon={<SearchIcon size={16} />}>
               Visualizar Dossier
@@ -454,80 +400,71 @@ export const DocumentosView: React.FC = () => {
             <div>
               {/* Carátula del Expediente */}
               <div
-                style={{
-                  background: 'linear-gradient(135deg, #163666 0%, #10264a 100%)',
-                  color: '#ffffff',
-                  padding: '24px',
-                  borderRadius: '12px',
-                  marginBottom: '20px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
+                className="bg-[linear-gradient(135deg,#163666_0%,#10264a_100%)] text-[#ffffff] p-[24px] rounded-[12px] mb-[20px] flex justify-between items-center"
               >
                 <div>
-                  <div style={{ fontSize: '11px', color: '#38bdf8', fontWeight: 700, letterSpacing: '0.5px' }}>
+                  <div className="text-[11px] text-[#38bdf8] font-bold tracking-[0.5px]">
                     CARÁTULA OFICIAL DE EXPEDIENTE ADMINISTRATIVO
                   </div>
-                  <h3 style={{ fontSize: '22px', fontWeight: 800, marginTop: '2px' }}>
+                  <h3 className="text-[22px] font-extrabold mt-[2px]">
                     {dossierActivo.numeroExpediente}
                   </h3>
-                  <div style={{ fontSize: '13px', color: '#cbd5e1', marginTop: '6px' }}>
+                  <div className="text-[13px] text-[#cbd5e1] mt-[6px]">
                     <strong>Administrado:</strong> {dossierActivo.administrado} (RUC: {dossierActivo.dniRuc})<br />
                     <strong>Ubicación:</strong> {dossierActivo.direccion}<br />
                     <strong>Giro:</strong> {dossierActivo.giro}
                   </div>
                 </div>
-                <div style={{ textAlign: 'right' }}>
+                <div className="text-right">
                   <Badge variant="purple">{dossierActivo.estadoActual}</Badge>
-                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#38bdf8', marginTop: '8px' }}>
+                  <div className="text-[14px] font-bold text-[#38bdf8] mt-[8px]">
                     Total Folios: {dossierActivo.totalFolios}
                   </div>
-                  <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
+                  <div className="text-[11px] text-[#94a3b8] mt-[4px]">
                     Fecha Apertura: {dossierActivo.fechaInicio}
                   </div>
                 </div>
               </div>
 
               {/* Árbol de Piezas Procesales */}
-              <h4 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '12px', color: 'var(--color-midnight-900)' }}>
+              <h4 className="text-[15px] font-bold mb-[12px] text-midnight-900">
                 Piezas Procesales y Actas Foliadas del Expediente:
               </h4>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-[13px] text-left">
                   <thead>
-                    <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid var(--color-border)' }}>
-                      <th style={{ padding: '12px 14px' }}>Foliado</th>
-                      <th style={{ padding: '12px 14px' }}>Pieza Procesal</th>
-                      <th style={{ padding: '12px 14px' }}>N° Correlativo / Código</th>
-                      <th style={{ padding: '12px 14px' }}>Fecha Actuación</th>
-                      <th style={{ padding: '12px 14px' }}>Estado Documentario</th>
+                    <tr className="bg-[#f8fafc] border-b border-b-border">
+                      <th className="py-[12px] px-[14px]">Foliado</th>
+                      <th className="py-[12px] px-[14px]">Pieza Procesal</th>
+                      <th className="py-[12px] px-[14px]">N° Correlativo / Código</th>
+                      <th className="py-[12px] px-[14px]">Fecha Actuación</th>
+                      <th className="py-[12px] px-[14px]">Estado Documentario</th>
                     </tr>
                   </thead>
                   <tbody>
                     {dossierActivo.piezasProcesales.map((p: any, i: number) => (
-                      <tr key={i} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                        <td style={{ padding: '12px 14px', fontWeight: 700, color: 'var(--color-primary-600)' }}>
+                      <tr key={i} className="border-b border-b-border">
+                        <td className="py-[12px] px-[14px] font-bold text-primary-600">
                           Folios {p.folio}
                         </td>
-                        <td style={{ padding: '12px 14px', fontWeight: 600 }}>{p.tipo}</td>
-                        <td style={{ padding: '12px 14px', fontFamily: 'monospace' }}>{p.numero}</td>
-                        <td style={{ padding: '12px 14px', color: 'var(--color-text-secondary)' }}>{p.fecha}</td>
-                        <td style={{ padding: '12px 14px' }}><Badge variant="success">{p.estado}</Badge></td>
+                        <td className="py-[12px] px-[14px] font-semibold">{p.tipo}</td>
+                        <td className="py-[12px] px-[14px] font-mono">{p.numero}</td>
+                        <td className="py-[12px] px-[14px] text-text-secondary">{p.fecha}</td>
+                        <td className="py-[12px] px-[14px]"><Badge variant="success">{p.estado}</Badge></td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
 
-              <div style={{ marginTop: '20px', display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <div className="mt-[20px] flex gap-[12px] justify-end">
                 <Button variant="outline" icon={<PrinterIcon size={15} />} onClick={() => window.print()}>
                   Imprimir Carátula y Hoja de Ruta
                 </Button>
               </div>
             </div>
           ) : (
-            <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', textAlign: 'center', padding: '32px' }}>
+            <p className="text-[13px] text-text-muted text-center p-[32px]">
               Ingrese un N° de expediente (ej. EXP-2026-0042) para consultar el dossier documental completo y su foliado.
             </p>
           )}
@@ -538,18 +475,10 @@ export const DocumentosView: React.FC = () => {
       {activeTab === 'correlativos' && (
         <Card title="Verificador de Disponibilidad de Correlativos Físicos">
           <div
-            style={{
-              backgroundColor: '#eff6ff',
-              padding: '12px 16px',
-              borderRadius: '8px',
-              border: '1px solid #bfdbfe',
-              color: '#1e3a8a',
-              fontSize: '13px',
-              marginBottom: '20px',
-            }}
+            className="bg-[#eff6ff] py-[12px] px-[16px] rounded-[8px] border border-[#bfdbfe] text-[#1e3a8a] text-[13px] mb-[20px]"
           >
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-              <span style={{ marginTop: '2px', flexShrink: 0 }}><ShieldAlertIcon size={16} /></span>
+            <div className="flex items-start gap-[8px]">
+              <span className="mt-[2px] shrink-0"><ShieldAlertIcon size={16} /></span>
               <span>
                 <strong>Control Estricto de Series:</strong> Los talonarios físicos vienen pre-impresos por imprenta con numeración de serie.
                 Esta herramienta consulta el sistema en tiempo real para evitar duplicidades o adulteración de actas.
@@ -557,15 +486,15 @@ export const DocumentosView: React.FC = () => {
             </div>
           </div>
 
-          <form onSubmit={handleVerificarCorrelativo} style={{ display: 'grid', gridTemplateColumns: '1.5fr 2fr auto', gap: '12px', alignItems: 'flex-end' }}>
+          <form onSubmit={handleVerificarCorrelativo} className="grid grid-cols-[1.5fr_2fr_auto] gap-[12px] items-end">
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+              <label className="block text-[13px] font-semibold mb-[6px]">
                 Tipo de Acta
               </label>
               <select
                 value={tipoVerificar}
                 onChange={(e) => setTipoVerificar(e.target.value)}
-                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--color-border)', fontSize: '13px' }}
+                className="w-full p-[10px] rounded-[6px] border border-border text-[13px]"
               >
                 <option value="ACTA_FISCALIZACION">Acta de Fiscalización (AF)</option>
                 <option value="NOTIFICACION_CARGO">Notificación de Cargo (NC)</option>
@@ -581,29 +510,29 @@ export const DocumentosView: React.FC = () => {
               required
             />
 
-            <Button type="submit" variant="primary" loading={actionLoading} style={{ marginBottom: '14px' }}>
+            <Button type="submit" variant="primary" loading={actionLoading} className="mb-[14px]!">
               Verificar en Backend
             </Button>
           </form>
 
           {resultadoCorrelativo && (
-            <div style={{ marginTop: '20px' }}>
+            <div className="mt-[20px]">
               {resultadoCorrelativo.error ? (
                 <Alert type="error">{resultadoCorrelativo.error}</Alert>
               ) : resultadoCorrelativo.disponible ? (
-                <div style={{ padding: '16px', borderRadius: '8px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div className="p-[16px] rounded-[8px] bg-[#f0fdf4] border border-[#bbf7d0] text-[#166534] flex items-center gap-[10px]">
                   <CheckCircleIcon size={24} color="#16a34a" />
                   <div>
-                    <h4 style={{ fontSize: '14px', fontWeight: 700 }}>CORRELATIVO DISPONIBLE</h4>
-                    <p style={{ fontSize: '12px' }}>El número {numeroVerificar} no ha sido usado en ninguna intervención previa. Puede utilizarse legítimamente.</p>
+                    <h4 className="text-[14px] font-bold">CORRELATIVO DISPONIBLE</h4>
+                    <p className="text-[12px]">El número {numeroVerificar} no ha sido usado en ninguna intervención previa. Puede utilizarse legítimamente.</p>
                   </div>
                 </div>
               ) : (
-                <div style={{ padding: '16px', borderRadius: '8px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div className="p-[16px] rounded-[8px] bg-[#fef2f2] border border-[#fecaca] text-[#991b1b] flex items-center gap-[10px]">
                   <AlertTriangleIcon size={24} color="#dc2626" />
                   <div>
-                    <h4 style={{ fontSize: '14px', fontWeight: 700 }}>CORRELATIVO DUPLICADO / OCUPADO</h4>
-                    <p style={{ fontSize: '12px' }}>ALERTA: El número {numeroVerificar} ya se encuentra registrado en el sistema. Prohibido volver a emitirlo.</p>
+                    <h4 className="text-[14px] font-bold">CORRELATIVO DUPLICADO / OCUPADO</h4>
+                    <p className="text-[12px]">ALERTA: El número {numeroVerificar} ya se encuentra registrado en el sistema. Prohibido volver a emitirlo.</p>
                   </div>
                 </div>
               )}
@@ -614,17 +543,17 @@ export const DocumentosView: React.FC = () => {
 
       {/* Tab 4: Mesa de Partes (Documentos Externos) */}
       {activeTab === 'externos' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: '20px' }}>
+        <div className="grid grid-cols-[1fr_1.6fr] gap-[20px]">
           <Card title="Ingreso por Mesa de Partes (BPMN N1-E04)">
             <form onSubmit={handleRegistrarExterno}>
-              <div style={{ marginBottom: '14px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+              <div className="mb-[14px]">
+                <label className="block text-[13px] font-semibold mb-[6px]">
                   Entidad de Origen / Fuente
                 </label>
                 <select
                   value={origenExterno}
                   onChange={(e) => setOrigenExterno(e.target.value as any)}
-                  style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--color-border)', fontSize: '13px' }}
+                  className="w-full p-[10px] rounded-[6px] border border-border text-[13px]"
                 >
                   <option value="DENUNCIA">Denuncia Ciudadana / Junta Vecinal</option>
                   <option value="FISCALIA">Ministerio Público / Fiscalía</option>
@@ -667,42 +596,42 @@ export const DocumentosView: React.FC = () => {
                 onChange={(e) => setDerivadoExterno(e.target.value)}
               />
 
-              <Button type="submit" variant="primary" style={{ width: '100%' }}>
+              <Button type="submit" variant="primary" className="w-full!">
                 Generar Registro de Mesa de Partes
               </Button>
             </form>
           </Card>
 
           <Card title="Documentos Externos Recibidos">
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-[13px] text-left">
                 <thead>
-                  <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid var(--color-border)' }}>
-                    <th style={{ padding: '12px 14px' }}>N° Registro</th>
-                    <th style={{ padding: '12px 14px' }}>Origen</th>
-                    <th style={{ padding: '12px 14px' }}>Remitente & Asunto</th>
-                    <th style={{ padding: '12px 14px' }}>Derivado a</th>
+                  <tr className="bg-[#f8fafc] border-b border-b-border">
+                    <th className="py-[12px] px-[14px]">N° Registro</th>
+                    <th className="py-[12px] px-[14px]">Origen</th>
+                    <th className="py-[12px] px-[14px]">Remitente & Asunto</th>
+                    <th className="py-[12px] px-[14px]">Derivado a</th>
                   </tr>
                 </thead>
                 <tbody>
                   {documentosExternos.map((ext) => (
-                    <tr key={ext.numeroRegistro} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                      <td style={{ padding: '12px 14px', fontWeight: 700, color: 'var(--color-primary-600)', whiteSpace: 'nowrap' }}>
+                    <tr key={ext.numeroRegistro} className="border-b border-b-border">
+                      <td className="py-[12px] px-[14px] font-bold text-primary-600 whitespace-nowrap">
                         {ext.numeroRegistro}
-                        <div style={{ fontSize: '11px', color: 'var(--color-text-muted)', fontWeight: 400 }}>
+                        <div className="text-[11px] text-text-muted font-normal">
                           {ext.folios} f. • {ext.fechaIngreso.slice(0, 10)}
                         </div>
                       </td>
-                      <td style={{ padding: '12px 14px' }}>
+                      <td className="py-[12px] px-[14px]">
                         <Badge variant="info">{ext.origen}</Badge>
                       </td>
-                      <td style={{ padding: '12px 14px' }}>
+                      <td className="py-[12px] px-[14px]">
                         <strong>{ext.remitente}</strong>
-                        <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
+                        <p className="text-[12px] text-text-secondary mt-[2px]">
                           {ext.asunto}
                         </p>
                       </td>
-                      <td style={{ padding: '12px 14px', color: 'var(--color-text-muted)', fontSize: '12px' }}>
+                      <td className="py-[12px] px-[14px] text-text-muted text-[12px]">
                         {ext.derivadoA}
                       </td>
                     </tr>

@@ -126,12 +126,12 @@ export const NotificacionesView: React.FC = () => {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+      <div className="flex items-center justify-between mb-[20px]">
         <div>
-          <h2 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--color-midnight-900)' }}>
+          <h2 className="text-[18px] font-extrabold text-midnight-900">
             Diligenciamiento de Notificaciones Domiciliarias (SP3)
           </h2>
-          <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+          <p className="text-[13px] text-text-muted mt-[2px]">
             Asignación de cédulas de notificación de cargo (NC) no entregadas in situ para diligencia en domicilio.
           </p>
         </div>
@@ -142,7 +142,7 @@ export const NotificacionesView: React.FC = () => {
 
       {message && <Alert type={message.type}>{message.text}</Alert>}
 
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+      <div className="flex gap-[8px] mb-[16px]">
         <Button variant={tab === 'pendientes' ? 'primary' : 'secondary'} size="sm" onClick={() => setTab('pendientes')}>
           Pendientes de Asignación
         </Button>
@@ -153,9 +153,9 @@ export const NotificacionesView: React.FC = () => {
 
       <Card>
         {loading ? (
-          <div style={{ padding: '40px', textAlign: 'center' }}>
+          <div className="p-[40px] text-center">
             <Spinner size={32} />
-            <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '12px' }}>
+            <p className="text-[13px] text-text-muted mt-[12px]">
               Cargando cédulas de notificación...
             </p>
           </div>
@@ -170,35 +170,35 @@ export const NotificacionesView: React.FC = () => {
             }
           />
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-[13px] text-left">
               <thead>
-                <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid var(--color-border)' }}>
-                  <th style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--color-text-secondary)' }}>ID Cédula</th>
-                  <th style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--color-text-secondary)' }}>NC Asociada</th>
-                  <th style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--color-text-secondary)' }}>Notificador</th>
-                  <th style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--color-text-secondary)' }}>Estado</th>
-                  <th style={{ padding: '12px 16px', fontWeight: 700, color: 'var(--color-text-secondary)', textAlign: 'right' }}>Acciones</th>
+                <tr className="bg-[#f8fafc] border-b border-b-border">
+                  <th className="py-[12px] px-[16px] font-bold text-text-secondary">ID Cédula</th>
+                  <th className="py-[12px] px-[16px] font-bold text-text-secondary">NC Asociada</th>
+                  <th className="py-[12px] px-[16px] font-bold text-text-secondary">Notificador</th>
+                  <th className="py-[12px] px-[16px] font-bold text-text-secondary">Estado</th>
+                  <th className="py-[12px] px-[16px] font-bold text-text-secondary text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {notificaciones.map((notif) => (
                   <tr
                     key={notif.id}
-                    style={{ borderBottom: '1px solid var(--color-border)' }}
+                    className="border-b border-b-border"
                   >
-                    <td style={{ padding: '14px 16px', fontFamily: 'monospace', fontWeight: 600 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <td className="py-[14px] px-[16px] font-mono font-semibold">
+                      <div className="flex items-center gap-[8px]">
                         <MailIcon size={16} color="var(--color-primary-600)" />
                         {notif.id.slice(0, 8)}...
                       </div>
                     </td>
-                    <td style={{ padding: '14px 16px', color: 'var(--color-text-secondary)' }}>
+                    <td className="py-[14px] px-[16px] text-text-secondary">
                       {notif.notificacionCargoId || '---'}
                     </td>
-                    <td style={{ padding: '14px 16px', color: 'var(--color-text-secondary)' }}>
+                    <td className="py-[14px] px-[16px] text-text-secondary">
                       {notif.notificadorId ? (
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span className="flex items-center gap-[6px]">
                           <UserIcon size={14} />
                           {notif.notificadorNombre || notif.notificadorId}
                         </span>
@@ -206,13 +206,13 @@ export const NotificacionesView: React.FC = () => {
                         <Badge variant="warning">Sin asignar</Badge>
                       )}
                     </td>
-                    <td style={{ padding: '14px 16px' }}>
+                    <td className="py-[14px] px-[16px]">
                       <Badge variant={notif.estado === 'PENDIENTE_ASIGNACION' ? 'warning' : 'info'}>
                         {notif.estado}
                       </Badge>
                     </td>
-                    <td style={{ padding: '14px 16px', textAlign: 'right' }}>
-                      <div style={{ display: 'inline-flex', gap: '8px' }}>
+                    <td className="py-[14px] px-[16px] text-right">
+                      <div className="inline-flex gap-[8px]">
                         {tab === 'pendientes' ? (
                           <Button
                             variant="primary"
@@ -282,21 +282,14 @@ export const NotificacionesView: React.FC = () => {
           </>
         }
       >
-        <div className="form-group">
-          <label className="form-label form-label-required" style={{ display: 'block', marginBottom: '0.375rem', fontSize: '0.875rem', fontWeight: 600 }}>
+        <div>
+          <label className="block mb-[0.375rem] text-[0.875rem] font-semibold">
             Notificador
           </label>
           <select
-            className="form-select"
+            className="w-full py-[0.625rem] px-[0.875rem] rounded-sm border border-border text-[0.9375rem]"
             value={notificadorId}
             onChange={(e) => setNotificadorId(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '0.625rem 0.875rem',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--color-border)',
-              fontSize: '0.9375rem',
-            }}
           >
             <option value="">Selecciona un notificador…</option>
             {notificadores.map((n) => (
@@ -306,7 +299,7 @@ export const NotificacionesView: React.FC = () => {
             ))}
           </select>
           {notificadores.length === 0 && (
-            <p className="form-hint" style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.375rem' }}>
+            <p className="text-[0.75rem] text-text-muted mt-[0.375rem]">
               No hay usuarios con rol NOTIFICADOR registrados.
             </p>
           )}
@@ -365,15 +358,15 @@ export const NotificacionesView: React.FC = () => {
           value={fechaEntregaEfectiva}
           onChange={(e) => setFechaEntregaEfectiva(e.target.value)}
         />
-        <div style={{ marginBottom: '14px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '6px' }}>
+        <div className="mb-[14px]">
+          <label className="block text-[13px] font-semibold text-text-secondary mb-[6px]">
             Evidencia Documental / Foto de Cargo Firmado
           </label>
           <input
             type="file"
             accept="image/*,application/pdf"
             onChange={(e) => setArchivoEvidencia(e.target.files?.[0] || null)}
-            style={{ fontSize: '13px' }}
+            className="text-[13px]"
           />
         </div>
       </Modal>

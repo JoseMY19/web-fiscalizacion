@@ -213,11 +213,11 @@ export const RecursosView: React.FC = () => {
 
   return (
     <div>
-      <div style={{ marginBottom: '20px' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--color-midnight-900)' }}>
+      <div className="mb-[20px]">
+        <h2 className="text-[18px] font-extrabold text-midnight-900">
           Recursos Administrativos Impugnativos (SP6 / SP7)
         </h2>
-        <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+        <p className="text-[13px] text-text-muted mt-[2px]">
           Gestión de impugnaciones contra resoluciones sancionadoras en 1ra instancia (Reconsideración) y 2da instancia (Apelación GOP).
         </p>
       </div>
@@ -225,41 +225,17 @@ export const RecursosView: React.FC = () => {
       {message && <Alert type={message.type}>{message.text}</Alert>}
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+      <div className="flex gap-[8px] mb-[16px]">
         <button
           onClick={() => setActiveTab('reconsideracion')}
-          style={{
-            padding: '10px 20px',
-            fontSize: '13px',
-            fontWeight: 700,
-            borderRadius: 'var(--radius-sm)',
-            border: activeTab === 'reconsideracion' ? '1px solid var(--color-primary-600)' : '1px solid var(--color-border)',
-            backgroundColor: activeTab === 'reconsideracion' ? 'var(--color-primary-50)' : '#ffffff',
-            color: activeTab === 'reconsideracion' ? 'var(--color-primary-600)' : 'var(--color-text-secondary)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}
+          className={`py-[10px] px-[20px] text-[13px] font-bold rounded-sm cursor-pointer flex items-center gap-[8px] ${activeTab === 'reconsideracion' ? 'border border-primary-600' : 'border border-border'} ${activeTab === 'reconsideracion' ? 'bg-primary-50' : 'bg-[#ffffff]'} ${activeTab === 'reconsideracion' ? 'text-primary-600' : 'text-text-secondary'}`}
         >
           <ScaleIcon size={16} />
           1. Reconsideración (SP6 - Misma Autoridad)
         </button>
         <button
           onClick={() => setActiveTab('apelacion')}
-          style={{
-            padding: '10px 20px',
-            fontSize: '13px',
-            fontWeight: 700,
-            borderRadius: 'var(--radius-sm)',
-            border: activeTab === 'apelacion' ? '1px solid var(--color-primary-600)' : '1px solid var(--color-border)',
-            backgroundColor: activeTab === 'apelacion' ? 'var(--color-primary-50)' : '#ffffff',
-            color: activeTab === 'apelacion' ? 'var(--color-primary-600)' : 'var(--color-text-secondary)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}
+          className={`py-[10px] px-[20px] text-[13px] font-bold rounded-sm cursor-pointer flex items-center gap-[8px] ${activeTab === 'apelacion' ? 'border border-primary-600' : 'border border-border'} ${activeTab === 'apelacion' ? 'bg-primary-50' : 'bg-[#ffffff]'} ${activeTab === 'apelacion' ? 'text-primary-600' : 'text-text-secondary'}`}
         >
           <ScaleIcon size={16} />
           2. Apelación ante GOP (SP7 - Segunda Instancia)
@@ -268,29 +244,29 @@ export const RecursosView: React.FC = () => {
 
       {/* Tab 1: Reconsideración */}
       {activeTab === 'reconsideracion' ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="flex flex-col gap-[20px]">
           <Card title="Bandeja: reconsideraciones pendientes (sin evaluar o sin RSG vinculada)">
             {pendientesRecon.length === 0 ? (
               <EmptyState title="Sin reconsideraciones pendientes" description="No hay recursos de reconsideración esperando acción." />
             ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-[13px] text-left">
                   <thead>
-                    <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid var(--color-border)' }}>
-                      <th style={{ padding: '10px 12px' }}>N° Expediente</th>
-                      <th style={{ padding: '10px 12px' }}>Fecha presentación</th>
-                      <th style={{ padding: '10px 12px' }}>Nueva prueba</th>
-                      <th style={{ padding: '10px 12px' }}>Estado</th>
-                      <th style={{ padding: '10px 12px' }} />
+                    <tr className="bg-[#f8fafc] border-b border-b-border">
+                      <th className="py-[10px] px-[12px]">N° Expediente</th>
+                      <th className="py-[10px] px-[12px]">Fecha presentación</th>
+                      <th className="py-[10px] px-[12px]">Nueva prueba</th>
+                      <th className="py-[10px] px-[12px]">Estado</th>
+                      <th className="py-[10px] px-[12px]" />
                     </tr>
                   </thead>
                   <tbody>
                     {pendientesRecon.map((r) => (
-                      <tr key={r.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                        <td style={{ padding: '10px 12px' }}>{r.numeroExpediente}</td>
-                        <td style={{ padding: '10px 12px' }}>{formatearFecha(r.fechaPresentacion)}</td>
-                        <td style={{ padding: '10px 12px' }}>{r.nuevaPrueba ? 'Sí' : 'No'}</td>
-                        <td style={{ padding: '10px 12px' }}>
+                      <tr key={r.id} className="border-b border-b-border">
+                        <td className="py-[10px] px-[12px]">{r.numeroExpediente}</td>
+                        <td className="py-[10px] px-[12px]">{formatearFecha(r.fechaPresentacion)}</td>
+                        <td className="py-[10px] px-[12px]">{r.nuevaPrueba ? 'Sí' : 'No'}</td>
+                        <td className="py-[10px] px-[12px]">
                           {r.faltaVincularResolucion ? (
                             <Badge variant="warning">Falta vincular RSG</Badge>
                           ) : r.resultado ? (
@@ -299,7 +275,7 @@ export const RecursosView: React.FC = () => {
                             <Badge variant="neutral">Sin evaluar</Badge>
                           )}
                         </td>
-                        <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                        <td className="py-[10px] px-[12px] text-right">
                           <Button
                             size="sm"
                             variant="outline"
@@ -320,7 +296,7 @@ export const RecursosView: React.FC = () => {
           </Card>
 
           <Card title="Paso 1: Interposición del Recurso de Reconsideración">
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px' }}>
+            <div className="grid grid-cols-[2fr_1fr] gap-[16px]">
               <Input
                 label="ID de la Resolución Sancionadora (RSGSA)"
                 placeholder="Ej. 3fa85f64-5717-4562-b3fc-2c963f66afa6"
@@ -335,8 +311,8 @@ export const RecursosView: React.FC = () => {
               />
             </div>
 
-            <div style={{ margin: '14px 0', padding: '12px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+            <div className="my-[14px] mx-0 p-[12px] bg-[#f8fafc] rounded-[8px] border border-border">
+              <label className="flex items-center gap-[8px] text-[13px] font-semibold cursor-pointer">
                 <input
                   type="checkbox"
                   checked={nuevaPrueba}
@@ -346,7 +322,7 @@ export const RecursosView: React.FC = () => {
               </label>
 
               {nuevaPrueba && (
-                <div style={{ marginTop: '10px' }}>
+                <div className="mt-[10px]">
                   <Textarea
                     label="Descripción de la Nueva Prueba Aportada"
                     placeholder="Ej. Copia legalizada de Licencia de Funcionamiento N° 458-2026, plano visado o comprobante..."
@@ -371,9 +347,9 @@ export const RecursosView: React.FC = () => {
               onChange={(e) => setReconsideracionId(e.target.value)}
             />
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-              <div style={{ backgroundColor: '#f8fafc', padding: '14px', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
-                <h4 style={{ fontSize: '13px', fontWeight: 700, marginBottom: '8px' }}>Subsanación de Inadmisibilidad:</h4>
+            <div className="grid grid-cols-[1fr_1fr] gap-[16px] mb-[16px]">
+              <div className="bg-[#f8fafc] p-[14px] rounded-[8px] border border-border">
+                <h4 className="text-[13px] font-bold mb-[8px]">Subsanación de Inadmisibilidad:</h4>
                 <Input
                   type="date"
                   label="Fecha de Subsanación"
@@ -385,19 +361,19 @@ export const RecursosView: React.FC = () => {
                 </Button>
               </div>
 
-              <div style={{ backgroundColor: '#f8fafc', padding: '14px', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
-                <h4 style={{ fontSize: '13px', fontWeight: 700, marginBottom: '8px' }}>Emitir RSG Resolutiva (recomendado):</h4>
-                <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginBottom: '8px' }}>
+              <div className="bg-[#f8fafc] p-[14px] rounded-[8px] border border-border">
+                <h4 className="text-[13px] font-bold mb-[8px]">Emitir RSG Resolutiva (recomendado):</h4>
+                <p className="text-[11px] text-text-muted mb-[8px]">
                   Crea una resolución RSG nueva para este expediente y la vincula de una vez — nunca reutiliza la RSGSA recurrida.
                 </p>
                 <Button size="sm" variant="primary" loading={actionLoading} onClick={handleEmitirRsg}>
                   Emitir y Vincular RSG
                 </Button>
-                <details style={{ marginTop: '10px' }}>
-                  <summary style={{ fontSize: '11px', cursor: 'pointer', color: 'var(--color-text-muted)' }}>
+                <details className="mt-[10px]">
+                  <summary className="text-[11px] cursor-pointer text-text-muted">
                     Vincular una RSG ya existente manualmente (avanzado)
                   </summary>
-                  <div style={{ marginTop: '8px' }}>
+                  <div className="mt-[8px]">
                     <Input
                       label="ID de la RSG que Resuelve"
                       placeholder="ID de resolución que declara fundada/infundada"
@@ -420,7 +396,7 @@ export const RecursosView: React.FC = () => {
               rows={4}
             />
 
-            <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+            <div className="flex gap-[12px] mt-[12px]">
               <Button variant="success" loading={actionLoading} onClick={() => handleEvaluarRecon('FUNDADA')}>
                 Declarar FUNDADA
               </Button>
@@ -432,32 +408,32 @@ export const RecursosView: React.FC = () => {
         </div>
       ) : (
         /* Tab 2: Apelación GOP */
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="flex flex-col gap-[20px]">
           <Card title="Bandeja: apelaciones pendientes de decisión GOP">
             {pendientesApel.length === 0 ? (
               <EmptyState title="Sin apelaciones pendientes" description="No hay recursos de apelación esperando decisión de GOP." />
             ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-[13px] text-left">
                   <thead>
-                    <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid var(--color-border)' }}>
-                      <th style={{ padding: '10px 12px' }}>N° Expediente</th>
-                      <th style={{ padding: '10px 12px' }}>Informe generado</th>
-                      <th style={{ padding: '10px 12px' }}>Informe firmado</th>
-                      <th style={{ padding: '10px 12px' }} />
+                    <tr className="bg-[#f8fafc] border-b border-b-border">
+                      <th className="py-[10px] px-[12px]">N° Expediente</th>
+                      <th className="py-[10px] px-[12px]">Informe generado</th>
+                      <th className="py-[10px] px-[12px]">Informe firmado</th>
+                      <th className="py-[10px] px-[12px]" />
                     </tr>
                   </thead>
                   <tbody>
                     {pendientesApel.map((a) => (
-                      <tr key={a.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                        <td style={{ padding: '10px 12px' }}>{a.numeroExpediente}</td>
-                        <td style={{ padding: '10px 12px' }}>
+                      <tr key={a.id} className="border-b border-b-border">
+                        <td className="py-[10px] px-[12px]">{a.numeroExpediente}</td>
+                        <td className="py-[10px] px-[12px]">
                           <Badge variant={a.informeGopGenerado ? 'success' : 'neutral'}>{a.informeGopGenerado ? 'Sí' : 'No'}</Badge>
                         </td>
-                        <td style={{ padding: '10px 12px' }}>
+                        <td className="py-[10px] px-[12px]">
                           <Badge variant={a.informeFirmado ? 'success' : 'neutral'}>{a.informeFirmado ? 'Sí' : 'No'}</Badge>
                         </td>
-                        <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                        <td className="py-[10px] px-[12px] text-right">
                           <Button
                             size="sm"
                             variant="outline"
@@ -497,7 +473,7 @@ export const RecursosView: React.FC = () => {
               onChange={(e) => setApelacionId(e.target.value)}
             />
 
-            <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+            <div className="flex gap-[12px] mb-[16px]">
               <Button variant="secondary" icon={<FileTextIcon size={16} />} loading={actionLoading} onClick={handleGenerarInformeGop}>
                 Generar Informe de Elevación GOP
               </Button>
@@ -507,16 +483,16 @@ export const RecursosView: React.FC = () => {
             </div>
 
             {informeGopResult && (
-              <div style={{ backgroundColor: '#f0fdf4', padding: '12px', borderRadius: '8px', border: '1px solid #bbf7d0', marginBottom: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, color: '#16a34a' }}>
+              <div className="bg-[#f0fdf4] p-[12px] rounded-[8px] border border-[#bbf7d0] mb-[16px]">
+                <div className="flex items-center gap-[6px] text-[12px] font-semibold text-[#16a34a]">
                   <CheckIcon size={14} />
                   <span>Informe técnico generado con éxito (conforme al principio de doble instancia, sin opinión de fondo).</span>
                 </div>
               </div>
             )}
 
-            <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '16px' }}>
-              <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-midnight-900)', marginBottom: '8px' }}>
+            <div className="border-t border-t-border pt-[16px]">
+              <h4 className="text-[14px] font-bold text-midnight-900 mb-[8px]">
                 Resolución de Segunda Instancia por GOP:
               </h4>
               <Input
@@ -526,7 +502,7 @@ export const RecursosView: React.FC = () => {
                 onChange={(e) => setMotivoNulidad(e.target.value)}
               />
 
-              <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+              <div className="flex gap-[12px] mt-[12px]">
                 <Button variant="success" loading={actionLoading} onClick={() => handleDecisionGop('FUNDADA')}>
                   GOP: FUNDADA
                 </Button>

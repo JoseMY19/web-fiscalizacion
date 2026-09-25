@@ -329,16 +329,16 @@ export const ExpedientesView: React.FC = () => {
   return (
     <div>
       {/* Header Bar */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '22px', flexWrap: 'wrap', gap: '16px' }}>
+      <div className="flex items-start justify-between mb-[22px] flex-wrap gap-[16px]">
         <div>
-          <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.3px', margin: 0 }}>
+          <h2 className="text-[22px] font-extrabold text-[#0f172a] tracking-[-0.3px] m-0">
             Mesa de Control y Calificación Formal
           </h2>
-          <p style={{ fontSize: '13px', color: '#64748b', marginTop: '4px', margin: 0 }}>
+          <p className="text-[13px] text-[#64748b] mt-[4px] m-0">
             Validación de requisitos de procedibilidad, verificación de series de campo y control documental del PAS.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div className="flex gap-[10px]">
           <Button variant="secondary" icon={<RefreshCwIcon size={14} />} loading={loading} onClick={cargar}>
             Actualizar
           </Button>
@@ -352,149 +352,78 @@ export const ExpedientesView: React.FC = () => {
 
       {/* KPI Stats Cards */}
       <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: '16px',
-          marginBottom: '24px',
-        }}
+        className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-[16px] mb-[24px]"
       >
         <div
-          style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '12px',
-            padding: '16px 20px',
-            border: '1px solid #e2e8f0',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
+          className="bg-[#ffffff] rounded-[12px] py-[16px] px-[20px] border border-[#e2e8f0] shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex items-center justify-between"
         >
           <div>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Por Calificar</span>
-            <div style={{ fontSize: '26px', fontWeight: 800, color: '#0f172a', marginTop: '2px' }}>{expedientes.length}</div>
-            <span style={{ fontSize: '11px', color: '#0284c7', fontWeight: 600 }}>En bandeja de validación</span>
+            <span className="text-[12px] font-semibold text-[#64748b]">Por Calificar</span>
+            <div className="text-[26px] font-extrabold text-[#0f172a] mt-[2px]">{expedientes.length}</div>
+            <span className="text-[11px] text-[#0284c7] font-semibold">En bandeja de validación</span>
           </div>
-          <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: '#e0f2fe', color: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="w-[42px] h-[42px] rounded-[10px] bg-[#e0f2fe] text-[#0284c7] flex items-center justify-center">
             <ExpedienteIcon size={22} />
           </div>
         </div>
 
         <div
-          style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '12px',
-            padding: '16px 20px',
-            border: '1px solid #e2e8f0',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
+          className="bg-[#ffffff] rounded-[12px] py-[16px] px-[20px] border border-[#e2e8f0] shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex items-center justify-between"
         >
           <div>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Actas Observadas</span>
-            <div style={{ fontSize: '26px', fontWeight: 800, color: '#dc2626', marginTop: '2px' }}>{observadas.length}</div>
-            <span style={{ fontSize: '11px', color: '#dc2626', fontWeight: 600 }}>Devueltas para subsanación</span>
+            <span className="text-[12px] font-semibold text-[#64748b]">Actas Observadas</span>
+            <div className="text-[26px] font-extrabold text-[#dc2626] mt-[2px]">{observadas.length}</div>
+            <span className="text-[11px] text-[#dc2626] font-semibold">Devueltas para subsanación</span>
           </div>
-          <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="w-[42px] h-[42px] rounded-[10px] bg-[#fee2e2] text-[#dc2626] flex items-center justify-center">
             <AlertTriangleIcon size={22} />
           </div>
         </div>
 
         <div
-          style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '12px',
-            padding: '16px 20px',
-            border: '1px solid #e2e8f0',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
+          className="bg-[#ffffff] rounded-[12px] py-[16px] px-[20px] border border-[#e2e8f0] shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex items-center justify-between"
         >
           <div>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Ingreso Físico Recibido</span>
-            <div style={{ fontSize: '26px', fontWeight: 800, color: '#059669', marginTop: '2px' }}>
+            <span className="text-[12px] font-semibold text-[#64748b]">Ingreso Físico Recibido</span>
+            <div className="text-[26px] font-extrabold text-[#059669] mt-[2px]">
               {expedientes.filter((e) => e.fechaIngresoFisico).length}
             </div>
-            <span style={{ fontSize: '11px', color: '#059669', fontWeight: 600 }}>Talonarios en custodia</span>
+            <span className="text-[11px] text-[#059669] font-semibold">Talonarios en custodia</span>
           </div>
-          <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: '#dcfce7', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="w-[42px] h-[42px] rounded-[10px] bg-[#dcfce7] text-[#059669] flex items-center justify-center">
             <FileTextIcon size={22} />
           </div>
         </div>
 
         <div
-          style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '12px',
-            padding: '16px 20px',
-            border: '1px solid #e2e8f0',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
+          className="bg-[#ffffff] rounded-[12px] py-[16px] px-[20px] border border-[#e2e8f0] shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex items-center justify-between"
         >
           <div>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Conformidad Legal</span>
-            <div style={{ fontSize: '26px', fontWeight: 800, color: '#0f172a', marginTop: '2px' }}>100%</div>
-            <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Art. 248° TUO LPAG</span>
+            <span className="text-[12px] font-semibold text-[#64748b]">Conformidad Legal</span>
+            <div className="text-[26px] font-extrabold text-[#0f172a] mt-[2px]">100%</div>
+            <span className="text-[11px] text-[#64748b] font-semibold">Art. 248° TUO LPAG</span>
           </div>
-          <div style={{ width: '42px', height: '42px', borderRadius: '10px', backgroundColor: '#f1f5f9', color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="w-[42px] h-[42px] rounded-[10px] bg-[#f1f5f9] text-[#475569] flex items-center justify-center">
             <CheckCircleIcon size={22} />
           </div>
         </div>
       </div>
 
       {/* Main Container Card */}
-      <div style={{ backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
+      <div className="bg-[#ffffff] rounded-[12px] border border-[#e2e8f0] shadow-[0_1px_3px_rgba(0,0,0,0.05)] overflow-hidden">
         {/* Segmented Control Bar & Search Toolbar */}
         <div
-          style={{
-            padding: '16px 20px',
-            borderBottom: '1px solid #e2e8f0',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '14px',
-            backgroundColor: '#fafbfc',
-          }}
+          className="py-[16px] px-[20px] border-b border-b-[#e2e8f0] flex items-center justify-between flex-wrap gap-[14px] bg-[#fafbfc]"
         >
           {/* Segmented Control Tabs */}
-          <div style={{ display: 'inline-flex', backgroundColor: '#f1f5f9', padding: '4px', borderRadius: '8px', gap: '4px' }}>
+          <div className="inline-flex bg-[#f1f5f9] p-[4px] rounded-[8px] gap-[4px]">
             <button
               onClick={() => setActiveTab('validar')}
-              style={{
-                padding: '7px 16px',
-                borderRadius: '6px',
-                border: 'none',
-                backgroundColor: activeTab === 'validar' ? '#ffffff' : 'transparent',
-                color: activeTab === 'validar' ? '#0f172a' : '#64748b',
-                fontWeight: activeTab === 'validar' ? 700 : 500,
-                fontSize: '13px',
-                cursor: 'pointer',
-                boxShadow: activeTab === 'validar' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                transition: 'all 150ms ease',
-              }}
+              className={`py-[7px] px-[16px] rounded-[6px] border-0 text-[13px] cursor-pointer flex items-center gap-[8px] [transition:all_150ms_ease] ${activeTab === 'validar' ? 'bg-[#ffffff]' : 'bg-transparent'} ${activeTab === 'validar' ? 'text-[#0f172a]' : 'text-[#64748b]'} ${activeTab === 'validar' ? 'font-bold' : 'font-medium'} ${activeTab === 'validar' ? 'shadow-[0_1px_3px_rgba(0,0,0,0.08)]' : 'shadow-none'}`}
             >
               <span>Bandeja de Validación</span>
               <span
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  padding: '1px 7px',
-                  borderRadius: '9999px',
-                  backgroundColor: activeTab === 'validar' ? '#e0f2fe' : '#e2e8f0',
-                  color: activeTab === 'validar' ? '#0369a1' : '#64748b',
-                }}
+                className={`text-[11px] font-bold py-[1px] px-[7px] rounded-pill ${activeTab === 'validar' ? 'bg-[#e0f2fe]' : 'bg-[#e2e8f0]'} ${activeTab === 'validar' ? 'text-[#0369a1]' : 'text-[#64748b]'}`}
               >
                 {expedientes.length}
               </span>
@@ -502,33 +431,12 @@ export const ExpedientesView: React.FC = () => {
 
             <button
               onClick={() => setActiveTab('observadas')}
-              style={{
-                padding: '7px 16px',
-                borderRadius: '6px',
-                border: 'none',
-                backgroundColor: activeTab === 'observadas' ? '#ffffff' : 'transparent',
-                color: activeTab === 'observadas' ? '#0f172a' : '#64748b',
-                fontWeight: activeTab === 'observadas' ? 700 : 500,
-                fontSize: '13px',
-                cursor: 'pointer',
-                boxShadow: activeTab === 'observadas' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                transition: 'all 150ms ease',
-              }}
+              className={`py-[7px] px-[16px] rounded-[6px] border-0 text-[13px] cursor-pointer flex items-center gap-[8px] [transition:all_150ms_ease] ${activeTab === 'observadas' ? 'bg-[#ffffff]' : 'bg-transparent'} ${activeTab === 'observadas' ? 'text-[#0f172a]' : 'text-[#64748b]'} ${activeTab === 'observadas' ? 'font-bold' : 'font-medium'} ${activeTab === 'observadas' ? 'shadow-[0_1px_3px_rgba(0,0,0,0.08)]' : 'shadow-none'}`}
             >
               <span>Actas Observadas</span>
               {observadas.length > 0 && (
                 <span
-                  style={{
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    padding: '1px 7px',
-                    borderRadius: '9999px',
-                    backgroundColor: '#fee2e2',
-                    color: '#dc2626',
-                  }}
+                  className="text-[11px] font-bold py-[1px] px-[7px] rounded-pill bg-[#fee2e2] text-[#dc2626]"
                 >
                   {observadas.length}
                 </span>
@@ -537,21 +445,7 @@ export const ExpedientesView: React.FC = () => {
 
             <button
               onClick={() => setActiveTab('digitalizar')}
-              style={{
-                padding: '7px 16px',
-                borderRadius: '6px',
-                border: 'none',
-                backgroundColor: activeTab === 'digitalizar' ? '#ffffff' : 'transparent',
-                color: activeTab === 'digitalizar' ? '#0f172a' : '#64748b',
-                fontWeight: activeTab === 'digitalizar' ? 700 : 500,
-                fontSize: '13px',
-                cursor: 'pointer',
-                boxShadow: activeTab === 'digitalizar' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                transition: 'all 150ms ease',
-              }}
+              className={`py-[7px] px-[16px] rounded-[6px] border-0 text-[13px] cursor-pointer flex items-center gap-[8px] [transition:all_150ms_ease] ${activeTab === 'digitalizar' ? 'bg-[#ffffff]' : 'bg-transparent'} ${activeTab === 'digitalizar' ? 'text-[#0f172a]' : 'text-[#64748b]'} ${activeTab === 'digitalizar' ? 'font-bold' : 'font-medium'} ${activeTab === 'digitalizar' ? 'shadow-[0_1px_3px_rgba(0,0,0,0.08)]' : 'shadow-none'}`}
             >
               <PlusIcon size={14} />
               <span>Digitalizar Acta Física</span>
@@ -560,9 +454,9 @@ export const ExpedientesView: React.FC = () => {
 
           {/* Integrated Search Tool */}
           {activeTab === 'validar' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ position: 'relative', width: '320px' }}>
-                <span style={{ position: 'absolute', left: '10px', top: '9px', color: '#94a3b8' }}>
+            <div className="flex items-center gap-[10px]">
+              <div className="relative w-[320px]">
+                <span className="absolute left-[10px] top-[9px] text-[#94a3b8]">
                   <SearchIcon size={15} />
                 </span>
                 <input
@@ -570,15 +464,7 @@ export const ExpedientesView: React.FC = () => {
                   placeholder="Buscar por N°, inspector, infractor..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '7px 10px 7px 32px',
-                    fontSize: '13px',
-                    borderRadius: '6px',
-                    border: '1px solid #cbd5e1',
-                    backgroundColor: '#ffffff',
-                    outline: 'none',
-                  }}
+                  className="w-full py-[7px] pr-[10px] pl-[32px] text-[13px] rounded-[6px] border border-[#cbd5e1] bg-[#ffffff] outline-none"
                 />
               </div>
             </div>
@@ -589,9 +475,9 @@ export const ExpedientesView: React.FC = () => {
         {activeTab === 'validar' && (
           <div>
             {loading ? (
-              <div style={{ padding: '48px', textAlign: 'center' }}>
+              <div className="p-[48px] text-center">
                 <Spinner size={32} />
-                <p style={{ fontSize: '13px', color: '#64748b', marginTop: '12px' }}>
+                <p className="text-[13px] text-[#64748b] mt-[12px]">
                   Cargando expedientes pendientes de validación...
                 </p>
               </div>
@@ -602,15 +488,15 @@ export const ExpedientesView: React.FC = () => {
                 description="No se encontraron expedientes pendientes de validación formal en este momento."
               />
             ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-[13px] text-left">
                   <thead>
-                    <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                      <th style={{ padding: '12px 20px', fontWeight: 600, color: '#475569' }}>Expediente</th>
-                      <th style={{ padding: '12px 20px', fontWeight: 600, color: '#475569' }}>Fecha de Emisión</th>
-                      <th style={{ padding: '12px 20px', fontWeight: 600, color: '#475569' }}>Fiscalizador Asignado</th>
-                      <th style={{ padding: '12px 20px', fontWeight: 600, color: '#475569' }}>Calificación & Custodia</th>
-                      <th style={{ padding: '12px 20px', fontWeight: 600, color: '#475569', textAlign: 'right' }}>Acciones</th>
+                    <tr className="bg-[#f8fafc] border-b border-b-[#e2e8f0]">
+                      <th className="py-[12px] px-[20px] font-semibold text-[#475569]">Expediente</th>
+                      <th className="py-[12px] px-[20px] font-semibold text-[#475569]">Fecha de Emisión</th>
+                      <th className="py-[12px] px-[20px] font-semibold text-[#475569]">Fiscalizador Asignado</th>
+                      <th className="py-[12px] px-[20px] font-semibold text-[#475569]">Calificación & Custodia</th>
+                      <th className="py-[12px] px-[20px] font-semibold text-[#475569] text-right">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -621,17 +507,15 @@ export const ExpedientesView: React.FC = () => {
                       return (
                         <tr
                           key={exp.id}
-                          style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 100ms' }}
-                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8fafc')}
-                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                          className="border-b border-b-[#f1f5f9] [transition:background_100ms] hover:bg-[#f8fafc]"
                         >
-                          <td style={{ padding: '14px 20px', color: '#0f172a' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <span style={{ color: '#0284c7' }}>
+                          <td className="py-[14px] px-[20px] text-[#0f172a]">
+                            <div className="flex items-center gap-[8px]">
+                              <span className="text-[#0284c7]">
                                 <ExpedienteIcon size={16} />
                               </span>
                               <span
-                                style={{ fontWeight: 700, color: '#1d4ed8', cursor: 'pointer' }}
+                                className="font-bold text-[#1d4ed8] cursor-pointer"
                                 onClick={() =>
                                   setDetalleModal({
                                     isOpen: true,
@@ -643,60 +527,48 @@ export const ExpedientesView: React.FC = () => {
                                 {exp.numeroExpediente}
                               </span>
                             </div>
-                            <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px', paddingLeft: '24px' }}>
+                            <div className="text-[11px] text-[#64748b] mt-[2px] pl-[24px]">
                               Intervención de Fiscalización
                             </div>
                           </td>
-                          <td style={{ padding: '14px 20px', color: '#334155' }}>
-                            <div style={{ fontWeight: 500 }}>
+                          <td className="py-[14px] px-[20px] text-[#334155]">
+                            <div className="font-medium">
                               {exp.fechaHoraInicioIntervencion
                                 ? formatearFecha(exp.fechaHoraInicioIntervencion)
                                 : '---'}
                             </div>
-                            <div style={{ fontSize: '11px', color: '#64748b' }}>
+                            <div className="text-[11px] text-[#64748b]">
                               {exp.fechaHoraInicioIntervencion
                                 ? formatearHora(exp.fechaHoraInicioIntervencion) + ' hrs'
                                 : '---'}
                             </div>
                           </td>
-                          <td style={{ padding: '14px 20px', color: '#334155' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <td className="py-[14px] px-[20px] text-[#334155]">
+                            <div className="flex items-center gap-[8px]">
                               <div
-                                style={{
-                                  width: '28px',
-                                  height: '28px',
-                                  borderRadius: '50%',
-                                  backgroundColor: '#e0f2fe',
-                                  color: '#0284c7',
-                                  fontWeight: 700,
-                                  fontSize: '11px',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  flexShrink: 0,
-                                }}
+                                className="w-[28px] h-[28px] rounded-full bg-[#e0f2fe] text-[#0284c7] font-bold text-[11px] flex items-center justify-center shrink-0"
                               >
                                 {fiscalizadorLimpio.charAt(0)}
                               </div>
                               <div>
-                                <div style={{ fontWeight: 600, color: '#0f172a' }}>{fiscalizadorLimpio}</div>
-                                <div style={{ fontSize: '11px', color: '#64748b' }}>Inspector de Campo</div>
+                                <div className="font-semibold text-[#0f172a]">{fiscalizadorLimpio}</div>
+                                <div className="text-[11px] text-[#64748b]">Inspector de Campo</div>
                               </div>
                             </div>
                           </td>
-                          <td style={{ padding: '14px 20px' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
+                          <td className="py-[14px] px-[20px]">
+                            <div className="flex flex-col gap-[4px] items-start">
                               <Badge variant="warning">{formatEstado(exp.estado)}</Badge>
                               {exp.fechaIngresoFisico && (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#059669', fontWeight: 500, marginTop: '2px' }}>
+                                <div className="flex items-center gap-[4px] text-[11px] text-[#059669] font-medium mt-[2px]">
                                   <FileTextIcon size={12} color="#059669" />
                                   <span>Documento físico: {formatearFecha(exp.fechaIngresoFisico)}</span>
                                 </div>
                               )}
                             </div>
                           </td>
-                          <td style={{ padding: '14px 20px', textAlign: 'right' }}>
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                          <td className="py-[14px] px-[20px] text-right">
+                            <div className="inline-flex items-center gap-[6px]">
                               <Button
                                 variant="primary"
                                 size="sm"
@@ -716,7 +588,7 @@ export const ExpedientesView: React.FC = () => {
                                 size="sm"
                                 disabled={actionLoading}
                                 onClick={() => handleAprobar(exp.id, exp.numeroExpediente)}
-                                style={{ borderColor: '#86efac', color: '#15803d', backgroundColor: '#f0fdf4' }}
+                                className="border-[#86efac]! text-[#15803d]! bg-[#f0fdf4]!"
                               >
                                 Aprobar
                               </Button>
@@ -728,7 +600,7 @@ export const ExpedientesView: React.FC = () => {
                                   setObservarModal({ isOpen: true, id: exp.id, numero: exp.numeroExpediente });
                                   setObservacionesTexto('');
                                 }}
-                                style={{ borderColor: '#fca5a5', color: '#b91c1c', backgroundColor: '#fef2f2' }}
+                                className="border-[#fca5a5]! text-[#b91c1c]! bg-[#fef2f2]!"
                               >
                                 Observar
                               </Button>
@@ -756,12 +628,12 @@ export const ExpedientesView: React.FC = () => {
 
       {/* TAB 2: ACTAS OBSERVADAS & SUBSANACIÓN */}
       {activeTab === 'observadas' && (
-        <div style={{ padding: '20px' }}>
-          <div style={{ marginBottom: '16px' }}>
-            <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--color-midnight-900)' }}>
+        <div className="p-[20px]">
+          <div className="mb-[16px]">
+            <h3 className="text-[15px] font-bold text-midnight-900">
               Actas con Defectos Subsanables (V-01)
             </h3>
-            <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>
+            <p className="text-[13px] text-text-muted">
               Listado de intervenciones devueltas por la mesa de partes para que el fiscalizador subsane omisiones formales.
             </p>
           </div>
@@ -773,33 +645,33 @@ export const ExpedientesView: React.FC = () => {
               description="No tienes actas observadas pendientes de subsanación."
             />
           ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-[13px] text-left">
                 <thead>
-                  <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid var(--color-border)' }}>
-                    <th style={{ padding: '12px 16px', fontWeight: 700 }}>N° Expediente</th>
-                    <th style={{ padding: '12px 16px', fontWeight: 700 }}>Fecha Observación</th>
-                    <th style={{ padding: '12px 16px', fontWeight: 700 }}>Motivo de la Observación (Vicio Detectado)</th>
-                    <th style={{ padding: '12px 16px', fontWeight: 700, textAlign: 'right' }}>Acción</th>
+                  <tr className="bg-[#f8fafc] border-b border-b-border">
+                    <th className="py-[12px] px-[16px] font-bold">N° Expediente</th>
+                    <th className="py-[12px] px-[16px] font-bold">Fecha Observación</th>
+                    <th className="py-[12px] px-[16px] font-bold">Motivo de la Observación (Vicio Detectado)</th>
+                    <th className="py-[12px] px-[16px] font-bold text-right">Acción</th>
                   </tr>
                 </thead>
                 <tbody>
                   {observadas.map((obs) => (
-                    <tr key={obs.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                      <td style={{ padding: '14px 16px', fontWeight: 700, color: 'var(--color-midnight-900)' }}>
+                    <tr key={obs.id} className="border-b border-b-border">
+                      <td className="py-[14px] px-[16px] font-bold text-midnight-900">
                         {obs.numeroExpediente}
                       </td>
-                      <td style={{ padding: '14px 16px', color: 'var(--color-text-secondary)' }}>
+                      <td className="py-[14px] px-[16px] text-text-secondary">
                         {obs.fechaObservacion ? formatearFecha(obs.fechaObservacion) : 'Reciente'}
                       </td>
-                      <td style={{ padding: '14px 16px', color: '#b91c1c', maxWidth: '400px' }}>
-                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', backgroundColor: '#fff1f2', padding: '8px 12px', borderRadius: '6px', border: '1px solid #fecdd3', fontSize: '12px' }}>
-                          <span style={{ marginTop: '2px', flexShrink: 0 }}><AlertTriangleIcon size={15} color="#dc2626" /></span>
+                      <td className="py-[14px] px-[16px] text-[#b91c1c] max-w-[400px]">
+                        <div className="flex items-start gap-[8px] bg-[#fff1f2] py-[8px] px-[12px] rounded-[6px] border border-[#fecdd3] text-[12px]">
+                          <span className="mt-[2px] shrink-0"><AlertTriangleIcon size={15} color="#dc2626" /></span>
                           <span>{obs.motivo}</span>
                         </div>
                       </td>
-                      <td style={{ padding: '14px 16px', textAlign: 'right' }}>
-                        <div style={{ display: 'inline-flex', gap: '8px' }}>
+                      <td className="py-[14px] px-[16px] text-right">
+                        <div className="inline-flex gap-[8px]">
                           <Button
                             variant="secondary"
                             size="sm"
@@ -834,18 +706,18 @@ export const ExpedientesView: React.FC = () => {
 
       {/* TAB 3: DIGITALIZAR ACTA FÍSICA MANUAL */}
       {activeTab === 'digitalizar' && (
-        <div style={{ padding: '24px' }}>
-          <div style={{ marginBottom: '20px' }}>
-            <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--color-midnight-900)' }}>
+        <div className="p-[24px]">
+          <div className="mb-[20px]">
+            <h3 className="text-[15px] font-bold text-midnight-900">
               Ingreso y Digitalización de Acta Preimpresa de Campo
             </h3>
-            <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>
+            <p className="text-[13px] text-text-muted">
               Para actas levantadas físicamente en papel. El sistema verificará la disponibilidad de la serie física preimpresa.
             </p>
           </div>
 
-          <form onSubmit={handleCrearIntervencionManual} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+          <form onSubmit={handleCrearIntervencionManual} className="flex flex-col gap-[16px]">
+            <div className="grid grid-cols-[1fr_1fr_1fr] gap-[16px]">
               <div>
                 <Input
                   label="N° Notificación de Cargo Preimpresa *"
@@ -857,15 +729,7 @@ export const ExpedientesView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleValidarCorrelativo('NOTIFICACION_CARGO', digitalizarForm.numeroNotificacionCargo)}
-                  style={{
-                    marginTop: '6px',
-                    fontSize: '11px',
-                    color: 'var(--color-primary-600)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    textDecoration: 'underline',
-                  }}
+                  className="mt-[6px] text-[11px] text-primary-600 bg-transparent border-0 cursor-pointer underline"
                 >
                   Validar serie física en sistema
                 </button>
@@ -881,15 +745,7 @@ export const ExpedientesView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleValidarCorrelativo('ACTA_FISCALIZACION', digitalizarForm.numeroActaFiscalizacion)}
-                  style={{
-                    marginTop: '6px',
-                    fontSize: '11px',
-                    color: 'var(--color-primary-600)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    textDecoration: 'underline',
-                  }}
+                  className="mt-[6px] text-[11px] text-primary-600 bg-transparent border-0 cursor-pointer underline"
                 >
                   Validar serie física en sistema
                 </button>
@@ -907,12 +763,12 @@ export const ExpedientesView: React.FC = () => {
             </div>
 
             {correlativoStatus && (
-              <div style={{ padding: '8px 12px', backgroundColor: 'var(--color-bg-subtle)', borderRadius: '6px', fontSize: '12px' }}>
+              <div className="py-[8px] px-[12px] bg-bg-subtle rounded-[6px] text-[12px]">
                 {correlativoStatus}
               </div>
             )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px' }}>
+            <div className="grid grid-cols-[2fr_1fr] gap-[16px]">
               <Input
                 label="Dirección del Predio / Intervención *"
                 placeholder="Ej. Av. Próceres de la Independencia 1420"
@@ -928,7 +784,7 @@ export const ExpedientesView: React.FC = () => {
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div className="grid grid-cols-[1fr_1fr] gap-[16px]">
               <Input
                 label="Código de Infracción (CUIS)"
                 placeholder="Ej. G-010"
@@ -959,7 +815,7 @@ export const ExpedientesView: React.FC = () => {
               required
             />
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '12px' }}>
+            <div className="flex justify-end gap-[10px] mt-[12px]">
               <Button variant="secondary" type="button" onClick={() => setActiveTab('validar')}>
                 Cancelar
               </Button>
@@ -988,7 +844,7 @@ export const ExpedientesView: React.FC = () => {
           </>
         }
       >
-        <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '14px' }}>
+        <p className="text-[13px] text-text-secondary mb-[14px]">
           Indique de forma motivada los defectos formales o materiales subsanables del acta de fiscalización:
         </p>
         <Textarea
@@ -1020,18 +876,18 @@ export const ExpedientesView: React.FC = () => {
           </>
         }
       >
-        <div style={{ marginBottom: '16px', padding: '10px 14px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px' }}>
-          <div style={{ fontSize: '12px', fontWeight: 700, color: '#991b1b' }}>Motivo de la Observación:</div>
-          <div style={{ fontSize: '13px', color: '#b91c1c', marginTop: '2px' }}>{corregirModal.motivo}</div>
+        <div className="mb-[16px] py-[10px] px-[14px] bg-[#fef2f2] border border-[#fecaca] rounded-[6px]">
+          <div className="text-[12px] font-bold text-[#991b1b]">Motivo de la Observación:</div>
+          <div className="text-[13px] text-[#b91c1c] mt-[2px]">{corregirModal.motivo}</div>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <div className="flex flex-col gap-[14px]">
           <Input
             label="Dirección Subsanada"
             value={correccionForm.direccionAproximada}
             onChange={(e) => setCorreccionForm({ ...correccionForm, direccionAproximada: e.target.value })}
           />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="grid grid-cols-[1fr_1fr] gap-[12px]">
             <Input
               label="Nombre / Razón Social"
               value={correccionForm.nombresRazonSocial}

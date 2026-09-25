@@ -34,10 +34,10 @@ export const ConsultaCampoView: React.FC = () => {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+      <div className="flex justify-between items-center mb-[1.5rem]">
         <div>
-          <h1 style={{ margin: 0, fontSize: '1.5rem' }}>Exhortación / Constatación</h1>
-          <p style={{ margin: '0.25rem 0 0', color: 'var(--color-text-muted)' }}>
+          <h1 className="m-0 text-[1.5rem] font-bold">Exhortación / Constatación</h1>
+          <p className="mt-[0.25rem] mx-0 mb-0 text-text-muted">
             Solo consulta — estos caminos cierran en campo y no generan expediente ni pasan por validación.
           </p>
         </div>
@@ -50,7 +50,7 @@ export const ConsultaCampoView: React.FC = () => {
 
       <Card>
         {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+          <div className="flex justify-center p-[2rem]">
             <Spinner />
           </div>
         ) : items.length === 0 ? (
@@ -60,30 +60,30 @@ export const ConsultaCampoView: React.FC = () => {
             description="No hay intervenciones de Exhortación o Constatación sincronizadas."
           />
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <table className="w-full border-collapse">
             <thead>
-              <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--color-border)' }}>
-                <th style={{ padding: '0.5rem' }}>Fecha</th>
-                <th style={{ padding: '0.5rem' }}>Fiscalizador</th>
-                <th style={{ padding: '0.5rem' }}>Camino</th>
-                <th style={{ padding: '0.5rem' }}>Correlativo</th>
-                <th style={{ padding: '0.5rem' }}>Resumen</th>
-                <th style={{ padding: '0.5rem' }}></th>
+              <tr className="text-left border-b border-b-border">
+                <th className="p-[0.5rem]">Fecha</th>
+                <th className="p-[0.5rem]">Fiscalizador</th>
+                <th className="p-[0.5rem]">Camino</th>
+                <th className="p-[0.5rem]">Correlativo</th>
+                <th className="p-[0.5rem]">Resumen</th>
+                <th className="p-[0.5rem]"></th>
               </tr>
             </thead>
             <tbody>
               {items.map((item) => (
-                <tr key={item.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                  <td style={{ padding: '0.5rem' }}>{formatearFechaHora(item.fechaHoraInicio)}</td>
-                  <td style={{ padding: '0.5rem' }}>{item.fiscalizadorNombre}</td>
-                  <td style={{ padding: '0.5rem' }}>
+                <tr key={item.id} className="border-b border-b-border">
+                  <td className="p-[0.5rem]">{formatearFechaHora(item.fechaHoraInicio)}</td>
+                  <td className="p-[0.5rem]">{item.fiscalizadorNombre}</td>
+                  <td className="p-[0.5rem]">
                     <Badge variant={item.tipoActuacion === 'EXHORTACION' ? 'info' : 'neutral'}>
                       {item.tipoActuacion === 'EXHORTACION' ? 'Exhortación' : 'Constatación'}
                     </Badge>
                   </td>
-                  <td style={{ padding: '0.5rem' }}>{item.numeroCorrelativo ?? '—'}</td>
-                  <td style={{ padding: '0.5rem', maxWidth: 320 }}>{item.resumen ?? '—'}</td>
-                  <td style={{ padding: '0.5rem', display: 'flex', gap: '0.5rem' }}>
+                  <td className="p-[0.5rem]">{item.numeroCorrelativo ?? '—'}</td>
+                  <td className="p-[0.5rem] max-w-[320px]">{item.resumen ?? '—'}</td>
+                  <td className="p-[0.5rem] flex gap-[0.5rem]">
                     <Button
                       variant="outline"
                       size="sm"

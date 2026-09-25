@@ -137,12 +137,12 @@ export const ConfiguracionView: React.FC = () => {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+      <div className="flex items-center justify-between mb-[20px]">
         <div>
-          <h2 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--color-midnight-900)' }}>
+          <h2 className="text-[18px] font-extrabold text-midnight-900">
             Motor de Plazos, Calendario, Catálogo CUIS, UIT & Seguridad
           </h2>
-          <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+          <p className="text-[13px] text-text-muted mt-[2px]">
             Parámetros transversales para el cómputo de plazos hábiles, tipificación de infracciones y control de sesiones.
           </p>
         </div>
@@ -154,22 +154,10 @@ export const ConfiguracionView: React.FC = () => {
       {message && <Alert type={message.type}>{message.text}</Alert>}
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
+      <div className="flex gap-[8px] mb-[16px] flex-wrap">
         <button
           onClick={() => setActiveTab('plazos')}
-          style={{
-            padding: '10px 18px',
-            fontSize: '13px',
-            fontWeight: 700,
-            borderRadius: 'var(--radius-sm)',
-            border: activeTab === 'plazos' ? '1px solid var(--color-primary-600)' : '1px solid var(--color-border)',
-            backgroundColor: activeTab === 'plazos' ? 'var(--color-primary-50)' : '#ffffff',
-            color: activeTab === 'plazos' ? 'var(--color-primary-600)' : 'var(--color-text-secondary)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}
+          className={`py-[10px] px-[18px] text-[13px] font-bold rounded-sm cursor-pointer flex items-center gap-[8px] ${activeTab === 'plazos' ? 'border border-primary-600' : 'border border-border'} ${activeTab === 'plazos' ? 'bg-primary-50' : 'bg-[#ffffff]'} ${activeTab === 'plazos' ? 'text-primary-600' : 'text-text-secondary'}`}
         >
           <ClockIcon size={16} />
           Expedientes en Riesgo ({expedientesEnRiesgo.length})
@@ -177,19 +165,7 @@ export const ConfiguracionView: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('feriados')}
-          style={{
-            padding: '10px 18px',
-            fontSize: '13px',
-            fontWeight: 700,
-            borderRadius: 'var(--radius-sm)',
-            border: activeTab === 'feriados' ? '1px solid var(--color-primary-600)' : '1px solid var(--color-border)',
-            backgroundColor: activeTab === 'feriados' ? 'var(--color-primary-50)' : '#ffffff',
-            color: activeTab === 'feriados' ? 'var(--color-primary-600)' : 'var(--color-text-secondary)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}
+          className={`py-[10px] px-[18px] text-[13px] font-bold rounded-sm cursor-pointer flex items-center gap-[8px] ${activeTab === 'feriados' ? 'border border-primary-600' : 'border border-border'} ${activeTab === 'feriados' ? 'bg-primary-50' : 'bg-[#ffffff]'} ${activeTab === 'feriados' ? 'text-primary-600' : 'text-text-secondary'}`}
         >
           <CalendarIcon size={16} />
           Calendario de Feriados ({feriados.length})
@@ -197,19 +173,7 @@ export const ConfiguracionView: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('cuis')}
-          style={{
-            padding: '10px 18px',
-            fontSize: '13px',
-            fontWeight: 700,
-            borderRadius: 'var(--radius-sm)',
-            border: activeTab === 'cuis' ? '1px solid var(--color-primary-600)' : '1px solid var(--color-border)',
-            backgroundColor: activeTab === 'cuis' ? 'var(--color-primary-50)' : '#ffffff',
-            color: activeTab === 'cuis' ? 'var(--color-primary-600)' : 'var(--color-text-secondary)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}
+          className={`py-[10px] px-[18px] text-[13px] font-bold rounded-sm cursor-pointer flex items-center gap-[8px] ${activeTab === 'cuis' ? 'border border-primary-600' : 'border border-border'} ${activeTab === 'cuis' ? 'bg-primary-50' : 'bg-[#ffffff]'} ${activeTab === 'cuis' ? 'text-primary-600' : 'text-text-secondary'}`}
         >
           <SearchIcon size={16} />
           Catálogo CUIS (Ordenanza 464)
@@ -217,38 +181,14 @@ export const ConfiguracionView: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('uit')}
-          style={{
-            padding: '10px 18px',
-            fontSize: '13px',
-            fontWeight: 700,
-            borderRadius: 'var(--radius-sm)',
-            border: activeTab === 'uit' ? '1px solid var(--color-primary-600)' : '1px solid var(--color-border)',
-            backgroundColor: activeTab === 'uit' ? 'var(--color-primary-50)' : '#ffffff',
-            color: activeTab === 'uit' ? 'var(--color-primary-600)' : 'var(--color-text-secondary)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}
+          className={`py-[10px] px-[18px] text-[13px] font-bold rounded-sm cursor-pointer flex items-center gap-[8px] ${activeTab === 'uit' ? 'border border-primary-600' : 'border border-border'} ${activeTab === 'uit' ? 'bg-primary-50' : 'bg-[#ffffff]'} ${activeTab === 'uit' ? 'text-primary-600' : 'text-text-secondary'}`}
         >
           Valores Oficiales UIT ({parametrosUit.length})
         </button>
 
         <button
           onClick={() => setActiveTab('seguridad')}
-          style={{
-            padding: '10px 18px',
-            fontSize: '13px',
-            fontWeight: 700,
-            borderRadius: 'var(--radius-sm)',
-            border: activeTab === 'seguridad' ? '1px solid var(--color-primary-600)' : '1px solid var(--color-border)',
-            backgroundColor: activeTab === 'seguridad' ? 'var(--color-primary-50)' : '#ffffff',
-            color: activeTab === 'seguridad' ? 'var(--color-primary-600)' : 'var(--color-text-secondary)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}
+          className={`py-[10px] px-[18px] text-[13px] font-bold rounded-sm cursor-pointer flex items-center gap-[8px] ${activeTab === 'seguridad' ? 'border border-primary-600' : 'border border-border'} ${activeTab === 'seguridad' ? 'bg-primary-50' : 'bg-[#ffffff]'} ${activeTab === 'seguridad' ? 'text-primary-600' : 'text-text-secondary'}`}
         >
           <ShieldAlertIcon size={16} />
           Seguridad & Sesiones (Admin)
@@ -265,23 +205,23 @@ export const ConfiguracionView: React.FC = () => {
               description="Todos los expedientes administrativos del PAS se encuentran dentro de los plazos normativos vigentes."
             />
           ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-[13px] text-left">
                 <thead>
-                  <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid var(--color-border)' }}>
-                    <th style={{ padding: '12px 16px' }}>N° Expediente</th>
-                    <th style={{ padding: '12px 16px' }}>Fase Actual</th>
-                    <th style={{ padding: '12px 16px' }}>Plazo Límite</th>
-                    <th style={{ padding: '12px 16px' }}>Nivel de Riesgo</th>
+                  <tr className="bg-[#f8fafc] border-b border-b-border">
+                    <th className="py-[12px] px-[16px]">N° Expediente</th>
+                    <th className="py-[12px] px-[16px]">Fase Actual</th>
+                    <th className="py-[12px] px-[16px]">Plazo Límite</th>
+                    <th className="py-[12px] px-[16px]">Nivel de Riesgo</th>
                   </tr>
                 </thead>
                 <tbody>
                   {expedientesEnRiesgo.map((item, idx) => (
-                    <tr key={idx} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                      <td style={{ padding: '12px 16px', fontWeight: 700 }}>{item.numeroExpediente || item.expedienteId || '---'}</td>
-                      <td style={{ padding: '12px 16px' }}>{item.estado || 'En trámite'}</td>
-                      <td style={{ padding: '12px 16px', color: 'var(--color-danger)' }}>{formatearFecha(item.fechaLimite, 'Por vencer')}</td>
-                      <td style={{ padding: '12px 16px' }}><Badge variant="danger">ALERTA CRÍTICA</Badge></td>
+                    <tr key={idx} className="border-b border-b-border">
+                      <td className="py-[12px] px-[16px] font-bold">{item.numeroExpediente || item.expedienteId || '---'}</td>
+                      <td className="py-[12px] px-[16px]">{item.estado || 'En trámite'}</td>
+                      <td className="py-[12px] px-[16px] text-danger">{formatearFecha(item.fechaLimite, 'Por vencer')}</td>
+                      <td className="py-[12px] px-[16px]"><Badge variant="danger">ALERTA CRÍTICA</Badge></td>
                     </tr>
                   ))}
                 </tbody>
@@ -293,9 +233,9 @@ export const ConfiguracionView: React.FC = () => {
 
       {/* Tab 2: Feriados */}
       {activeTab === 'feriados' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+        <div className="grid grid-cols-[1fr_1fr] gap-[20px]">
           <Card title="Registrar Nuevo Día No Hábil / Feriado Municipal">
-            <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '14px' }}>
+            <p className="text-[12px] text-text-muted mb-[14px]">
               Los feriados registrados se excluyen automáticamente en la función de cómputo de días hábiles del PAS.
             </p>
             <Input
@@ -323,20 +263,11 @@ export const ConfiguracionView: React.FC = () => {
                 description="Agregue los días inhábiles oficiales para calibrar el cómputo de plazos."
               />
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div className="flex flex-col gap-[8px]">
                 {feriados.map((f, i) => (
                   <div
                     key={f.id || i}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '10px 14px',
-                      backgroundColor: 'var(--color-bg-subtle)',
-                      borderRadius: 'var(--radius-sm)',
-                      border: '1px solid var(--color-border)',
-                      fontSize: '13px',
-                    }}
+                    className="flex items-center justify-between py-[10px] px-[14px] bg-bg-subtle rounded-sm border border-border text-[13px]"
                   >
                     <div>
                       <strong>{formatearFecha(f.fecha)}</strong> — {f.descripcion}
@@ -353,8 +284,8 @@ export const ConfiguracionView: React.FC = () => {
       {/* Tab 3: Catálogo CUIS */}
       {activeTab === 'cuis' && (
         <Card title="Buscador Oficial del Cuadro Único de Infracciones y Sanciones (CUIS)">
-          <form onSubmit={handleBuscarCuis} style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-            <div style={{ flex: 1 }}>
+          <form onSubmit={handleBuscarCuis} className="flex gap-[10px] mb-[20px]">
+            <div className="flex-1">
               <Input
                 placeholder="Buscar por código (ej. 7.01.01) o palabras clave (construcción, clausura, ruidos, licencia)..."
                 value={queryCuis}
@@ -367,25 +298,25 @@ export const ConfiguracionView: React.FC = () => {
           </form>
 
           {resultadosCuis.length > 0 ? (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-[13px] text-left">
                 <thead>
-                  <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid var(--color-border)' }}>
-                    <th style={{ padding: '10px 14px' }}>Código</th>
-                    <th style={{ padding: '10px 14px' }}>Descripción de la Infracción</th>
-                    <th style={{ padding: '10px 14px' }}>Monto / Escala</th>
+                  <tr className="bg-[#f8fafc] border-b border-b-border">
+                    <th className="py-[10px] px-[14px]">Código</th>
+                    <th className="py-[10px] px-[14px]">Descripción de la Infracción</th>
+                    <th className="py-[10px] px-[14px]">Monto / Escala</th>
                   </tr>
                 </thead>
                 <tbody>
                   {resultadosCuis.map((c, i) => (
-                    <tr key={c.id || i} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                      <td style={{ padding: '12px 14px', fontWeight: 700, color: 'var(--color-primary-600)', whiteSpace: 'nowrap' }}>
+                    <tr key={c.id || i} className="border-b border-b-border">
+                      <td className="py-[12px] px-[14px] font-bold text-primary-600 whitespace-nowrap">
                         {c.codigo || (c as any).codigo_ordenanza || (c as any).id_interno}
                       </td>
-                      <td style={{ padding: '12px 14px', color: 'var(--color-text-main)' }}>
+                      <td className="py-[12px] px-[14px] text-text-main">
                         {c.descripcion || (c as any).texto_completo_pdf}
                       </td>
-                      <td style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>
+                      <td className="py-[12px] px-[14px] whitespace-nowrap">
                         <Badge variant="info">
                           {c.escala || (c.montoUit ? `${c.montoUit} % UIT` : 'Ver detalle')}
                         </Badge>
@@ -396,7 +327,7 @@ export const ConfiguracionView: React.FC = () => {
               </table>
             </div>
           ) : (
-            <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', textAlign: 'center', padding: '24px' }}>
+            <p className="text-[13px] text-text-muted text-center p-[24px]">
               Ingrese un término de búsqueda para consultar las infracciones tipificadas en la Ordenanza 464-MDSJL.
             </p>
           )}
@@ -406,27 +337,27 @@ export const ConfiguracionView: React.FC = () => {
       {/* Tab 4: Parámetros UIT */}
       {activeTab === 'uit' && (
         <Card title="Unidad Impositiva Tributaria (UIT) por Ejercicio Fiscal">
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-[13px] text-left">
               <thead>
-                <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid var(--color-border)' }}>
-                  <th style={{ padding: '12px 16px' }}>Año Fiscal</th>
-                  <th style={{ padding: '12px 16px' }}>Valor en Soles (S/)</th>
-                  <th style={{ padding: '12px 16px' }}>Vigente Desde</th>
-                  <th style={{ padding: '12px 16px' }}>Estado</th>
+                <tr className="bg-[#f8fafc] border-b border-b-border">
+                  <th className="py-[12px] px-[16px]">Año Fiscal</th>
+                  <th className="py-[12px] px-[16px]">Valor en Soles (S/)</th>
+                  <th className="py-[12px] px-[16px]">Vigente Desde</th>
+                  <th className="py-[12px] px-[16px]">Estado</th>
                 </tr>
               </thead>
               <tbody>
                 {parametrosUit.map((p) => (
-                  <tr key={p.id || p.anio} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                    <td style={{ padding: '14px 16px', fontWeight: 700 }}>{p.anio}</td>
-                    <td style={{ padding: '14px 16px', fontWeight: 700, color: 'var(--color-primary-600)' }}>
+                  <tr key={p.id || p.anio} className="border-b border-b-border">
+                    <td className="py-[14px] px-[16px] font-bold">{p.anio}</td>
+                    <td className="py-[14px] px-[16px] font-bold text-primary-600">
                       S/ {Number(p.valorSoles).toLocaleString('es-PE', { minimumFractionDigits: 2 })}
                     </td>
-                    <td style={{ padding: '14px 16px', color: 'var(--color-text-secondary)' }}>
+                    <td className="py-[14px] px-[16px] text-text-secondary">
                       {p.vigenteDesde ? p.vigenteDesde.slice(0, 10) : '---'}
                     </td>
-                    <td style={{ padding: '14px 16px' }}>
+                    <td className="py-[14px] px-[16px]">
                       {!p.vigenteHasta ? <Badge variant="success">Vigente</Badge> : <Badge variant="neutral">Cerrado</Badge>}
                     </td>
                   </tr>
@@ -440,50 +371,50 @@ export const ConfiguracionView: React.FC = () => {
       {/* Tab 5: Seguridad & Sesiones (Admin) */}
       {activeTab === 'seguridad' && (
         <Card title="Auditoría de Sesiones y Control de Accesos">
-          <div style={{ marginBottom: '16px', padding: '12px 16px', backgroundColor: '#eff6ff', borderRadius: '8px', border: '1px solid #bfdbfe' }}>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: '#1e40af', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div className="mb-[16px] py-[12px] px-[16px] bg-[#eff6ff] rounded-[8px] border border-[#bfdbfe]">
+            <div className="text-[13px] font-bold text-[#1e40af] mb-[4px] flex items-center gap-[6px]">
               <ShieldAlertIcon size={16} />
               <span>Revocación Inmediata de Credenciales y Sesiones</span>
             </div>
-            <p style={{ fontSize: '12px', color: '#1e3a8a', margin: 0 }}>
+            <p className="text-[12px] text-[#1e3a8a] m-0">
               Permite a los administradores invalidar instantáneamente todas las credenciales de refresh activas asociadas a un usuario en caso de pérdida o robo de terminales móviles de campo, o por desvinculación funcional del personal.
             </p>
           </div>
 
-          <div style={{ overflowX: 'auto', marginBottom: '24px' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
+          <div className="overflow-x-auto mb-[24px]">
+            <table className="w-full border-collapse text-[13px] text-left">
               <thead>
-                <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid var(--color-border)' }}>
-                  <th style={{ padding: '12px 16px' }}>Personal / Usuario</th>
-                  <th style={{ padding: '12px 16px' }}>DNI</th>
-                  <th style={{ padding: '12px 16px' }}>Rol Asignado</th>
-                  <th style={{ padding: '12px 16px' }}>Dispositivo Vinculado</th>
-                  <th style={{ padding: '12px 16px' }}>Estado</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'right' }}>Acción de Seguridad</th>
+                <tr className="bg-[#f8fafc] border-b border-b-border">
+                  <th className="py-[12px] px-[16px]">Personal / Usuario</th>
+                  <th className="py-[12px] px-[16px]">DNI</th>
+                  <th className="py-[12px] px-[16px]">Rol Asignado</th>
+                  <th className="py-[12px] px-[16px]">Dispositivo Vinculado</th>
+                  <th className="py-[12px] px-[16px]">Estado</th>
+                  <th className="py-[12px] px-[16px] text-right">Acción de Seguridad</th>
                 </tr>
               </thead>
               <tbody>
                 {usuariosSistema.map((u) => (
-                  <tr key={u.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                    <td style={{ padding: '14px 16px', fontWeight: 700, color: 'var(--color-midnight-900)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <tr key={u.id} className="border-b border-b-border">
+                    <td className="py-[14px] px-[16px] font-bold text-midnight-900">
+                      <div className="flex items-center gap-[8px]">
                         <UserIcon size={16} />
                         {u.nombres}
                       </div>
                     </td>
-                    <td style={{ padding: '14px 16px', color: 'var(--color-text-secondary)' }}>{u.dni}</td>
-                    <td style={{ padding: '14px 16px' }}>
+                    <td className="py-[14px] px-[16px] text-text-secondary">{u.dni}</td>
+                    <td className="py-[14px] px-[16px]">
                       <Badge variant={u.rol === 'ADMIN' ? 'danger' : u.rol === 'FISCALIZADOR' ? 'info' : 'warning'}>
                         {u.rol}
                       </Badge>
                     </td>
-                    <td style={{ padding: '14px 16px', color: 'var(--color-text-secondary)', fontSize: '12px' }}>
+                    <td className="py-[14px] px-[16px] text-text-secondary text-[12px]">
                       {u.dispositivo}
                     </td>
-                    <td style={{ padding: '14px 16px' }}>
+                    <td className="py-[14px] px-[16px]">
                       <Badge variant="success">Activo</Badge>
                     </td>
-                    <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                    <td className="py-[14px] px-[16px] text-right">
                       <Button
                         variant="danger"
                         size="sm"
@@ -499,9 +430,9 @@ export const ConfiguracionView: React.FC = () => {
             </table>
           </div>
 
-          <div style={{ padding: '16px', border: '1px dashed var(--color-border)', borderRadius: '8px' }}>
-            <h4 style={{ fontSize: '13px', fontWeight: 700, marginBottom: '8px' }}>Revocar Sesión por ID Manual</h4>
-            <div style={{ display: 'flex', gap: '12px', maxWidth: '500px' }}>
+          <div className="p-[16px] border border-dashed border-border rounded-[8px]">
+            <h4 className="text-[13px] font-bold mb-[8px]">Revocar Sesión por ID Manual</h4>
+            <div className="flex gap-[12px] max-w-[500px]">
               <Input
                 placeholder="Ingrese UUID de usuario en Prisma..."
                 value={customUserId}
