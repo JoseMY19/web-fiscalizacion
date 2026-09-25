@@ -12,7 +12,8 @@
     "jsx": "react-jsx",
     "strict": true,
     "noUnusedLocals": true,
-    "noUnusedParameters": true
+    "noUnusedParameters": true,
+    "paths": { "@pas-sjl/shared-types": ["./src/shared-types/index.ts"] }
   },
   "include": ["src"]
 }
