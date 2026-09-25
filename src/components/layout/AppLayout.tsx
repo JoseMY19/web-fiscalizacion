@@ -12,6 +12,7 @@ import {
   LogOutIcon,
   EyeIcon,
   BellIcon,
+  MapPinIcon,
 } from '../icons/Icons';
 
 export type NavModule =
@@ -25,6 +26,7 @@ export type NavModule =
   | 'recursos'
   | 'coactiva-pagos'
   | 'cautelares'
+  | 'mapa'
   | 'configuracion';
 
 interface AppLayoutProps {
@@ -47,17 +49,21 @@ interface NavItemConDef extends NavItem {
   roles?: string[];
 }
 
+// Ordenado según el recorrido del expediente: validación → notificación →
+// instrucción (IFI) → resolución → recursos → acto firme/cobranza. Después
+// lo transversal (cautelares, consultas, documentos, mapa, configuración).
 const navItems: NavItemConDef[] = [
   { id: 'dashboard', label: 'Panel Principal', icon: <DashboardIcon size={18} /> },
-  { id: 'documentos', label: 'Control Documentario', icon: <FileTextIcon size={18} /> },
   { id: 'expedientes', label: 'Validación de Expedientes', icon: <ExpedienteIcon size={18} /> },
-  { id: 'consulta-campo', label: 'Exhortación y Consulta', icon: <EyeIcon size={18} /> },
   { id: 'notificaciones', label: 'Notificación de Cédulas', icon: <MailIcon size={18} /> },
   { id: 'ifi', label: 'Instrucción e IFI', icon: <FileTextIcon size={18} /> },
   { id: 'resoluciones', label: 'Resolución Sancionadora', icon: <GavelIcon size={18} /> },
   { id: 'recursos', label: 'Recursos Impugnativos', icon: <ScaleIcon size={18} /> },
   { id: 'coactiva-pagos', label: 'Acto Firme y Cobranza', icon: <CreditCardIcon size={18} /> },
   { id: 'cautelares', label: 'Medidas Cautelares', icon: <ShieldAlertIcon size={18} /> },
+  { id: 'consulta-campo', label: 'Exhortación y Consulta', icon: <EyeIcon size={18} /> },
+  { id: 'documentos', label: 'Control Documentario', icon: <FileTextIcon size={18} /> },
+  { id: 'mapa', label: 'Mapa de Cobertura', icon: <MapPinIcon size={18} /> },
   { id: 'configuracion', label: 'Configuración y Parámetros', icon: <CalendarIcon size={18} /> },
 ];
 
