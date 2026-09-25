@@ -93,6 +93,8 @@ export interface NotificacionItem {
 export const NotificacionesApi = {
   getPendientesAsignacion: () =>
     apiClient<NotificacionItem[]>('/notificacion-domiciliaria/pendientes-asignacion'),
+  getAsignadas: () =>
+    apiClient<NotificacionItem[]>('/notificacion-domiciliaria/asignadas'),
   asignar: (id: string, notificadorId: string) =>
     apiClient<{ ok: true }>(`/notificacion-domiciliaria/${id}/asignar`, {
       method: 'PATCH',
@@ -118,15 +120,42 @@ export const NotificacionesApi = {
 // ============================================================================
 // IFI - INSTRUCCIÓN (SP4)
 // ============================================================================
+/**
+ * Forma real de GET /ifi/pendientes (ver ExpedientePendienteIfiResponseDto
+ * en el backend). `ifiEstado: null` significa que el Ifi todavía no existe
+ * para este expediente — ninguna acción de instrucción se ha registrado
+ * todavía (ni descargo ni sanear imputación).
+ */
 export interface ExpedienteIfiItem {
   expedienteId: string;
   numeroExpediente: string;
-  estado: string;
-  fechaNotificacionNc?: string;
-  fechaVencimientoDescargo?: string;
-  tieneDescargo?: boolean;
-  imputacionCorrecta?: boolean | null;
-  ifiFirmado?: boolean;
+  fechaNotificacion: string | null;
+  ifiEstado: 'EN_ELABORACION' | 'EMITIDO' | 'NOTIFICADO' | null;
+  recibioDescargo: boolean;
+  imputacionCorrecta: boolean | null;
+  tieneSeccionAutomatica: boolean;
+  tieneAnalisis: boolean;
+  recomendacion: 'SANCIONAR' | 'ARCHIVAR' | null;
+  numeroInforme: string | null;
+}
+
+/** Forma real de GET /ifi/:expedienteId (ver IfiDetalleResponseDto en el backend) — el Ifi completo, para prellenar el panel de detalle. */
+export interface IfiDetalle {
+  id: string;
+  expedienteId: string;
+  estado: 'EN_ELABORACION' | 'EMITIDO' | 'NOTIFICADO';
+  recibioDescargo: boolean;
+  fechaRecepcionDescargo: string | null;
+  descargoTexto: string | null;
+  imputacionCorrecta: boolean | null;
+  motivoVicioTrascendente: string | null;
+  recomendacion: 'SANCIONAR' | 'ARCHIVAR' | null;
+  seccionAutomatica: string | null;
+  analisisTexto: string | null;
+  fechaEmision: string | null;
+  fechaNotificacion: string | null;
+  basesLegalesAdicionales: string | null;
+  numeroInforme: string | null;
 }
 
 /** Forma real de POST /ifi/:expedienteId/generar-planchazo — ver SeccionAutomaticaPlanchazo en el backend (módulo ifi/domain). */
@@ -173,6 +202,7 @@ export const IfiApi = {
       pendientes: ExpedienteIfiItem[];
       esperandoNotificacion: ExpedienteIfiItem[];
     }>('/ifi/pendientes'),
+  getDetalle: (expedienteId: string) => apiClient<IfiDetalle>(`/ifi/${expedienteId}`),
   registrarDescargo: (expedienteId: string, descargoTexto: string, fechaRecepcionDescargo?: string) =>
     apiClient<{ ok: true }>(`/ifi/${expedienteId}/descargo`, {
       method: 'PATCH',
@@ -202,42 +232,349 @@ export const IfiApi = {
       method: 'PATCH',
       body: JSON.stringify({ recomendacion }),
     }),
-  firmarIfi: (expedienteId: string) =>
-    apiClient<{ ok: true }>(`/ifi/${expedienteId}/firmar`, { method: 'PATCH' }),
+  firmarIfi: (expedienteId: string, numeroInforme: string) =>
+    apiClient<{ ok: true }>(`/ifi/${expedienteId}/firmar`, {
+      method: 'PATCH',
+      body: JSON.stringify({ numeroInforme }),
+    }),
   notificarIfi: (expedienteId: string, fechaNotificacion: string) =>
     apiClient<{ ok: true }>(`/ifi/${expedienteId}/notificar`, {
       method: 'PATCH',
       body: JSON.stringify({ fechaNotificacion }),
     }),
+  registrarBasesLegalesAdicionales: (expedienteId: string, basesLegalesAdicionales: string) =>
+    apiClient<{ ok: true }>(`/ifi/${expedienteId}/bases-legales-adicionales`, {
+      method: 'PATCH',
+      body: JSON.stringify({ basesLegalesAdicionales }),
+    }),
+  subirDocumento: (expedienteId: string, descripcion: string, archivo: File) => {
+    const formData = new FormData();
+    formData.append('descripcion', descripcion);
+    formData.append('archivo', archivo);
+    return apiClient<{ id: string }>(`/ifi/${expedienteId}/documentos`, { method: 'POST', body: formData });
+  },
+  getDocumentos: (expedienteId: string) => apiClient<IfiDocumentoAdjuntoItem[]>(`/ifi/${expedienteId}/documentos`),
+  /** SP4-T01 — evidencia para sanear la imputación. No depende del planchazo ni del estado del IFI. */
+  getEvidenciaImputacion: (expedienteId: string) =>
+    apiClient<EvidenciaImputacion>(`/ifi/${expedienteId}/evidencia-imputacion`),
 };
+
+/** Respuesta de GET /ifi/:expedienteId/evidencia-imputacion. Todo dato ausente viene null — nunca inventado. */
+export interface EvidenciaImputacion {
+  expedienteId: string;
+  intervencionId: string;
+  numeroExpediente: string;
+  intervencion: {
+    fechaHoraInicio: string;
+    origen: string;
+    referenciaOrigen: string | null;
+    direccionAproximada: string | null;
+  };
+  administrado: {
+    identificado: boolean;
+    nombresRazonSocial: string | null;
+    numeroDocumento: string | null;
+    domicilio: string | null;
+    distrito: string | null;
+    giroUso: string | null;
+  } | null;
+  actaFiscalizacion: {
+    numeroCorrelativo: string;
+    hechosVerificados: string;
+    observacionesAdministrado: string | null;
+  } | null;
+  notificacionCargo: {
+    numeroCorrelativo: string;
+    baseCalculo: string;
+    montoPasibleMulta: number | null;
+    fechaDeteccion: string;
+    fechaNotificacion: string | null;
+    receptorNombre: string | null;
+    receptorDocumento: string | null;
+    receptorRelacion: string | null;
+    modoNotificacion: 'PERSONAL_FIRMA' | 'PERSONAL_NEGATIVA' | 'DOMICILIARIA_PENDIENTE' | 'DOMICILIARIA_EFECTIVA' | null;
+  } | null;
+  actasMedidaProvisionalCorrelativos: string[];
+  codigosCuis: Array<{
+    codigoNormativo: string;
+    descripcion: string | null;
+    fuenteNormativa: string | null;
+    escala: string | null;
+    condicionEscala: string | null;
+    porcentajeAplicado: number | null;
+    montoCalculado: number | null;
+  }>;
+}
+
+export interface IfiDocumentoAdjuntoItem {
+  id: string;
+  descripcion: string;
+  nombreOriginal: string;
+  tamanoBytes: number | null;
+  subidoEn: string;
+}
+
+/** Abre el documento adjunto del IFI en pestaña nueva — mismo patrón que abrirDocumento. */
+export async function abrirDocumentoIfi(documentoId: string): Promise<void> {
+  const res = await fetch(`${BASE_URL}/ifi/documentos/${documentoId}/archivo`, {
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+  if (!res.ok) {
+    alert('No se pudo abrir el documento.');
+    return;
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+}
+
+/**
+ * Descarga el Word del Informe Final de Instrucción generado al vuelo
+ * (GET /ifi/:expedienteId/documento). A diferencia de abrirDocumentoIfi, acá
+ * se fuerza la descarga con un <a download> temporal — mismo patrón que
+ * descargarDocumentoWord. Si el backend rechaza la generación (ej. faltan
+ * datos del IFI todavía), se relanza el mensaje de la ConflictException en
+ * vez de usar alert(), para que la vista lo muestre con su propio patrón de
+ * mensajes de error.
+ */
+export async function descargarDocumentoIfi(expedienteId: string, numeroExpediente: string): Promise<void> {
+  const res = await fetch(`${BASE_URL}/ifi/${expedienteId}/documento`, {
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+  if (!res.ok) {
+    let errorMsg = `Error ${res.status}: ${res.statusText}`;
+    try {
+      const errJson = await res.json();
+      errorMsg = errJson.message || errJson.detalle || errorMsg;
+    } catch {
+      // sin body JSON — se queda con el mensaje genérico
+    }
+    throw new Error(errorMsg);
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const enlace = document.createElement('a');
+  enlace.href = url;
+  enlace.download = `ifi-${numeroExpediente}.docx`;
+  enlace.click();
+  URL.revokeObjectURL(url);
+}
 
 // ============================================================================
 // RESOLUCIONES (SP5)
 // ============================================================================
+export type TipoResolucion = 'RSGSA' | 'RSG';
+/** Art. 43 Ordenanza 464: LEVE 50%, GRAVE 40%, MUY_GRAVE 30% de descuento. */
+export type TipoInfraccion = 'LEVE' | 'GRAVE' | 'MUY_GRAVE';
+export type EstadoResolucion = 'EN_ELABORACION' | 'EMITIDA' | 'NOTIFICADA';
+/** "En firma" = EN_ELABORACION con fechaEnvioFirma puesta (la firma es física, la hace el Subgerente). */
+export type EtapaResolucion = 'ESPERANDO_DESCARGO_IFI' | 'EN_REDACCION' | 'EN_FIRMA' | 'FIRMADA' | 'NOTIFICADA';
+
+/** Plazos calculados por el backend (días hábiles con la tabla de feriados). Fechas ISO a medianoche UTC. */
+export interface PlazosResolucion {
+  /** Último día del plazo de 5 días hábiles para el descargo contra el IFI. */
+  finEsperaDescargoIfi: string | null;
+  /** Primer día en que se puede enviar a firma. */
+  puedeEnviarAFirmaDesde: string | null;
+  diasHabilesEsperaRestantes: number | null;
+  esperaDescargoVencida: boolean;
+  fechaCaducidad: string | null;
+  /** Fin de los 9 meses originales (la ampliación solo se emite antes). */
+  fechaCaducidadOriginal: string | null;
+  /** Límite si se firma la ampliación (12 meses desde la NC). */
+  fechaCaducidadConAmpliacion: string | null;
+  ampliacionFirmada: boolean;
+  /** ≤ 30 días para caducar, sin resolución final ni ampliación firmadas: rojo + "Emitir RSG de ampliación". */
+  alertaAmpliacion: boolean;
+  /** null si la NC no tiene fecha de notificación o la resolución ya se notificó (detiene el reloj). */
+  diasParaCaducidad: number | null;
+  diasEnFirma: number | null;
+}
+
+/** Forma real de las filas de GET /resoluciones/bandeja, /pendientes y /buscar (ExpedientePendienteResolucionResponseDto). */
 export interface ExpedienteResolucionItem {
   expedienteId: string;
   numeroExpediente: string;
-  estado: string;
-  recomendacionIfi?: string;
-  tipoResolucion?: 'RSG' | 'RSGSA' | null;
-  montoSinDescuento?: number | null;
-  montoConDescuento?: number | null;
-  firmada?: boolean;
-  notificada?: boolean;
+  recomendacionIfi: 'SANCIONAR' | 'ARCHIVAR' | null;
+  /** El IFI archivó por vicio trascendente ("archivo por error de fondo"). */
+  archivoPorVicio: boolean;
+  /** Tipo que corresponde según el IFI (Sancionar → RSGSA, Archivar → RSG). */
+  tipoCorrespondiente: TipoResolucion | null;
+  etapa: EtapaResolucion;
+  resolucionId: string | null;
+  /** Tipo guardado (null = resolución todavía no iniciada). */
+  tipo: TipoResolucion | null;
+  estado: EstadoResolucion | null;
+  tipoNoCoincideConIfi: boolean;
+  enParte: boolean;
+  motivoDiscrepanciaIfi: string | null;
+  ampliacionEstado: EstadoResolucion | null;
+  tieneSeccionAutomatica: boolean;
+  tieneAnalisis: boolean;
+  retiroConfirmado: boolean;
+  tieneMonto: boolean;
+  tieneMedidaComplementaria: boolean;
+  fechaEnvioFirma: string | null;
+  fechaEmision: string | null;
+  numeroResolucion: string | null;
+  fechaNotificacion: string | null;
+  ifiFechaNotificacion: string | null;
+  plazos: PlazosResolucion;
 }
 
+export interface BandejaResoluciones {
+  enRedaccion: ExpedienteResolucionItem[];
+  porFirmar: ExpedienteResolucionItem[];
+  firmadas: ExpedienteResolucionItem[];
+}
+
+/** Forma real de GET /resoluciones/:expedienteId (ResolucionDetalleResponseDto). */
+export interface ResolucionDetalle {
+  expedienteId: string;
+  numeroExpediente: string;
+  intervencionId: string;
+  administrado: {
+    identificado: boolean;
+    nombresRazonSocial: string | null;
+    tipoDocumento: string | null;
+    numeroDocumento: string | null;
+    domicilio: string | null;
+  } | null;
+  infracciones: Array<{ codigoNormativo: string; descripcion: string | null }>;
+  tieneActaFiscalizacion: boolean;
+  tieneNotificacionCargo: boolean;
+  medidasProvisionales: Array<{ numeroCorrelativo: string; tipoMedida: string }>;
+  ifi: {
+    estado: 'EN_ELABORACION' | 'EMITIDO' | 'NOTIFICADO';
+    recomendacion: 'SANCIONAR' | 'ARCHIVAR' | null;
+    archivoPorVicio: boolean;
+    motivoVicioTrascendente: string | null;
+    numeroInforme: string | null;
+    fechaNotificacion: string | null;
+    recibioDescargo: boolean;
+    fechaRecepcionDescargo: string | null;
+    descargoTexto: string | null;
+  } | null;
+  tipoCorrespondiente: TipoResolucion | null;
+  tipoNoCoincideConIfi: boolean;
+  etapa: EtapaResolucion;
+  plazos: PlazosResolucion;
+  /** null = la resolución de primera instancia todavía no se inició. */
+  resolucion: {
+    id: string;
+    tipo: TipoResolucion;
+    estado: EstadoResolucion;
+    montoSinDescuento: number | null;
+    /** Calculado por el backend, nunca a mano. */
+    montoConDescuento: number | null;
+    tipoInfraccion: TipoInfraccion | null;
+    porcentajeDescuento: number | null;
+    porcentajeUit: number | null;
+    enParte: boolean;
+    motivoDiscrepanciaIfi: string | null;
+    descargoPosteriorTexto: string | null;
+    descargoPosteriorFecha: string | null;
+    medidaComplementaria: string | null;
+    /** JSON: { heredadoDelIfi: PlanchazoData | null, resolucion: { tipo } }. */
+    seccionAutomatica: string | null;
+    analisisTexto: string | null;
+    tareaRetiroEstadoCuenta: {
+      responsableId: string | null;
+      responsableNombre: string | null;
+      confirmada: boolean;
+      fechaConfirmacion: string | null;
+    };
+    fechaEnvioFirma: string | null;
+    numeroResolucion: string | null;
+    /** Fecha real de firma del Subgerente. */
+    fechaEmision: string | null;
+    fechaNotificacion: string | null;
+  } | null;
+  /** RSG de ampliación de plazo (null = no se inició). */
+  ampliacion: {
+    id: string;
+    estado: EstadoResolucion;
+    numeroResolucion: string | null;
+    fechaEnvioFirma: string | null;
+    fechaFirma: string | null;
+    fechaNotificacion: string | null;
+  } | null;
+}
+
+/** Descarga un Word generado al vuelo; relanza el mensaje del backend si lo rechaza. */
+async function descargarWord(ruta: string, nombre: string): Promise<void> {
+  const res = await fetch(`${BASE_URL}${ruta}`, { headers: { Authorization: `Bearer ${getToken()}` } });
+  if (!res.ok) {
+    let errorMsg = `Error ${res.status}: ${res.statusText}`;
+    try {
+      const errJson = await res.json();
+      errorMsg = errJson.message || errJson.detalle || errorMsg;
+    } catch {
+      // sin body JSON
+    }
+    throw new Error(errorMsg);
+  }
+  const url = URL.createObjectURL(await res.blob());
+  const enlace = document.createElement('a');
+  enlace.href = url;
+  enlace.download = nombre;
+  enlace.click();
+  URL.revokeObjectURL(url);
+}
+
+export const descargarDocumentoResolucion = (expedienteId: string, numeroExpediente: string) =>
+  descargarWord(`/resoluciones/${expedienteId}/documento`, `resolucion-${numeroExpediente}.docx`);
+
+export const descargarDocumentoAmpliacion = (expedienteId: string, numeroExpediente: string) =>
+  descargarWord(`/resoluciones/${expedienteId}/ampliacion/documento`, `rsg-ampliacion-${numeroExpediente}.docx`);
+
 export const ResolucionesApi = {
+  /** En redacción + por firmar (contador del menú y Dashboard). */
   getPendientes: () => apiClient<ExpedienteResolucionItem[]>('/resoluciones/pendientes'),
-  getDetalle: (expedienteId: string) => apiClient<any>(`/resoluciones/${expedienteId}`),
-  definirTipo: (expedienteId: string, tipo: 'RSG' | 'RSGSA') =>
+  getBandeja: () => apiClient<BandejaResoluciones>('/resoluciones/bandeja'),
+  buscar: (q: string) => apiClient<ExpedienteResolucionItem[]>(`/resoluciones/buscar?q=${encodeURIComponent(q)}`),
+  getDetalle: (expedienteId: string) => apiClient<ResolucionDetalle>(`/resoluciones/${expedienteId}`),
+  /** Decisión del abogado: sugerida por el IFI; si difiere, el motivo es obligatorio (vicio → solo RSG). */
+  definirTipo: (expedienteId: string, datos: { tipo: TipoResolucion; enParte?: boolean; motivoDiscrepanciaIfi?: string }) =>
     apiClient<{ ok: true }>(`/resoluciones/${expedienteId}/tipo`, {
       method: 'PATCH',
-      body: JSON.stringify({ tipo }),
+      body: JSON.stringify(datos),
     }),
-  guardarMontos: (expedienteId: string, montoSinDescuento?: number, montoConDescuento?: number) =>
+  /** Reemplaza los tres valores (omitir = vacío). El monto con descuento lo calcula el backend. */
+  guardarMontos: (
+    expedienteId: string,
+    datos: { tipoInfraccion: TipoInfraccion | null; porcentajeUit: number | null; montoSinDescuento: number | null },
+  ) =>
     apiClient<{ ok: true }>(`/resoluciones/${expedienteId}/montos`, {
       method: 'PATCH',
-      body: JSON.stringify({ montoSinDescuento, montoConDescuento }),
+      body: JSON.stringify({
+        ...(datos.tipoInfraccion ? { tipoInfraccion: datos.tipoInfraccion } : {}),
+        ...(datos.porcentajeUit != null ? { porcentajeUit: datos.porcentajeUit } : {}),
+        ...(datos.montoSinDescuento != null ? { montoSinDescuento: datos.montoSinDescuento } : {}),
+      }),
+    }),
+  /** Descargo presentado después del IFI. Texto vacío = quitarlo. */
+  registrarDescargoPosterior: (expedienteId: string, texto: string, fecha: string | null) =>
+    apiClient<{ ok: true }>(`/resoluciones/${expedienteId}/descargo-posterior`, {
+      method: 'PATCH',
+      body: JSON.stringify({ texto, ...(fecha ? { fecha } : {}) }),
+    }),
+  emitirAmpliacion: (expedienteId: string) =>
+    apiClient<{ ok: true }>(`/resoluciones/${expedienteId}/ampliacion`, { method: 'POST' }),
+  enviarAmpliacionAFirma: (expedienteId: string, fechaEnvio: string) =>
+    apiClient<{ ok: true }>(`/resoluciones/${expedienteId}/ampliacion/enviar-a-firma`, {
+      method: 'PATCH',
+      body: JSON.stringify({ fechaEnvio }),
+    }),
+  firmarAmpliacion: (expedienteId: string, fechaFirma: string, numeroResolucion?: string) =>
+    apiClient<{ ok: true }>(`/resoluciones/${expedienteId}/ampliacion/firmar`, {
+      method: 'PATCH',
+      body: JSON.stringify({ fechaFirma, ...(numeroResolucion ? { numeroResolucion } : {}) }),
+    }),
+  notificarAmpliacion: (expedienteId: string, fechaNotificacion: string) =>
+    apiClient<{ ok: true }>(`/resoluciones/${expedienteId}/ampliacion/notificar`, {
+      method: 'PATCH',
+      body: JSON.stringify({ fechaNotificacion }),
     }),
   guardarMedidaComplementaria: (expedienteId: string, medidaComplementaria: string) =>
     apiClient<{ ok: true }>(`/resoluciones/${expedienteId}/medida-complementaria`, {
@@ -256,8 +593,19 @@ export const ResolucionesApi = {
       method: 'PATCH',
       body: JSON.stringify({ responsableId, confirmada }),
     }),
-  firmar: (expedienteId: string) =>
-    apiClient<{ ok: true }>(`/resoluciones/${expedienteId}/firmar`, { method: 'PATCH' }),
+  enviarAFirma: (expedienteId: string, fechaEnvio: string) =>
+    apiClient<{ ok: true }>(`/resoluciones/${expedienteId}/enviar-a-firma`, {
+      method: 'PATCH',
+      body: JSON.stringify({ fechaEnvio }),
+    }),
+  retirarDeFirma: (expedienteId: string) =>
+    apiClient<{ ok: true }>(`/resoluciones/${expedienteId}/retirar-de-firma`, { method: 'PATCH' }),
+  /** Registrar la firma física del Subgerente: fecha real + N° del documento (opcional, nunca lo genera el sistema). */
+  firmar: (expedienteId: string, fechaFirma: string, numeroResolucion?: string) =>
+    apiClient<{ ok: true }>(`/resoluciones/${expedienteId}/firmar`, {
+      method: 'PATCH',
+      body: JSON.stringify({ fechaFirma, ...(numeroResolucion ? { numeroResolucion } : {}) }),
+    }),
   notificar: (expedienteId: string, fechaNotificacion: string) =>
     apiClient<{ ok: true }>(`/resoluciones/${expedienteId}/notificar`, {
       method: 'PATCH',
@@ -469,7 +817,7 @@ export interface BundleIntervencion {
   gpsPrecisionM?: number;
   origenUbicacion: 'GPS_AUTOMATICO' | 'DIRECCION_MANUAL' | 'SIN_UBICACION';
   direccionAproximada?: string;
-  origen: 'DENUNCIA' | 'INOPINADA' | 'ORDEN_SUPERIOR' | 'DOC_EXTERNO';
+  origen: 'DENUNCIA' | 'INOPINADA' | 'ORDEN_SUPERIOR' | 'DOC_EXTERNO' | 'OTROS';
   referenciaOrigen?: string;
   tipoActuacion: 'EXHORTACION' | 'CONSTATACION' | 'INICIA_PAS';
   versionLocal: number;
@@ -527,7 +875,7 @@ export interface BundleIntervencion {
   }[];
   actasMedidaProvisional: {
     numeroCorrelativo: string;
-    tipoMedida: 'CLAUSURA' | 'PARALIZACION';
+    tipoMedida: 'CLAUSURA' | 'PARALIZACION' | 'OTROS';
     descripcion?: string;
     lugarEjecucion?: string;
     observacionesAdministrado?: string;
@@ -649,9 +997,23 @@ export interface IntervencionSelectorItem {
   numeroExpediente: string | null;
 }
 
+export interface IntervencionMapaItem {
+  id: string;
+  latitud: number;
+  longitud: number;
+  gpsPrecisionM: number | null;
+  fechaHoraInicio: string;
+  tipoActuacion: string;
+  origenUbicacion: string;
+  fiscalizadorNombre: string;
+  administradoNombre: string | null;
+  direccionAproximada: string | null;
+}
+
 export const ConsultasApi = {
   getCierresCampo: () => apiClient<CierreCampoItem[]>('/consultas/cierres-campo'),
   getIntervencionesSelector: () => apiClient<IntervencionSelectorItem[]>('/consultas/intervenciones-selector'),
+  getMapaIntervenciones: () => apiClient<IntervencionMapaItem[]>('/consultas/mapa-intervenciones'),
 };
 
 /**
