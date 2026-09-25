@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ConfirmProvider } from './context/ConfirmContext';
-import { AppLayout, NavModule } from './components/layout/AppLayout';
+import { AppLayout, NavModule, puedeVerModulo } from './components/layout/AppLayout';
 import { LoginView } from './modules/auth/LoginView';
 import { DashboardView } from './modules/dashboard/DashboardView';
 import { DocumentosView } from './modules/documentos/DocumentosView';
@@ -80,6 +80,11 @@ function MainApp() {
 
   if (!isAuthenticated) {
     return <LoginView />;
+  }
+
+  // Rol temporal de pruebas: si entra por URL a un módulo no habilitado, vuelve al inicio.
+  if (!puedeVerModulo(currentModule, user?.rol)) {
+    return <Navigate to="/" replace />;
   }
 
   return (
