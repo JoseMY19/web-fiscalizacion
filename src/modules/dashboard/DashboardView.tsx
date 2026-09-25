@@ -59,45 +59,25 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
     <div>
       {/* Welcome Banner in Midnight Blue */}
       <div
-        style={{
-          background: 'linear-gradient(135deg, #163666 0%, #0f264c 100%)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '32px',
-          color: '#ffffff',
-          marginBottom: '28px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          boxShadow: '0 10px 25px -5px rgba(22, 54, 102, 0.25)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-        }}
+        className="bg-[linear-gradient(135deg,#163666_0%,#0f264c_100%)] rounded-lg p-[32px] text-[#ffffff] mb-[28px] flex items-center justify-between shadow-[0_10px_25px_-5px_rgba(22,54,102,0.25)] border border-[rgba(255,255,255,0.08)]"
       >
-        <div style={{ maxWidth: '650px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+        <div className="max-w-[650px]">
+          <div className="flex items-center gap-[12px] mb-[12px]">
             <img
               src="/logo-sjl-white.png"
               alt="MDSJL"
-              style={{ height: '34px', width: 'auto', objectFit: 'contain' }}
+              className="h-[34px] w-auto object-contain"
             />
             <span
-              style={{
-                fontSize: '11px',
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                letterSpacing: '1px',
-                color: '#38bdf8',
-                backgroundColor: 'rgba(56, 189, 248, 0.12)',
-                padding: '2px 8px',
-                borderRadius: '4px',
-              }}
+              className="text-[11px] font-bold uppercase tracking-[1px] text-[#38bdf8] bg-[rgba(56,189,248,0.12)] py-[2px] px-[8px] rounded-[4px]"
             >
               Control Operativo PAS
             </span>
           </div>
-          <h2 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '8px', color: '#ffffff' }}>
+          <h2 className="text-[24px] font-extrabold mb-[8px] text-[#ffffff]">
             Procedimiento Administrativo Sancionador
           </h2>
-          <p style={{ fontSize: '13px', color: '#cbd5e1', lineHeight: '1.5' }}>
+          <p className="text-[13px] text-[#cbd5e1] leading-[1.5]">
             Monitoreo en tiempo real del ciclo sancionador municipal: validación formal de actas,
             cédulas de notificación, fase instructora, emisión de resoluciones, impugnaciones y cobranza coactiva.
           </p>
@@ -108,7 +88,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
             icon={<RefreshCwIcon size={16} />}
             loading={loading}
             onClick={loadData}
-            style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', color: '#ffffff', border: '1px solid rgba(255, 255, 255, 0.2)' }}
+            className="bg-[rgba(255,255,255,0.1)]! text-[#ffffff]! border! border-[rgba(255,255,255,0.2)]!"
           >
             Actualizar Datos
           </Button>
@@ -117,48 +97,34 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
 
       {/* KPI Cards Grid */}
       <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: '20px',
-          marginBottom: '32px',
-        }}
+        className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-[20px] mb-[32px]"
       >
         {/* KPI 1 */}
-        <Card style={{ position: 'relative', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <Card className="relative! overflow-hidden!">
+          <div className="flex items-start justify-between">
             <div>
-              <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-muted)' }}>
+              <p className="text-[13px] font-semibold text-text-muted">
                 Validación de Expedientes
               </p>
-              <h3 style={{ fontSize: '32px', fontWeight: 800, color: 'var(--color-midnight-900)', marginTop: '4px' }}>
+              <h3 className="text-[32px] font-extrabold text-midnight-900 mt-[4px]">
                 {loading ? <Spinner size={24} /> : stats.pendientesValidacion}
               </h3>
-              <p style={{ fontSize: '12px', color: 'var(--color-warning)', fontWeight: 600, marginTop: '4px' }}>
+              <p className="text-[12px] text-warning font-semibold mt-[4px]">
                 Pendientes de mesa de control
               </p>
             </div>
             <div
-              style={{
-                width: '46px',
-                height: '46px',
-                borderRadius: '12px',
-                backgroundColor: 'var(--color-primary-50)',
-                color: 'var(--color-primary-600)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+              className="w-[46px] h-[46px] rounded-[12px] bg-primary-50 text-primary-600 flex items-center justify-center"
             >
               <ExpedienteIcon size={24} />
             </div>
           </div>
-          <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid var(--color-border)' }}>
+          <div className="mt-[16px] pt-[12px] border-t border-t-border">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => onNavigate('expedientes')}
-              style={{ padding: 0, color: 'var(--color-primary-600)', fontSize: '12px' }}
+              className="p-0! text-primary-600! text-[12px]!"
             >
               Ver expedientes pendientes <ArrowRightIcon size={14} />
             </Button>
@@ -167,39 +133,30 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
 
         {/* KPI 2 */}
         <Card>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <div className="flex items-start justify-between">
             <div>
-              <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-muted)' }}>
+              <p className="text-[13px] font-semibold text-text-muted">
                 En Fase de Instrucción
               </p>
-              <h3 style={{ fontSize: '32px', fontWeight: 800, color: 'var(--color-midnight-900)', marginTop: '4px' }}>
+              <h3 className="text-[32px] font-extrabold text-midnight-900 mt-[4px]">
                 {loading ? <Spinner size={24} /> : stats.pendientesIfi}
               </h3>
-              <p style={{ fontSize: '12px', color: 'var(--color-info)', fontWeight: 600, marginTop: '4px' }}>
+              <p className="text-[12px] text-info font-semibold mt-[4px]">
                 Para IFI / Descargos
               </p>
             </div>
             <div
-              style={{
-                width: '46px',
-                height: '46px',
-                borderRadius: '12px',
-                backgroundColor: 'var(--color-info-bg)',
-                color: 'var(--color-info)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+              className="w-[46px] h-[46px] rounded-[12px] bg-info-bg text-info flex items-center justify-center"
             >
               <FileTextIcon size={24} />
             </div>
           </div>
-          <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid var(--color-border)' }}>
+          <div className="mt-[16px] pt-[12px] border-t border-t-border">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => onNavigate('ifi')}
-              style={{ padding: 0, color: 'var(--color-info)', fontSize: '12px' }}
+              className="p-0! text-info! text-[12px]!"
             >
               Ir a bandeja IFI <ArrowRightIcon size={14} />
             </Button>
@@ -208,39 +165,30 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
 
         {/* KPI 3 */}
         <Card>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <div className="flex items-start justify-between">
             <div>
-              <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-muted)' }}>
+              <p className="text-[13px] font-semibold text-text-muted">
                 Pendientes de Resolución
               </p>
-              <h3 style={{ fontSize: '32px', fontWeight: 800, color: 'var(--color-midnight-900)', marginTop: '4px' }}>
+              <h3 className="text-[32px] font-extrabold text-midnight-900 mt-[4px]">
                 {loading ? <Spinner size={24} /> : stats.pendientesResolucion}
               </h3>
-              <p style={{ fontSize: '12px', color: 'var(--color-purple)', fontWeight: 600, marginTop: '4px' }}>
+              <p className="text-[12px] text-purple font-semibold mt-[4px]">
                 Emisión de RSG / RSGSA
               </p>
             </div>
             <div
-              style={{
-                width: '46px',
-                height: '46px',
-                borderRadius: '12px',
-                backgroundColor: 'var(--color-purple-bg)',
-                color: 'var(--color-purple)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+              className="w-[46px] h-[46px] rounded-[12px] bg-purple-bg text-purple flex items-center justify-center"
             >
               <GavelIcon size={24} />
             </div>
           </div>
-          <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid var(--color-border)' }}>
+          <div className="mt-[16px] pt-[12px] border-t border-t-border">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => onNavigate('resoluciones')}
-              style={{ padding: 0, color: 'var(--color-purple)', fontSize: '12px' }}
+              className="p-0! text-purple! text-[12px]!"
             >
               Ir a Resoluciones <ArrowRightIcon size={14} />
             </Button>
@@ -249,39 +197,30 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
 
         {/* KPI 4 */}
         <Card>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <div className="flex items-start justify-between">
             <div>
-              <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-muted)' }}>
+              <p className="text-[13px] font-semibold text-text-muted">
                 Expedientes en Riesgo
               </p>
-              <h3 style={{ fontSize: '32px', fontWeight: 800, color: stats.enRiesgo > 0 ? 'var(--color-danger)' : 'var(--color-success)', marginTop: '4px' }}>
+              <h3 className={`text-[32px] font-extrabold mt-[4px] ${stats.enRiesgo > 0 ? 'text-danger' : 'text-success'}`}>
                 {loading ? <Spinner size={24} /> : stats.enRiesgo}
               </h3>
-              <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', fontWeight: 600, marginTop: '4px' }}>
+              <p className="text-[12px] text-text-muted font-semibold mt-[4px]">
                 Alerta de plazos / caducidad
               </p>
             </div>
             <div
-              style={{
-                width: '46px',
-                height: '46px',
-                borderRadius: '12px',
-                backgroundColor: stats.enRiesgo > 0 ? 'var(--color-danger-bg)' : 'var(--color-success-bg)',
-                color: stats.enRiesgo > 0 ? 'var(--color-danger)' : 'var(--color-success)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+              className={`w-[46px] h-[46px] rounded-[12px] flex items-center justify-center ${stats.enRiesgo > 0 ? 'bg-danger-bg' : 'bg-success-bg'} ${stats.enRiesgo > 0 ? 'text-danger' : 'text-success'}`}
             >
               <ClockIcon size={24} />
             </div>
           </div>
-          <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid var(--color-border)' }}>
+          <div className="mt-[16px] pt-[12px] border-t border-t-border">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => onNavigate('configuracion')}
-              style={{ padding: 0, color: 'var(--color-danger)', fontSize: '12px' }}
+              className="p-0! text-danger! text-[12px]!"
             >
               Ver monitor de plazos <ArrowRightIcon size={14} />
             </Button>
@@ -294,7 +233,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
         title="Flujo Operativo del Procedimiento Sancionador (BPMN 2.0)"
         subtitle="Ruta crítica de los expedientes administrativos según la normativa vigente de San Juan de Lurigancho"
       >
-        <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', padding: '8px 0 16px' }}>
+        <div className="flex gap-[12px] overflow-x-auto pt-[8px] px-0 pb-[16px]">
           {[
             { step: 'SP1', title: 'Campo', desc: 'Actas y Notificación de Cargo', active: false },
             { step: 'SP2', title: 'Validación', desc: 'Revisión formal y aprobación', active: true, mod: 'expedientes' as NavModule },
@@ -307,41 +246,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
             <div
               key={item.step}
               onClick={() => item.mod && onNavigate(item.mod)}
-              style={{
-                flex: '1 0 160px',
-                padding: '16px',
-                borderRadius: 'var(--radius-md)',
-                backgroundColor: item.active ? 'var(--color-primary-50)' : '#f8fafc',
-                border: item.active ? '1px solid var(--color-primary-100)' : '1px solid var(--color-border)',
-                cursor: item.mod ? 'pointer' : 'default',
-                transition: 'all var(--transition-fast)',
-              }}
-              onMouseEnter={(e) => {
-                if (item.mod) e.currentTarget.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                if (item.mod) e.currentTarget.style.transform = 'none';
-              }}
+              className={`flex-[1_0_160px] p-[16px] rounded-md [transition:all_var(--transition-fast)] ${item.active ? 'bg-primary-50' : 'bg-[#f8fafc]'} ${item.active ? 'border border-primary-100' : 'border border-border'} ${item.mod ? 'cursor-pointer hover:-translate-y-[2px]' : 'cursor-default'}`}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <div className="flex items-center justify-between mb-[8px]">
                 <span
-                  style={{
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    padding: '2px 8px',
-                    borderRadius: '4px',
-                    backgroundColor: item.active ? 'var(--color-primary-600)' : '#cbd5e1',
-                    color: '#ffffff',
-                  }}
+                  className={`text-[11px] font-bold py-[2px] px-[8px] rounded-[4px] text-[#ffffff] ${item.active ? 'bg-primary-600' : 'bg-[#cbd5e1]'}`}
                 >
                   {item.step}
                 </span>
-                {idx < arr.length - 1 && <span style={{ color: '#cbd5e1', fontSize: '14px' }}>→</span>}
+                {idx < arr.length - 1 && <span className="text-[#cbd5e1] text-[14px]">→</span>}
               </div>
-              <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-text-main)', marginBottom: '4px' }}>
+              <h4 className="text-[14px] font-bold text-text-main mb-[4px]">
                 {item.title}
               </h4>
-              <p style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>{item.desc}</p>
+              <p className="text-[11px] text-text-muted">{item.desc}</p>
             </div>
           ))}
         </div>

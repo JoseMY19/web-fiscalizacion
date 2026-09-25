@@ -70,19 +70,10 @@ function MainApp() {
   if (isLoading) {
     return (
       <div
-        style={{
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: '#10264a',
-          color: '#ffffff',
-          gap: '16px',
-        }}
+        className="min-h-screen flex flex-col items-center justify-center bg-[#10264a] text-[#ffffff] gap-[16px]"
       >
         <Spinner size={36} color="#38bdf8" />
-        <p style={{ fontSize: '14px', color: '#94a3b8' }}>Iniciando Sistema PAS Oficina MDSJL...</p>
+        <p className="text-[14px] text-[#94a3b8]">Iniciando Sistema PAS Oficina MDSJL...</p>
       </div>
     );
   }

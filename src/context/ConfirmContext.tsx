@@ -49,7 +49,7 @@ export const ConfirmProvider: React.FC<{ children: React.ReactNode }> = ({ child
           </>
         }
       >
-        <p style={{ fontSize: '14px', color: 'var(--color-text-main)', lineHeight: 1.5 }}>{options?.message}</p>
+        <p className="text-[14px] text-text-main leading-[1.5]">{options?.message}</p>
       </Modal>
     </ConfirmContext.Provider>
   );

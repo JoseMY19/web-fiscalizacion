@@ -100,76 +100,43 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   const cleanRole = user?.rol === 'ADMIN' ? 'Administrador' : user?.rol === 'FISCALIZADOR' ? 'Inspector de Campo' : user?.rol ?? 'Oficina';
 
   return (
-    <div className="app-container">
+    <div className="flex min-h-screen bg-bg-app">
       {/* ================================================================ */}
       {/* SIDEBAR INSTITUCIONAL - AZUL NAVY INSTITUCIONAL                   */}
       {/* ================================================================ */}
       <aside
-        style={{
-          width: '280px',
-          background: 'linear-gradient(180deg, #163666 0%, #10264a 100%)',
-          color: '#ffffff',
-          display: 'flex',
-          flexDirection: 'column',
-          flexShrink: 0,
-          borderRight: '1px solid rgba(255, 255, 255, 0.1)',
-          boxShadow: '4px 0 20px rgba(16, 38, 74, 0.25)',
-          zIndex: 100,
-        }}
+        className="w-[280px] bg-[linear-gradient(180deg,#163666_0%,#10264a_100%)] text-[#ffffff] flex flex-col shrink-0 border-r border-r-[rgba(255,255,255,0.1)] shadow-[4px_0_20px_rgba(16,38,74,0.25)] z-[100]"
       >
         {/* Brand Header con Logo Oficial SJL */}
         <div
-          style={{
-            padding: '24px 20px 20px',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            textAlign: 'center',
-            gap: '14px',
-            background: 'rgba(255, 255, 255, 0.02)',
-          }}
+          className="pt-[24px] px-[20px] pb-[20px] border-b border-b-[rgba(255,255,255,0.1)] flex flex-col items-center justify-center text-center gap-[14px] bg-[rgba(255,255,255,0.02)]"
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+          <div className="flex items-center justify-center w-full">
             <img
               src="/logo-sjl-white.png"
               alt="Municipalidad de San Juan de Lurigancho"
-              style={{
-                height: '66px',
-                width: 'auto',
-                maxWidth: '220px',
-                objectFit: 'contain',
-              }}
+              className="h-[66px] w-auto max-w-[220px] object-contain"
             />
           </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff', letterSpacing: '0.2px' }}>
+          <div className="text-center">
+            <div className="text-[13px] font-bold text-[#ffffff] tracking-[0.2px]">
               Fiscalización Administrativa
             </div>
-            <div style={{ fontSize: '11px', color: '#bfdbfe', marginTop: '3px' }}>
+            <div className="text-[11px] text-[#bfdbfe] mt-[3px]">
               MDSJL • Sistema Sancionador PAS
             </div>
           </div>
         </div>
 
         {/* Navigation Section */}
-        <div style={{ padding: '16px 12px', flex: 1, overflowY: 'auto' }}>
+        <div className="py-[16px] px-[12px] flex-1 overflow-y-auto">
           <div
-            style={{
-              fontSize: '11px',
-              fontWeight: 600,
-              textTransform: 'uppercase',
-              letterSpacing: '0.8px',
-              color: '#93c5fd',
-              padding: '4px 12px 8px',
-              opacity: 0.75,
-            }}
+            className="text-[11px] font-semibold uppercase tracking-[0.8px] text-[#93c5fd] pt-[4px] px-[12px] pb-[8px] opacity-[0.75]"
           >
             Módulos del Sistema
           </div>
 
-          <nav style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+          <nav className="flex flex-col gap-[2px]">
             {navItems.filter((item) => esVisibleParaRol(item, user?.rol)).map((item) => {
               const active = currentModule === item.id;
               const count = badgeCounts[item.id];
@@ -177,57 +144,17 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                 <button
                   key={item.id}
                   onClick={() => onSelectModule(item.id)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '9px 12px',
-                    borderRadius: '6px',
-                    backgroundColor: active ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
-                    color: active ? '#ffffff' : '#cbd5e1',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    fontWeight: active ? 600 : 400,
-                    transition: 'background-color 150ms ease, color 150ms ease',
-                    textAlign: 'left',
-                    width: '100%',
-                    boxShadow: 'none',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!active) {
-                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.06)';
-                      e.currentTarget.style.color = '#ffffff';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!active) {
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                      e.currentTarget.style.color = '#cbd5e1';
-                    }
-                  }}
+                  className={`flex items-center justify-between py-[9px] px-[12px] rounded-[6px] border-0 cursor-pointer text-[13px] [transition:background-color_150ms_ease,color_150ms_ease] text-left w-full shadow-none ${active ? 'bg-[rgba(255,255,255,0.12)]' : 'bg-transparent'} ${active ? 'text-[#ffffff]' : 'text-[#cbd5e1] hover:bg-[rgba(255,255,255,0.06)] hover:text-[#ffffff]'} ${active ? 'font-semibold' : 'font-normal'}`}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ color: active ? '#38bdf8' : '#94a3b8', display: 'flex', alignItems: 'center' }}>
+                  <div className="flex items-center gap-[10px]">
+                    <span className={`flex items-center ${active ? 'text-[#38bdf8]' : 'text-[#94a3b8]'}`}>
                       {item.icon}
                     </span>
                     <span>{item.label}</span>
                   </div>
                   {typeof count === 'number' && count > 0 && (
                     <span
-                      style={{
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        minWidth: '19px',
-                        height: '19px',
-                        padding: '0 6px',
-                        borderRadius: '10px',
-                        backgroundColor: '#ef4444',
-                        color: '#ffffff',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
+                      className="text-[11px] font-bold min-w-[19px] h-[19px] py-0 px-[6px] rounded-[10px] bg-[#ef4444] text-[#ffffff] inline-flex items-center justify-center"
                     >
                       {count}
                     </span>
@@ -240,47 +167,23 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
         {/* User Profile & Logout in Azul Navy */}
         <div
-          style={{
-            padding: '16px',
-            borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-            backgroundColor: '#0c1f3c',
-          }}
+          className="p-[16px] border-t border-t-[rgba(255,255,255,0.1)] bg-[#0c1f3c]"
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-[10px] min-w-0">
               <div
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '50%',
-                  backgroundColor: '#1d4ed8',
-                  color: '#ffffff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 700,
-                  fontSize: '13px',
-                  flexShrink: 0,
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                }}
+                className="w-[36px] h-[36px] rounded-full bg-[#1d4ed8] text-[#ffffff] flex items-center justify-center font-bold text-[13px] shrink-0 border border-[rgba(255,255,255,0.2)]"
               >
                 {cleanName.charAt(0)}
               </div>
-              <div style={{ minWidth: 0 }}>
+              <div className="min-w-0">
                 <div
-                  style={{
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    color: '#ffffff',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
+                  className="text-[13px] font-semibold text-[#ffffff] whitespace-nowrap overflow-hidden text-ellipsis"
                   title={cleanName}
                 >
                   {cleanName}
                 </div>
-                <div style={{ fontSize: '11px', color: '#93c5fd' }}>
+                <div className="text-[11px] text-[#93c5fd]">
                   {cleanRole} • DNI: {user?.dni ?? '---'}
                 </div>
               </div>
@@ -288,20 +191,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             <button
               onClick={onLogout}
               title="Cerrar sesión"
-              style={{
-                backgroundColor: 'transparent',
-                border: 'none',
-                color: '#bfdbfe',
-                cursor: 'pointer',
-                padding: '6px',
-                borderRadius: '6px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'color 150ms',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = '#f87171')}
-              onMouseLeave={(e) => (e.currentTarget.style.color = '#bfdbfe')}
+              className="bg-transparent border-0 text-[#bfdbfe] cursor-pointer p-[6px] rounded-[6px] flex items-center justify-center [transition:color_150ms] hover:text-[#f87171]"
             >
               <LogOutIcon size={18} />
             </button>
@@ -312,68 +202,40 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       {/* ================================================================ */}
       {/* MAIN CONTENT AREA                                                */}
       {/* ================================================================ */}
-      <div className="main-content">
+      <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
         {/* Topbar Header */}
-        <header className="app-topbar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#64748b' }}>
-              <span style={{ fontWeight: 500 }}>Fiscalización</span>
-              <span style={{ color: '#cbd5e1' }}>/</span>
-              <span style={{ color: '#0f172a', fontWeight: 700 }}>{currentNav?.label}</span>
+        <header className="h-[64px] bg-[#ffffff] border-b border-b-[#e2e8f0] flex items-center justify-between px-[32px] relative z-[20] max-md:px-[16px]">
+          <div className="flex items-center gap-[12px]">
+            <div className="flex items-center gap-[8px] text-[13px] text-[#64748b]">
+              <span className="font-medium">Fiscalización</span>
+              <span className="text-[#cbd5e1]">/</span>
+              <span className="text-[#0f172a] font-bold">{currentNav?.label}</span>
             </div>
             <span
-              style={{
-                fontSize: '11px',
-                fontWeight: 600,
-                color: '#0369a1',
-                backgroundColor: '#e0f2fe',
-                padding: '2px 8px',
-                borderRadius: '6px',
-              }}
+              className="text-[11px] font-semibold text-[#0369a1] bg-[#e0f2fe] py-[2px] px-[8px] rounded-[6px]"
             >
               MDSJL
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div className="flex items-center gap-[20px]">
             {/* Estado de conexión */}
             <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '7px',
-                fontSize: '12px',
-                fontWeight: 500,
-                color: '#059669',
-              }}
+              className="flex items-center gap-[7px] text-[12px] font-medium text-[#059669]"
               title="Conexión en vivo con el servidor"
             >
               <span
-                style={{
-                  width: '7px',
-                  height: '7px',
-                  borderRadius: '50%',
-                  backgroundColor: '#10b981',
-                  boxShadow: '0 0 0 2px rgba(16, 185, 129, 0.2)',
-                }}
+                className="w-[7px] h-[7px] rounded-full bg-[#10b981] shadow-[0_0_0_2px_rgba(16,185,129,0.2)]"
               />
               <span>Sistema en línea</span>
             </div>
 
             {/* Fecha oficial */}
             <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '7px',
-                fontSize: '13px',
-                color: '#64748b',
-                borderLeft: '1px solid #e2e8f0',
-                paddingLeft: '16px',
-              }}
+              className="flex items-center gap-[7px] text-[13px] text-[#64748b] border-l border-l-[#e2e8f0] pl-[16px]"
             >
               <CalendarIcon size={15} color="#94a3b8" />
-              <span style={{ textTransform: 'capitalize' }}>
+              <span className="capitalize">
                 {new Date().toLocaleDateString('es-PE', {
                   weekday: 'long',
                   day: 'numeric',
@@ -385,12 +247,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
             {/* Botón de Notificaciones con contador */}
             <div
-              style={{
-                borderLeft: '1px solid #e2e8f0',
-                paddingLeft: '16px',
-                display: 'flex',
-                alignItems: 'center',
-              }}
+              className="border-l border-l-[#e2e8f0] pl-[16px] flex items-center"
             >
               <button
                 onClick={() => onSelectModule('expedientes')}
@@ -399,49 +256,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                     ? `${totalPendientes} expedientes pendientes de validación`
                     : 'Sin notificaciones pendientes'
                 }
-                style={{
-                  position: 'relative',
-                  backgroundColor: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  width: '36px',
-                  height: '36px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  color: '#64748b',
-                  transition: 'all 150ms ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f1f5f9';
-                  e.currentTarget.style.color = '#0f172a';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f8fafc';
-                  e.currentTarget.style.color = '#64748b';
-                }}
+                className="relative bg-[#f8fafc] border border-[#e2e8f0] rounded-[8px] w-[36px] h-[36px] flex items-center justify-center cursor-pointer text-[#64748b] [transition:all_150ms_ease] hover:bg-[#f1f5f9] hover:text-[#0f172a]"
               >
                 <BellIcon size={17} />
                 {totalPendientes > 0 && (
                   <span
-                    style={{
-                      position: 'absolute',
-                      top: '-4px',
-                      right: '-4px',
-                      minWidth: '18px',
-                      height: '18px',
-                      padding: '0 4px',
-                      borderRadius: '9px',
-                      backgroundColor: '#ef4444',
-                      color: '#ffffff',
-                      fontSize: '10px',
-                      fontWeight: 700,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: '2px solid #ffffff',
-                    }}
+                    className="absolute -top-[4px] -right-[4px] min-w-[18px] h-[18px] py-0 px-[4px] rounded-[9px] bg-[#ef4444] text-[#ffffff] text-[10px] font-bold flex items-center justify-center border-2 border-[#ffffff]"
                   >
                     {totalPendientes}
                   </span>
@@ -452,7 +272,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         </header>
 
         {/* Page Body */}
-        <main className="page-body">{children}</main>
+        <main className="flex-1 w-full max-w-[1600px] mx-auto pt-[24px] px-[32px] pb-[48px] max-md:p-[16px]">{children}</main>
       </div>
     </div>
   );
