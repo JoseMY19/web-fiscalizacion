@@ -14,7 +14,7 @@ export default defineConfig({
   server: { host: true, port: 5174, allowedHosts: ['.trycloudflare.com'] },
   resolve: {
     alias: {
-      '@pas-sjl/shared-types': path.resolve(__dirname, '../../packages/shared-types/src/index.ts'),
+      '@pas-sjl/shared-types': path.resolve(__dirname, 'src/shared-types/index.ts'),
     },
   },
   plugins: [react(), tailwindcss()],

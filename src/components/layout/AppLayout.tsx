@@ -77,9 +77,31 @@ const navItems: NavItemConDef[] = [
  * agregan roles de oficina reales, este mapa se actualiza junto con los
  * guards del backend, no antes.
  */
+/**
+ * Rol TEMPORAL de pruebas (usuario para que los abogados prueben el
+ * sistema). Ve solo los módulos que ya están avanzados y funcionan; en
+ * ellos puede hacer todo. Al terminar/mejorar otro módulo, agrégalo aquí.
+ * No es el sistema de roles definitivo (fase posterior).
+ */
+export const MODULOS_ROL_PRUEBA: NavModule[] = [
+  'dashboard',
+  'expedientes',
+  'notificaciones',
+  'ifi',
+  'resoluciones',
+  'consulta-campo',
+  'cautelares',
+];
+
+/** Si el rol puede entrar a ese módulo (menú y rutas usan la misma regla). */
+export function puedeVerModulo(modulo: NavModule, rol: string | undefined): boolean {
+  if (rol === 'PRUEBA') return MODULOS_ROL_PRUEBA.includes(modulo);
+  if (rol === 'NOTIFICADOR') return modulo === 'dashboard' || modulo === 'notificaciones';
+  return true;
+}
+
 function esVisibleParaRol(item: NavItemConDef, rol: string | undefined): boolean {
-  if (rol !== 'NOTIFICADOR') return true;
-  return item.id === 'dashboard' || item.id === 'notificaciones';
+  return puedeVerModulo(item.id, rol);
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({
@@ -97,7 +119,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   );
 
   const cleanName = (user?.nombres || 'Carla Vega').replace(/\s*\(admin\s*dev\)/gi, '').trim();
-  const cleanRole = user?.rol === 'ADMIN' ? 'Administrador' : user?.rol === 'FISCALIZADOR' ? 'Inspector de Campo' : user?.rol ?? 'Oficina';
+  const cleanRole = user?.rol === 'ADMIN' ? 'Administrador' : user?.rol === 'FISCALIZADOR' ? 'Inspector de Campo' : user?.rol === 'PRUEBA' ? 'Usuario de Prueba' : user?.rol ?? 'Oficina';
 
   return (
     <div className="flex min-h-screen bg-bg-app">
