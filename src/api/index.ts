@@ -616,71 +616,127 @@ export const ResolucionesApi = {
 // ============================================================================
 // RECURSOS (SP6 RECONSIDERACIÓN & SP7 APELACIÓN)
 // ============================================================================
-export interface ReconsideracionPendienteItem {
-  id: string;
-  resolucionId: string;
+export type SituacionRecursos =
+  | 'SIN_ACTO_RECURRIBLE'
+  | 'PLAZO_ABIERTO'
+  | 'PLAZO_VENCIDO'
+  | 'RECONSIDERACION_EN_TRAMITE'
+  | 'EN_APELACION'
+  | 'CONCLUIDO_A_FAVOR'
+  | 'APELACION_INFUNDADA'
+  | 'NULIDAD_PENDIENTE';
+
+export type ResultadoReconsideracion = 'FUNDADA' | 'IMPROCEDENTE' | 'INFUNDADA';
+export type DecisionGop = 'FUNDADA' | 'INFUNDADA' | 'NULIDAD';
+
+/** Recursos de un expediente (GET /recursos/:expedienteId, bandeja y buscador). Estado derivado en el backend. */
+export interface ExpedienteRecursos {
   expedienteId: string;
   numeroExpediente: string;
-  fechaPresentacion: string;
-  nuevaPrueba: boolean;
-  resultado: 'FUNDADA' | 'IMPROCEDENTE' | 'INFUNDADA' | null;
-  faltaVincularResolucion: boolean;
-}
-
-export interface ApelacionPendienteItem {
-  id: string;
-  expedienteId: string;
-  resolucionId: string;
-  numeroExpediente: string;
-  informeGopGenerado: boolean;
-  informeFirmado: boolean;
-}
-
-export const RecursosApi = {
-  // Bandejas — sin esto había que copiar ids a mano de otra pantalla.
-  getPendientesReconsideracion: () => apiClient<ReconsideracionPendienteItem[]>('/reconsideraciones/pendientes'),
-  getPendientesApelacion: () => apiClient<ApelacionPendienteItem[]>('/apelaciones/pendientes'),
-
-  // Reconsideración (SP6)
-  presentarReconsideracion: (resolucionId: string, data: {
+  administrado: string | null;
+  ncFechaNotificacion: string | null;
+  situacion: SituacionRecursos;
+  /** Último acto recurrible: RSG que resolvió la reconsideración (si está notificada) o la resolución original. */
+  ultimoActo: { resolucionId: string; numeroResolucion: string | null; esRsgDeReconsideracion: boolean; fechaNotificacion: string } | null;
+  fechaLimiteRecurso: string | null;
+  diasHabilesRestantes: number | null;
+  tienePago: boolean;
+  pago: { montoPagado: number; fechaPago: string } | null;
+  resolucion: {
+    id: string;
+    tipo: TipoResolucion;
+    estado: string;
+    numeroResolucion: string | null;
+    fechaEmision: string | null;
+    fechaNotificacion: string | null;
+    montoSinDescuento: number | null;
+    medidaComplementaria: string | null;
+  };
+  reconsideracion: {
+    id: string;
     fechaPresentacion: string;
     nuevaPrueba: boolean;
-    nuevaPruebaTexto?: string;
-  }) =>
-    apiClient<{ id: string }>(`/reconsideraciones/${resolucionId}`, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
-  subsanarReconsideracion: (id: string, fechaSubsanacion: string) =>
-    apiClient<{ ok: true }>(`/reconsideraciones/${id}/subsanacion`, {
-      method: 'PATCH',
-      body: JSON.stringify({ fechaSubsanacion }),
-    }),
+    nuevaPruebaTexto: string | null;
+    fechaSubsanacion: string | null;
+    resultado: ResultadoReconsideracion | null;
+    analisisTexto: string | null;
+    rsg: {
+      id: string;
+      estado: 'EN_ELABORACION' | 'EMITIDA' | 'NOTIFICADA';
+      analisisTexto: string | null;
+      fechaEnvioFirma: string | null;
+      numeroResolucion: string | null;
+      fechaEmision: string | null;
+      fechaNotificacion: string | null;
+    } | null;
+  } | null;
+  apelacion: {
+    id: string;
+    resolucionId: string;
+    resolucionApeladaNumero: string | null;
+    resolucionApeladaEsRsgReconsideracion: boolean;
+    fechaPresentacion: string | null;
+    informeGenerado: boolean;
+    fechaFirmaInforme: string | null;
+    firmadoPor: string | null;
+    fechaElevacionGop: string | null;
+    decisionGop: DecisionGop | null;
+    motivoNulidad: string | null;
+    fechaDecisionGop: string | null;
+  } | null;
+  actoFirme: { motivo: string; fechaFirmeza: string } | null;
+}
+
+export interface BandejaRecursos {
+  plazoAbierto: ExpedienteRecursos[];
+  reconsideraciones: ExpedienteRecursos[];
+  apelaciones: ExpedienteRecursos[];
+  resueltos: ExpedienteRecursos[];
+}
+
+export interface InformeGop {
+  antecedentes: string;
+  resumenExpediente: unknown;
+}
+
+export const descargarDocumentoRsgReconsideracion = (reconsideracionId: string, numeroExpediente: string) =>
+  descargarWord(`/reconsideraciones/${reconsideracionId}/rsg/documento`, `rsg-reconsideracion-${numeroExpediente}.docx`);
+
+export const descargarDocumentoInformeGop = (apelacionId: string, numeroExpediente: string) =>
+  descargarWord(`/apelaciones/${apelacionId}/informe-gop/documento`, `informe-gop-${numeroExpediente}.docx`);
+
+const patch = (ruta: string, body?: unknown) =>
+  apiClient<{ ok: true }>(ruta, { method: 'PATCH', ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
+
+export const RecursosApi = {
+  getBandeja: () => apiClient<BandejaRecursos>('/recursos/bandeja'),
+  buscar: (q: string) => apiClient<ExpedienteRecursos[]>(`/recursos/buscar?q=${encodeURIComponent(q)}`),
+  getDetalle: (expedienteId: string) => apiClient<ExpedienteRecursos>(`/recursos/${expedienteId}`),
+
+  // Reconsideración (SP6)
+  presentarReconsideracion: (resolucionId: string, data: { fechaPresentacion: string; nuevaPrueba: boolean; nuevaPruebaTexto?: string }) =>
+    apiClient<{ id: string }>(`/reconsideraciones/${resolucionId}`, { method: 'POST', body: JSON.stringify(data) }),
+  subsanarReconsideracion: (id: string, fechaSubsanacion: string) => patch(`/reconsideraciones/${id}/subsanacion`, { fechaSubsanacion }),
   evaluarReconsideracion: (id: string, resultado: 'FUNDADA' | 'INFUNDADA', analisisTexto: string) =>
-    apiClient<{ ok: true }>(`/reconsideraciones/${id}/evaluar`, {
-      method: 'PATCH',
-      body: JSON.stringify({ resultado, analisisTexto }),
-    }),
-  vincularResolucionResuelve: (id: string, resolucionQueResuelveId: string) =>
-    apiClient<{ ok: true }>(`/reconsideraciones/${id}/resolucion-que-resuelve`, {
-      method: 'PATCH',
-      body: JSON.stringify({ resolucionQueResuelveId }),
-    }),
-  /** Camino recomendado: crea la RSG nueva y la vincula en un solo paso — nunca reutiliza la resolución recurrida. */
+    patch(`/reconsideraciones/${id}/evaluar`, { resultado, analisisTexto }),
+  /** Crea la RSG que resuelve (nueva, nunca reutiliza la recurrida). */
   emitirRsgQueResuelve: (id: string) => apiClient<{ resolucionId: string }>(`/reconsideraciones/${id}/emitir-rsg`, { method: 'POST' }),
+  rsgAnalisis: (id: string, analisisTexto: string) => patch(`/reconsideraciones/${id}/rsg/analisis`, { analisisTexto }),
+  rsgEnviarAFirma: (id: string, fechaEnvio: string) => patch(`/reconsideraciones/${id}/rsg/enviar-a-firma`, { fechaEnvio }),
+  rsgRetirarDeFirma: (id: string) => patch(`/reconsideraciones/${id}/rsg/retirar-de-firma`),
+  rsgFirmar: (id: string, fechaFirma: string, numeroResolucion?: string) =>
+    patch(`/reconsideraciones/${id}/rsg/firmar`, { fechaFirma, ...(numeroResolucion ? { numeroResolucion } : {}) }),
+  rsgNotificar: (id: string, fechaNotificacion: string) => patch(`/reconsideraciones/${id}/rsg/notificar`, { fechaNotificacion }),
 
   // Apelación (SP7)
-  presentarApelacion: (resolucionId: string) =>
-    apiClient<{ id: string }>(`/apelaciones/${resolucionId}`, { method: 'POST' }),
-  generarInformeGop: (id: string) =>
-    apiClient<any>(`/apelaciones/${id}/informe-gop`, { method: 'POST' }),
-  firmarInformeGop: (id: string) =>
-    apiClient<{ ok: true }>(`/apelaciones/${id}/firmar-informe`, { method: 'PATCH' }),
-  registrarDecisionGop: (id: string, decisionGop: 'FUNDADA' | 'INFUNDADA' | 'NULIDAD', motivoNulidad?: string) =>
-    apiClient<{ ok: true }>(`/apelaciones/${id}/decision`, {
-      method: 'PATCH',
-      body: JSON.stringify({ decisionGop, motivoNulidad }),
-    }),
+  presentarApelacion: (resolucionId: string, fechaPresentacion: string) =>
+    apiClient<{ id: string }>(`/apelaciones/${resolucionId}`, { method: 'POST', body: JSON.stringify({ fechaPresentacion }) }),
+  generarInformeGop: (id: string) => apiClient<InformeGop>(`/apelaciones/${id}/informe-gop`, { method: 'POST' }),
+  verInformeGop: (id: string) => apiClient<{ informe: InformeGop | null }>(`/apelaciones/${id}/informe-gop`),
+  firmarInformeGop: (id: string) => patch(`/apelaciones/${id}/firmar-informe`),
+  elevarAGop: (id: string, fechaElevacion: string) => patch(`/apelaciones/${id}/elevar`, { fechaElevacion }),
+  registrarDecisionGop: (id: string, decisionGop: DecisionGop, fechaDecision: string, motivoNulidad?: string) =>
+    patch(`/apelaciones/${id}/decision`, { decisionGop, fechaDecision, ...(motivoNulidad ? { motivoNulidad } : {}) }),
 };
 
 // ============================================================================
