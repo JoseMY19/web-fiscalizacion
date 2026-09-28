@@ -1,36 +1,91 @@
-import React, { useState } from 'react';
-import { CoactivaPagosApi } from '../../api';
-import { Card, Button, Input, Alert } from '../../components/common/Common';
-import { hoyLocal } from '../../lib/fechas';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  ActoFirmePendienteDerivacion,
+  CandidatoActoFirme,
+  CoactivaPagosApi,
+  PagoRegistrado,
+  ResolucionPendientePago,
+} from '../../api';
+import { Card, Button, Input, Alert, Badge } from '../../components/common/Common';
+import { ComboboxExpediente } from '../../components/common/ComboboxExpediente';
+import { formatearFecha, hoyLocal } from '../../lib/fechas';
 import { CreditCardIcon, GavelIcon, FileTextIcon, ScaleIcon } from '../../components/icons/Icons';
+
+type MotivoFirmeza = CandidatoActoFirme['motivo'];
+
+const MOTIVO_CORTO: Record<MotivoFirmeza, string> = {
+  VENCIMIENTO_PLAZO_RECURSOS: 'Plazo de recursos vencido',
+  APELACION_INFUNDADA: 'Apelación infundada (GOP)',
+};
+
+const soles = (n: number | null) =>
+  n === null || Number.isNaN(n) ? '—' : `S/ ${n.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+/** Lista cargada desde la API con su estado de carga/error. */
+function useLista<T>(cargarFn: () => Promise<T[]>) {
+  const [datos, setDatos] = useState<T[] | null>(null);
+  const [cargando, setCargando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const recargar = useCallback(async () => {
+    setCargando(true);
+    setError(null);
+    try {
+      const d = await cargarFn();
+      setDatos(Array.isArray(d) ? d : []);
+    } catch (err: any) {
+      setError(err.message || 'Error al cargar la lista.');
+    } finally {
+      setCargando(false);
+    }
+  }, [cargarFn]);
+  useEffect(() => {
+    recargar();
+  }, [recargar]);
+  return { datos, cargando, error, recargar };
+}
+
+type PagoResumen = PagoRegistrado & { numeroExpediente: string; numeroResolucion: string | null };
 
 export const CoactivaPagosView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'coactiva' | 'pagos'>('coactiva');
   const [actionLoading, setActionLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+  const candidatos = useLista(CoactivaPagosApi.listarCandidatosActoFirme);
+  const pendientesDerivacion = useLista(CoactivaPagosApi.listarPendientesDerivacion);
+  const pendientesPago = useLista(CoactivaPagosApi.listarResolucionesPendientesPago);
+
   // Estados Acto Firme
-  const [expedienteId, setExpedienteId] = useState('');
-  const [motivoFirmeza, setMotivoFirmeza] = useState<'VENCIMIENTO_PLAZO_RECURSOS' | 'APELACION_INFUNDADA'>('VENCIMIENTO_PLAZO_RECURSOS');
+  const [candidato, setCandidato] = useState<CandidatoActoFirme | null>(null);
+  const [actoFirme, setActoFirme] = useState<ActoFirmePendienteDerivacion | null>(null);
+  const [motivoFirmeza, setMotivoFirmeza] = useState<MotivoFirmeza>('VENCIMIENTO_PLAZO_RECURSOS');
   const [fechaFirmeza, setFechaFirmeza] = useState(hoyLocal());
   const [fechaDerivacion, setFechaDerivacion] = useState(hoyLocal());
   const [requiereMedida, setRequiereMedida] = useState(false);
 
   // Estados Pagos
-  const [resolucionIdPago, setResolucionIdPago] = useState('');
+  const [resolucionPago, setResolucionPago] = useState<ResolucionPendientePago | null>(null);
   const [montoPagado, setMontoPagado] = useState('');
   const [fechaPago, setFechaPago] = useState(hoyLocal());
-  const [pagoResultado, setPagoResultado] = useState<any | null>(null);
+  const [pagoResultado, setPagoResultado] = useState<PagoResumen | null>(null);
+
+  const elegirCandidato = (c: CandidatoActoFirme | null) => {
+    setCandidato(c);
+    if (c) setMotivoFirmeza(c.motivo);
+  };
 
   const handleDeclararFirme = async () => {
-    if (!expedienteId.trim()) {
-      setMessage({ type: 'error', text: 'Ingrese el ID del expediente.' });
+    if (!candidato) {
+      setMessage({ type: 'error', text: 'Seleccione el expediente a declarar firme.' });
       return;
     }
     setActionLoading(true);
     try {
-      await CoactivaPagosApi.declararActoFirme(expedienteId.trim(), motivoFirmeza, fechaFirmeza);
-      setMessage({ type: 'success', text: `Expediente declarado como ACTO FIRME por ${motivoFirmeza}.` });
+      await CoactivaPagosApi.declararActoFirme(candidato.expedienteId, motivoFirmeza, fechaFirmeza);
+      setMessage({ type: 'success', text: `Expediente ${candidato.numeroExpediente} declarado como ACTO FIRME (${MOTIVO_CORTO[motivoFirmeza]}).` });
+      setCandidato(null);
+      candidatos.recargar();
+      pendientesDerivacion.recargar();
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message || 'Error al declarar acto firme.' });
     } finally {
@@ -38,12 +93,20 @@ export const CoactivaPagosView: React.FC = () => {
     }
   };
 
+  const exigirActoFirme = (): ActoFirmePendienteDerivacion | null => {
+    if (!actoFirme) setMessage({ type: 'error', text: 'Seleccione el expediente con acto firme.' });
+    return actoFirme;
+  };
+
   const handleConstanciaMulta = async () => {
-    if (!expedienteId.trim()) return;
+    const af = exigirActoFirme();
+    if (!af) return;
     setActionLoading(true);
     try {
-      await CoactivaPagosApi.emitirConstanciaMulta(expedienteId.trim());
+      await CoactivaPagosApi.emitirConstanciaMulta(af.expedienteId);
       setMessage({ type: 'success', text: 'Constancia de Exigibilidad de Multa emitida con éxito.' });
+      setActoFirme({ ...af, constanciaMultaEmitida: true });
+      pendientesDerivacion.recargar();
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message || 'Error al emitir constancia de multa.' });
     } finally {
@@ -52,11 +115,14 @@ export const CoactivaPagosView: React.FC = () => {
   };
 
   const handleConstanciaMedida = async () => {
-    if (!expedienteId.trim()) return;
+    const af = exigirActoFirme();
+    if (!af) return;
     setActionLoading(true);
     try {
-      await CoactivaPagosApi.emitirConstanciaMedida(expedienteId.trim());
+      await CoactivaPagosApi.emitirConstanciaMedida(af.expedienteId);
       setMessage({ type: 'success', text: 'Constancia de Exigibilidad de Medida Complementaria emitida con éxito.' });
+      setActoFirme({ ...af, constanciaMedidaComplementariaEmitida: true });
+      pendientesDerivacion.recargar();
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message || 'Error al emitir constancia de medida complementaria.' });
     } finally {
@@ -65,11 +131,14 @@ export const CoactivaPagosView: React.FC = () => {
   };
 
   const handleDerivacion = async () => {
-    if (!expedienteId.trim()) return;
+    const af = exigirActoFirme();
+    if (!af) return;
     setActionLoading(true);
     try {
-      await CoactivaPagosApi.registrarDerivacionCoactiva(expedienteId.trim(), fechaDerivacion, requiereMedida);
-      setMessage({ type: 'success', text: 'Derivación formal a la Oficina de Ejecución Coactiva registrada.' });
+      await CoactivaPagosApi.registrarDerivacionCoactiva(af.expedienteId, fechaDerivacion, requiereMedida);
+      setMessage({ type: 'success', text: `Derivación del expediente ${af.numeroExpediente} a la Oficina de Ejecución Coactiva registrada.` });
+      setActoFirme(null);
+      pendientesDerivacion.recargar();
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message || 'Error al registrar derivación coactiva.' });
     } finally {
@@ -78,15 +147,17 @@ export const CoactivaPagosView: React.FC = () => {
   };
 
   const handleRegistrarPago = async () => {
-    if (!resolucionIdPago.trim() || !montoPagado) {
+    if (!resolucionPago || !montoPagado) {
       setMessage({ type: 'error', text: 'Complete la resolución y el monto cancelado según comprobante.' });
       return;
     }
     setActionLoading(true);
     try {
-      const res = await CoactivaPagosApi.registrarPago(resolucionIdPago.trim(), Number(montoPagado), fechaPago);
-      setPagoResultado(res);
+      const res = await CoactivaPagosApi.registrarPago(resolucionPago.resolucionId, Number(montoPagado), fechaPago);
+      setPagoResultado({ ...res, numeroExpediente: resolucionPago.numeroExpediente, numeroResolucion: resolucionPago.numeroResolucion });
       setMessage({ type: 'success', text: `Pago de S/ ${montoPagado} registrado con éxito en Tesorería/Recaudación.` });
+      setResolucionPago(null);
+      pendientesPago.recargar();
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message || 'Error al registrar pago.' });
     } finally {
@@ -126,13 +197,26 @@ export const CoactivaPagosView: React.FC = () => {
 
       {activeTab === 'coactiva' ? (
         <div className="flex flex-col gap-[20px]">
-          <Card title="Etapa 1: Declaratoria de Acto Firme">
+          <Card title="Etapa 1: Declaratoria de Acto Firme" className="overflow-visible! relative! z-[30]!">
             <div className="grid grid-cols-[2fr_1fr] gap-[16px]">
-              <Input
-                label="ID del Expediente Sancionador"
-                placeholder="Ej. 3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                value={expedienteId}
-                onChange={(e) => setExpedienteId(e.target.value)}
+              <ComboboxExpediente<CandidatoActoFirme>
+                label="Expediente Sancionador"
+                opciones={candidatos.datos}
+                cargando={candidatos.cargando}
+                error={candidatos.error}
+                seleccionada={candidato}
+                onSeleccionar={elegirCandidato}
+                obtenerClave={(c) => c.expedienteId}
+                obtenerNumeroExpediente={(c) => c.numeroExpediente}
+                renderDetalle={(c) => (
+                  <>
+                    <Badge variant={c.motivo === 'APELACION_INFUNDADA' ? 'danger' : 'warning'}>{MOTIVO_CORTO[c.motivo]}</Badge>
+                    {c.fechaVencimientoPlazo && (
+                      <span className="text-[11px] text-text-muted">Plazo venció {formatearFecha(c.fechaVencimientoPlazo)}</span>
+                    )}
+                  </>
+                )}
+                mensajeVacio="No hay expedientes que hoy puedan declararse firmes (resolución notificada con plazo de recursos vencido, o apelación declarada infundada)."
               />
               <Input
                 type="date"
@@ -148,7 +232,7 @@ export const CoactivaPagosView: React.FC = () => {
               </label>
               <select
                 value={motivoFirmeza}
-                onChange={(e) => setMotivoFirmeza(e.target.value as any)}
+                onChange={(e) => setMotivoFirmeza(e.target.value as MotivoFirmeza)}
                 className="w-full p-[10px] rounded-[6px] border border-border text-[13px]"
               >
                 <option value="VENCIMIENTO_PLAZO_RECURSOS">Vencimiento del Plazo Legal de Recursos (Sin Impugnación)</option>
@@ -161,7 +245,28 @@ export const CoactivaPagosView: React.FC = () => {
             </Button>
           </Card>
 
-          <Card title="Etapa 2: Emisión de Títulos de Ejecución y Derivación Coactiva">
+          <Card title="Etapa 2: Emisión de Títulos de Ejecución y Derivación Coactiva" className="overflow-visible! relative! z-[20]!">
+            <ComboboxExpediente<ActoFirmePendienteDerivacion>
+              label="Expediente con Acto Firme (pendiente de derivación)"
+              opciones={pendientesDerivacion.datos}
+              cargando={pendientesDerivacion.cargando}
+              error={pendientesDerivacion.error}
+              seleccionada={actoFirme}
+              onSeleccionar={setActoFirme}
+              obtenerClave={(a) => a.expedienteId}
+              obtenerNumeroExpediente={(a) => a.numeroExpediente}
+              renderDetalle={(a) => (
+                <>
+                  <span className="text-[11px] text-text-muted">Firme desde {formatearFecha(a.fechaFirmeza)}</span>
+                  <Badge variant={a.constanciaMultaEmitida ? 'success' : 'neutral'}>
+                    {a.constanciaMultaEmitida ? 'Constancia multa emitida' : 'Sin constancia de multa'}
+                  </Badge>
+                  {a.constanciaMedidaComplementariaEmitida && <Badge variant="success">Constancia medida emitida</Badge>}
+                </>
+              )}
+              mensajeVacio="No hay expedientes con acto firme pendientes de derivar a coactiva."
+            />
+
             <div className="flex gap-[12px] mb-[20px]">
               <Button variant="secondary" icon={<FileTextIcon size={16} />} loading={actionLoading} onClick={handleConstanciaMulta}>
                 Emitir Constancia de Multa Exigible
@@ -200,7 +305,7 @@ export const CoactivaPagosView: React.FC = () => {
         </div>
       ) : (
         /* Tab 2: Pagos */
-        <Card title="Registro Manual de Comprobantes de Pago de Multas">
+        <Card title="Registro Manual de Comprobantes de Pago de Multas" className="overflow-visible! relative! z-[20]!">
           <div
             className="bg-[#eff6ff] py-[12px] px-[16px] rounded-[8px] border border-[#bfdbfe] text-[#1e3a8a] text-[13px] mb-[16px]"
           >
@@ -213,11 +318,26 @@ export const CoactivaPagosView: React.FC = () => {
             </div>
           </div>
 
-          <Input
-            label="ID de la Resolución Sancionadora (RSGSA)"
-            placeholder="Ej. 3fa85f64-5717-4562-b3fc-2c963f66afa6"
-            value={resolucionIdPago}
-            onChange={(e) => setResolucionIdPago(e.target.value)}
+          <ComboboxExpediente<ResolucionPendientePago>
+            label="Resolución Sancionadora (RSGSA) notificada"
+            opciones={pendientesPago.datos}
+            cargando={pendientesPago.cargando}
+            error={pendientesPago.error}
+            seleccionada={resolucionPago}
+            onSeleccionar={setResolucionPago}
+            obtenerClave={(r) => r.resolucionId}
+            obtenerNumeroExpediente={(r) => r.numeroExpediente}
+            renderDetalle={(r) => (
+              <>
+                <Badge variant="danger">{r.tipo}</Badge>
+                {r.numeroResolucion && <span className="text-[11px] text-text-muted">N° {r.numeroResolucion}</span>}
+                <span className="text-[11px] font-semibold text-text-secondary">
+                  Multa {soles(r.montoSinDescuento)}
+                  {r.montoConDescuento !== null && ` (c/desc. ${soles(r.montoConDescuento)})`}
+                </span>
+              </>
+            )}
+            mensajeVacio="No hay resoluciones sancionadoras notificadas pendientes de pago."
           />
 
           <div className="grid grid-cols-[1fr_1fr] gap-[16px]">
@@ -242,8 +362,22 @@ export const CoactivaPagosView: React.FC = () => {
           </Button>
 
           {pagoResultado && (
-            <div className="mt-[16px] bg-[#f8fafc] p-[12px] rounded-[8px] border border-border">
-              <pre className="text-[12px]">{JSON.stringify(pagoResultado, null, 2)}</pre>
+            <div className="mt-[16px] bg-[#f8fafc] p-[12px] rounded-[8px] border border-border text-[13px]">
+              <p className="font-bold text-midnight-900 mb-[8px]">Pago registrado</p>
+              <dl className="grid grid-cols-[auto_1fr] gap-x-[16px] gap-y-[4px]">
+                <dt className="text-text-muted">Expediente</dt>
+                <dd className="font-semibold">{pagoResultado.numeroExpediente}</dd>
+                {pagoResultado.numeroResolucion && (
+                  <>
+                    <dt className="text-text-muted">Resolución N°</dt>
+                    <dd className="font-semibold">{pagoResultado.numeroResolucion}</dd>
+                  </>
+                )}
+                <dt className="text-text-muted">Monto pagado</dt>
+                <dd className="font-semibold">{soles(Number(pagoResultado.montoPagado))}</dd>
+                <dt className="text-text-muted">Fecha de pago</dt>
+                <dd className="font-semibold">{formatearFecha(pagoResultado.fechaPago)}</dd>
+              </dl>
             </div>
           )}
         </Card>

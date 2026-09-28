@@ -742,7 +742,44 @@ export const RecursosApi = {
 // ============================================================================
 // ACTO FIRME & PAGOS (SP8 & ES1)
 // ============================================================================
+export interface CandidatoActoFirme {
+  expedienteId: string;
+  numeroExpediente: string;
+  motivo: 'VENCIMIENTO_PLAZO_RECURSOS' | 'APELACION_INFUNDADA';
+  fechaVencimientoPlazo: string | null;
+}
+
+export interface ActoFirmePendienteDerivacion {
+  expedienteId: string;
+  numeroExpediente: string;
+  motivo: 'VENCIMIENTO_PLAZO_RECURSOS' | 'APELACION_INFUNDADA';
+  fechaFirmeza: string;
+  constanciaMultaEmitida: boolean;
+  constanciaMedidaComplementariaEmitida: boolean;
+}
+
+export interface ResolucionPendientePago {
+  resolucionId: string;
+  expedienteId: string;
+  numeroExpediente: string;
+  tipo: 'RSGSA' | 'RSG';
+  numeroResolucion: string | null;
+  fechaNotificacion: string | null;
+  montoSinDescuento: number | null;
+  montoConDescuento: number | null;
+}
+
+export interface PagoRegistrado {
+  id: string;
+  resolucionId: string;
+  montoPagado: number;
+  fechaPago: string;
+}
+
 export const CoactivaPagosApi = {
+  listarCandidatosActoFirme: () => apiClient<CandidatoActoFirme[]>('/actos-firmes/candidatos'),
+  listarPendientesDerivacion: () => apiClient<ActoFirmePendienteDerivacion[]>('/actos-firmes/pendientes-derivacion'),
+  listarResolucionesPendientesPago: () => apiClient<ResolucionPendientePago[]>('/pagos/resoluciones-pendientes'),
   declararActoFirme: (expedienteId: string, motivo: 'VENCIMIENTO_PLAZO_RECURSOS' | 'APELACION_INFUNDADA', fechaFirmeza: string) =>
     apiClient<any>(`/actos-firmes/${expedienteId}`, {
       method: 'POST',
@@ -758,7 +795,7 @@ export const CoactivaPagosApi = {
       body: JSON.stringify({ fechaDerivacionCoactiva, requiereMedidaComplementaria }),
     }),
   registrarPago: (resolucionId: string, montoPagado: number, fechaPago: string) =>
-    apiClient<any>(`/pagos/${resolucionId}`, {
+    apiClient<PagoRegistrado>(`/pagos/${resolucionId}`, {
       method: 'POST',
       body: JSON.stringify({ montoPagado, fechaPago }),
     }),
