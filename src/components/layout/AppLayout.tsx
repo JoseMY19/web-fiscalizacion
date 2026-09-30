@@ -14,6 +14,7 @@ import {
   BellIcon,
   MapPinIcon,
   PenToolIcon,
+  UnlockIcon,
 } from '../icons/Icons';
 
 export type NavModule =
@@ -27,6 +28,7 @@ export type NavModule =
   | 'recursos'
   | 'coactiva-pagos'
   | 'cautelares'
+  | 'levantamientos'
   | 'mapa'
   | 'configuracion';
 
@@ -38,7 +40,7 @@ interface AppLayoutProps {
   children: React.ReactNode;
   badgeCounts?: Partial<Record<NavModule, number>>;
   /** Contador secundario ámbar por módulo (ej. O5: resoluciones esperando la firma del Subgerente). */
-  badgeAlertas?: Partial<Record<NavModule, { count: number; title: string }>>;
+  badgeAlertas?: Partial<Record<NavModule, { count: number; title: string; icon?: React.ReactNode }>>;
 }
 
 interface NavItem {
@@ -64,6 +66,7 @@ const navItems: NavItemConDef[] = [
   { id: 'recursos', label: 'Recursos Impugnativos', icon: <ScaleIcon size={18} /> },
   { id: 'coactiva-pagos', label: 'Acto Firme y Cobranza', icon: <CreditCardIcon size={18} /> },
   { id: 'cautelares', label: 'Medidas Cautelares', icon: <ShieldAlertIcon size={18} /> },
+  { id: 'levantamientos', label: 'Levantamiento de Medidas', icon: <UnlockIcon size={18} /> },
   { id: 'consulta-campo', label: 'Exhortación y Consulta', icon: <EyeIcon size={18} /> },
   { id: 'documentos', label: 'Control Documentario', icon: <FileTextIcon size={18} /> },
   { id: 'mapa', label: 'Mapa de Cobertura', icon: <MapPinIcon size={18} /> },
@@ -185,7 +188,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                         title={alerta.title}
                         className="text-[11px] font-bold h-[19px] py-0 px-[6px] rounded-[10px] bg-[#f59e0b] text-[#ffffff] inline-flex items-center justify-center gap-[3px]"
                       >
-                        <PenToolIcon size={10} />
+                        {alerta.icon ?? <PenToolIcon size={10} />}
                         {alerta.count}
                       </span>
                     )}

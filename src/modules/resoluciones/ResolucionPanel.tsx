@@ -30,6 +30,7 @@ import {
   varianteEtapa,
 } from './resolucionUi';
 import { AmpliacionPlazoCard } from './AmpliacionPlazoCard';
+import { AvisoLevantamientoMedidas } from '../levantamientos/AvisoLevantamientoMedidas';
 import { PagadoBadge } from '../../components/common/PagadoBadge';
 
 /** Mismo modelo de pasos que IfiView (StepDef/stepper), más un estado para los pasos opcionales. */
@@ -1014,6 +1015,9 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
         </div>
       )}
       {errorCarga && <Alert type="error">{errorCarga}</Alert>}
+
+      {/* F1: aviso si una medida provisional se levantó o tiene solicitud en evaluación (solo informa). */}
+      <AvisoLevantamientoMedidas expedienteId={expedienteId} />
 
       {/* 1. RESUMEN */}
       <section className="mb-[20px]">

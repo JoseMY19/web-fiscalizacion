@@ -14,6 +14,9 @@ import { ResolucionesView } from './modules/resoluciones/ResolucionesView';
 import { RecursosView } from './modules/recursos/RecursosView';
 import { CoactivaPagosView } from './modules/coactiva-pagos/CoactivaPagosView';
 import { CautelaresView } from './modules/cautelares/CautelaresView';
+import { LevantamientosView } from './modules/levantamientos/LevantamientosView';
+import { useResumenLevantamientos } from './modules/levantamientos/useResumenLevantamientos';
+import { badgesLevantamientos } from './modules/levantamientos/badgesLevantamientos';
 import { ConfiguracionView } from './modules/configuracion/ConfiguracionView';
 import { MapaIntervencionesView } from './modules/mapa/MapaIntervencionesView';
 import { ExpedientesApi, IfiApi, ResolucionesApi, ConfiguracionApi } from './api';
@@ -32,6 +35,8 @@ function MainApp() {
 
   const [badgeCounts, setBadgeCounts] = useState<Partial<Record<NavModule, number>>>({});
   const [badgeAlertas, setBadgeAlertas] = useState<Partial<Record<NavModule, { count: number; title: string }>>>({});
+  // F1: solicitudes de levantamiento en evaluación (rojo si alguna está por vencer).
+  const badgesLev = badgesLevantamientos(useResumenLevantamientos(isAuthenticated, currentModule));
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -99,7 +104,7 @@ function MainApp() {
   }
 
   return (
-    <AppLayout currentModule={currentModule} onSelectModule={irA} user={user} onLogout={logout} badgeCounts={badgeCounts} badgeAlertas={badgeAlertas}>
+    <AppLayout currentModule={currentModule} onSelectModule={irA} user={user} onLogout={logout} badgeCounts={{ ...badgeCounts, ...badgesLev.counts }} badgeAlertas={{ ...badgeAlertas, ...badgesLev.alertas }}>
       <Routes>
         <Route path="/" element={<DashboardView onNavigate={irA} />} />
         <Route path="/documentos" element={<DocumentosView />} />
@@ -111,6 +116,7 @@ function MainApp() {
         <Route path="/recursos" element={<RecursosView />} />
         <Route path="/coactiva-pagos" element={<CoactivaPagosView />} />
         <Route path="/cautelares" element={<CautelaresView />} />
+        <Route path="/levantamientos" element={<LevantamientosView />} />
         <Route path="/mapa" element={<MapaIntervencionesView />} />
         <Route path="/configuracion" element={<ConfiguracionView />} />
         <Route path="*" element={<Navigate to="/" replace />} />

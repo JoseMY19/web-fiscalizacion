@@ -15,6 +15,7 @@ import {
 } from '../../api';
 import { PagadoBadge } from '../../components/common/PagadoBadge';
 import { AmpliacionPlazoCard } from '../resoluciones/AmpliacionPlazoCard';
+import { AvisoLevantamientoMedidas } from '../levantamientos/AvisoLevantamientoMedidas';
 import { textoCaducidad } from '../resoluciones/resolucionUi';
 import { socket } from '../../lib/socket';
 import { Card, Button, Badge, Modal, Input, Textarea, Alert, EmptyState, Spinner } from '../../components/common/Common';
@@ -1519,6 +1520,7 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
   return (
     <Modal isOpen onClose={onClose} title={`Expediente ${e.numeroExpediente} — Detalle de instrucción`} maxWidth="680px">
       <ResumenPlazoPagoIfi e={e} />
+      <AvisoLevantamientoMedidas expedienteId={e.expedienteId} />
       <AmpliacionEnIfi expedienteId={e.expedienteId} numeroExpediente={e.numeroExpediente} onCambio={onCambioAmpliacion} />
       <div className="flex flex-col gap-0">
         {steps.map((step, idx) => (

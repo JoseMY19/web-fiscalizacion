@@ -1188,3 +1188,5 @@ export async function descargarDocumentoWord(
   enlace.click();
   URL.revokeObjectURL(url);
 }
+// F1 — Levantamiento de medidas provisionales (archivo propio para no mezclarlo con el resto).
+export * from './levantamientos';
