@@ -3,14 +3,13 @@ import {
   ActoFirmePendienteDerivacion,
   CandidatoActoFirme,
   CoactivaPagosApi,
-  PagoRegistrado,
-  ResolucionPendientePago,
 } from '../../api';
+import { RegistroPagoCard } from '../pagos/RegistroPagoCard';
 import { Card, Button, Input, Alert, Badge } from '../../components/common/Common';
 import { ComboboxExpediente } from '../../components/common/ComboboxExpediente';
 import { PagadoBadge } from '../../components/common/PagadoBadge';
 import { formatearFecha, hoyLocal } from '../../lib/fechas';
-import { CreditCardIcon, GavelIcon, FileTextIcon, ScaleIcon } from '../../components/icons/Icons';
+import { CreditCardIcon, GavelIcon, FileTextIcon } from '../../components/icons/Icons';
 
 type MotivoFirmeza = CandidatoActoFirme['motivo'];
 
@@ -18,9 +17,6 @@ const MOTIVO_CORTO: Record<MotivoFirmeza, string> = {
   VENCIMIENTO_PLAZO_RECURSOS: 'Plazo de recursos vencido',
   APELACION_INFUNDADA: 'Apelación infundada (GOP)',
 };
-
-const soles = (n: number | null) =>
-  n === null || Number.isNaN(n) ? '—' : `S/ ${n.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 /** Lista cargada desde la API con su estado de carga/error. */
 function useLista<T>(cargarFn: () => Promise<T[]>) {
@@ -45,8 +41,6 @@ function useLista<T>(cargarFn: () => Promise<T[]>) {
   return { datos, cargando, error, recargar };
 }
 
-type PagoResumen = PagoRegistrado & { numeroExpediente: string; numeroResolucion: string | null };
-
 export const CoactivaPagosView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'coactiva' | 'pagos'>('coactiva');
   const [actionLoading, setActionLoading] = useState(false);
@@ -54,7 +48,6 @@ export const CoactivaPagosView: React.FC = () => {
 
   const candidatos = useLista(CoactivaPagosApi.listarCandidatosActoFirme);
   const pendientesDerivacion = useLista(CoactivaPagosApi.listarPendientesDerivacion);
-  const pendientesPago = useLista(CoactivaPagosApi.listarResolucionesPendientesPago);
 
   // Estados Acto Firme
   const [candidato, setCandidato] = useState<CandidatoActoFirme | null>(null);
@@ -63,12 +56,6 @@ export const CoactivaPagosView: React.FC = () => {
   const [fechaFirmeza, setFechaFirmeza] = useState(hoyLocal());
   const [fechaDerivacion, setFechaDerivacion] = useState(hoyLocal());
   const [requiereMedida, setRequiereMedida] = useState(false);
-
-  // Estados Pagos
-  const [resolucionPago, setResolucionPago] = useState<ResolucionPendientePago | null>(null);
-  const [montoPagado, setMontoPagado] = useState('');
-  const [fechaPago, setFechaPago] = useState(hoyLocal());
-  const [pagoResultado, setPagoResultado] = useState<PagoResumen | null>(null);
 
   const elegirCandidato = (c: CandidatoActoFirme | null) => {
     setCandidato(c);
@@ -147,25 +134,6 @@ export const CoactivaPagosView: React.FC = () => {
     }
   };
 
-  const handleRegistrarPago = async () => {
-    if (!resolucionPago || !montoPagado) {
-      setMessage({ type: 'error', text: 'Complete la resolución y el monto cancelado según comprobante.' });
-      return;
-    }
-    setActionLoading(true);
-    try {
-      const res = await CoactivaPagosApi.registrarPago(resolucionPago.resolucionId, Number(montoPagado), fechaPago);
-      setPagoResultado({ ...res, numeroExpediente: resolucionPago.numeroExpediente, numeroResolucion: resolucionPago.numeroResolucion });
-      setMessage({ type: 'success', text: `Pago de S/ ${montoPagado} registrado con éxito en Tesorería/Recaudación.` });
-      setResolucionPago(null);
-      pendientesPago.recargar();
-    } catch (err: any) {
-      setMessage({ type: 'error', text: err.message || 'Error al registrar pago.' });
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
   return (
     <div>
       <div className="mb-[20px]">
@@ -192,7 +160,7 @@ export const CoactivaPagosView: React.FC = () => {
           className={`py-[10px] px-[20px] text-[13px] font-bold rounded-sm cursor-pointer flex items-center gap-[8px] ${activeTab === 'pagos' ? 'border border-primary-600' : 'border border-border'} ${activeTab === 'pagos' ? 'bg-primary-50' : 'bg-[#ffffff]'} ${activeTab === 'pagos' ? 'text-primary-600' : 'text-text-secondary'}`}
         >
           <CreditCardIcon size={16} />
-          2. Registro de Pagos de Multas (ES1)
+          2. Registro de Pagos de Multas (por N° de NC)
         </button>
       </div>
 
@@ -328,83 +296,13 @@ export const CoactivaPagosView: React.FC = () => {
           </Card>
         </div>
       ) : (
-        /* Tab 2: Pagos */
-        <Card title="Registro Manual de Comprobantes de Pago de Multas" className="overflow-visible! relative! z-[20]!">
-          <div
-            className="bg-[#eff6ff] py-[12px] px-[16px] rounded-[8px] border border-[#bfdbfe] text-[#1e3a8a] text-[13px] mb-[16px]"
-          >
-            <div className="flex items-start gap-[8px]">
-              <span className="mt-[2px] shrink-0"><ScaleIcon size={16} /></span>
-              <span>
-                <strong>Regla Legal No Negociable (§2.19):</strong> El pago del administrado extingue la sanción pecuniaria
-                (multa), pero <strong>NUNCA</strong> extingue ni revoca de pleno derecho las medidas complementarias de clausura o paralización.
-              </span>
-            </div>
-          </div>
-
-          <ComboboxExpediente<ResolucionPendientePago>
-            label="Resolución Sancionadora (RSGSA) notificada"
-            opciones={pendientesPago.datos}
-            cargando={pendientesPago.cargando}
-            error={pendientesPago.error}
-            seleccionada={resolucionPago}
-            onSeleccionar={setResolucionPago}
-            obtenerClave={(r) => r.resolucionId}
-            obtenerNumeroExpediente={(r) => r.numeroExpediente}
-            renderDetalle={(r) => (
-              <>
-                <Badge variant="danger">{r.tipo}</Badge>
-                {r.numeroResolucion && <span className="text-[11px] text-text-muted">N° {r.numeroResolucion}</span>}
-                <span className="text-[11px] font-semibold text-text-secondary">
-                  Multa {soles(r.montoSinDescuento)}
-                  {r.montoConDescuento !== null && ` (c/desc. ${soles(r.montoConDescuento)})`}
-                </span>
-              </>
-            )}
-            mensajeVacio="No hay resoluciones sancionadoras notificadas pendientes de pago."
-          />
-
-          <div className="grid grid-cols-[1fr_1fr] gap-[16px]">
-            <Input
-              label="Monto Pagado (S/)"
-              placeholder="Ej. 1375.00"
-              type="number"
-              step="0.01"
-              value={montoPagado}
-              onChange={(e) => setMontoPagado(e.target.value)}
-            />
-            <Input
-              type="date"
-              label="Fecha de Pago en Recibo/Voucher"
-              value={fechaPago}
-              onChange={(e) => setFechaPago(e.target.value)}
-            />
-          </div>
-
-          <Button variant="success" loading={actionLoading} onClick={handleRegistrarPago}>
-            Registrar Pago en Sistema
-          </Button>
-
-          {pagoResultado && (
-            <div className="mt-[16px] bg-[#f8fafc] p-[12px] rounded-[8px] border border-border text-[13px]">
-              <p className="font-bold text-midnight-900 mb-[8px]">Pago registrado</p>
-              <dl className="grid grid-cols-[auto_1fr] gap-x-[16px] gap-y-[4px]">
-                <dt className="text-text-muted">Expediente</dt>
-                <dd className="font-semibold">{pagoResultado.numeroExpediente}</dd>
-                {pagoResultado.numeroResolucion && (
-                  <>
-                    <dt className="text-text-muted">Resolución N°</dt>
-                    <dd className="font-semibold">{pagoResultado.numeroResolucion}</dd>
-                  </>
-                )}
-                <dt className="text-text-muted">Monto pagado</dt>
-                <dd className="font-semibold">{soles(Number(pagoResultado.montoPagado))}</dd>
-                <dt className="text-text-muted">Fecha de pago</dt>
-                <dd className="font-semibold">{formatearFecha(pagoResultado.fechaPago)}</dd>
-              </dl>
-            </div>
-          )}
-        </Card>
+        /* Tab 2: Pagos — F5: se registran por N° de NC (mismo formulario que "Registro de Pagos"). */
+        <RegistroPagoCard
+          onRegistrado={() => {
+            candidatos.recargar();
+            pendientesDerivacion.recargar();
+          }}
+        />
       )}
     </div>
   );

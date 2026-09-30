@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { IntervencionesApi, BundleIntervencion, abrirDocumento, descargarDocumentoWord } from '../../api';
 import { Modal, Button, Badge, Alert, Spinner } from '../../components/common/Common';
 import { formatearFecha, formatearFechaHora } from '../../lib/fechas';
+import { HistorialCorreccionesExpediente } from '../correcciones/CorreccionMaterial';
 import {
   ShieldAlertIcon,
   CameraIcon,
@@ -20,6 +21,8 @@ interface ExpedienteDetalleModalProps {
   onClose: () => void;
   intervencionId: string | null;
   numeroExpediente?: string;
+  /** O2: si se conoce, se muestra el historial de correcciones de error material. */
+  expedienteId?: string;
 }
 
 export const ExpedienteDetalleModal: React.FC<ExpedienteDetalleModalProps> = ({
@@ -27,6 +30,7 @@ export const ExpedienteDetalleModal: React.FC<ExpedienteDetalleModalProps> = ({
   onClose,
   intervencionId,
   numeroExpediente,
+  expedienteId,
 }) => {
   const [data, setData] = useState<BundleIntervencion | null>(null);
   const [loading, setLoading] = useState(false);
@@ -246,6 +250,12 @@ export const ExpedienteDetalleModal: React.FC<ExpedienteDetalleModalProps> = ({
                 </div>
               ) : (
                 <p className="text-text-muted text-[13px]">No hay datos registrados del administrado en esta intervención.</p>
+              )}
+              {expedienteId && (
+                <div className="mt-[18px] pt-[14px] border-t border-t-border">
+                  <h4 className="text-[13px] font-bold text-midnight-900 mb-[8px]">Historial de correcciones (error material)</h4>
+                  <HistorialCorreccionesExpediente expedienteId={expedienteId} />
+                </div>
               )}
             </div>
           )}

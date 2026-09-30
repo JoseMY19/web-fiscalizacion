@@ -27,6 +27,7 @@ export type NavModule =
   | 'resoluciones'
   | 'recursos'
   | 'coactiva-pagos'
+  | 'pagos'
   | 'cautelares'
   | 'levantamientos'
   | 'mapa'
@@ -65,6 +66,7 @@ const navItems: NavItemConDef[] = [
   { id: 'resoluciones', label: 'Resolución Sancionadora', icon: <GavelIcon size={18} /> },
   { id: 'recursos', label: 'Recursos Impugnativos', icon: <ScaleIcon size={18} /> },
   { id: 'coactiva-pagos', label: 'Acto Firme y Cobranza', icon: <CreditCardIcon size={18} /> },
+  { id: 'pagos', label: 'Registro de Pagos', icon: <CreditCardIcon size={18} /> },
   { id: 'cautelares', label: 'Medidas Cautelares', icon: <ShieldAlertIcon size={18} /> },
   { id: 'levantamientos', label: 'Levantamiento de Medidas', icon: <UnlockIcon size={18} /> },
   { id: 'consulta-campo', label: 'Exhortación y Consulta', icon: <EyeIcon size={18} /> },
@@ -97,12 +99,15 @@ export const MODULOS_ROL_PRUEBA: NavModule[] = [
   'resoluciones',
   'consulta-campo',
   'cautelares',
+  'pagos',
 ];
 
 /** Si el rol puede entrar a ese módulo (menú y rutas usan la misma regla). */
 export function puedeVerModulo(modulo: NavModule, rol: string | undefined): boolean {
   if (rol === 'PRUEBA') return MODULOS_ROL_PRUEBA.includes(modulo);
   if (rol === 'NOTIFICADOR') return modulo === 'dashboard' || modulo === 'notificaciones';
+  // F5: rol temporal mínimo de Caja/plataforma — solo registra pagos por N° de NC.
+  if (rol === 'CAJA') return modulo === 'dashboard' || modulo === 'pagos';
   return true;
 }
 
@@ -126,7 +131,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   );
 
   const cleanName = (user?.nombres || 'Carla Vega').replace(/\s*\(admin\s*dev\)/gi, '').trim();
-  const cleanRole = user?.rol === 'ADMIN' ? 'Administrador' : user?.rol === 'FISCALIZADOR' ? 'Inspector de Campo' : user?.rol === 'PRUEBA' ? 'Usuario de Prueba' : user?.rol ?? 'Oficina';
+  const cleanRole = user?.rol === 'ADMIN' ? 'Administrador' : user?.rol === 'FISCALIZADOR' ? 'Inspector de Campo' : user?.rol === 'PRUEBA' ? 'Usuario de Prueba' : user?.rol === 'CAJA' ? 'Caja / Plataforma' : user?.rol ?? 'Oficina';
 
   return (
     <div className="flex min-h-screen bg-bg-app">

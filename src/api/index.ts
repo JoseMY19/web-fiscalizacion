@@ -137,7 +137,7 @@ export interface ExpedienteIfiItem {
   tieneAnalisis: boolean;
   recomendacion: 'SANCIONAR' | 'ARCHIVAR' | null;
   numeroInforme: string | null;
-  /** O9: hay un pago registrado (contra cualquier resolución del expediente). */
+  /** O9/F5: hay un pago registrado contra la NC del expediente. */
   tienePago: boolean;
   fechaPago: string | null;
   montoPagado: number | null;
@@ -155,9 +155,6 @@ export interface IfiDetalle {
   id: string;
   expedienteId: string;
   estado: 'EN_ELABORACION' | 'EMITIDO' | 'NOTIFICADO';
-  recibioDescargo: boolean;
-  fechaRecepcionDescargo: string | null;
-  descargoTexto: string | null;
   imputacionCorrecta: boolean | null;
   motivoVicioTrascendente: string | null;
   recomendacion: 'SANCIONAR' | 'ARCHIVAR' | null;
@@ -214,15 +211,6 @@ export const IfiApi = {
       esperandoNotificacion: ExpedienteIfiItem[];
     }>('/ifi/pendientes'),
   getDetalle: (expedienteId: string) => apiClient<IfiDetalle>(`/ifi/${expedienteId}`),
-  registrarDescargo: (expedienteId: string, descargoTexto: string, fechaRecepcionDescargo?: string) =>
-    apiClient<{ ok: true }>(`/ifi/${expedienteId}/descargo`, {
-      method: 'PATCH',
-      body: JSON.stringify({
-        recibioDescargo: true,
-        fechaRecepcionDescargo: fechaRecepcionDescargo || new Date().toISOString(),
-        descargoTexto,
-      }),
-    }),
   sanearImputacion: (expedienteId: string, imputacionCorrecta: boolean, motivoVicioTrascendente?: string) =>
     apiClient<{ ok: true }>(`/ifi/${expedienteId}/imputacion`, {
       method: 'PATCH',
@@ -431,7 +419,7 @@ export interface ExpedienteResolucionItem {
   fechaNotificacion: string | null;
   ifiFechaNotificacion: string | null;
   plazos: PlazosResolucion;
-  /** O9: hay un pago registrado (contra cualquier resolución del expediente). */
+  /** O9/F5: hay un pago registrado contra la NC del expediente. */
   tienePago: boolean;
   fechaPago: string | null;
   montoPagado: number | null;
@@ -468,10 +456,9 @@ export interface ResolucionDetalle {
     motivoVicioTrascendente: string | null;
     numeroInforme: string | null;
     fechaNotificacion: string | null;
-    recibioDescargo: boolean;
-    fechaRecepcionDescargo: string | null;
-    descargoTexto: string | null;
   } | null;
+  /** O3: cantidad de descargos del expediente (lista completa en DescargosApi). */
+  cantidadDescargos: number;
   tipoCorrespondiente: TipoResolucion | null;
   tipoNoCoincideConIfi: boolean;
   etapa: EtapaResolucion;
@@ -489,8 +476,6 @@ export interface ResolucionDetalle {
     porcentajeUit: number | null;
     enParte: boolean;
     motivoDiscrepanciaIfi: string | null;
-    descargoPosteriorTexto: string | null;
-    descargoPosteriorFecha: string | null;
     medidaComplementaria: string | null;
     /** JSON: { heredadoDelIfi: PlanchazoData | null, resolucion: { tipo } }. */
     seccionAutomatica: string | null;
@@ -516,7 +501,7 @@ export interface ResolucionDetalle {
     fechaFirma: string | null;
     fechaNotificacion: string | null;
   } | null;
-  /** O9: pago registrado contra cualquier resolución del expediente (null = no pagó). */
+  /** O9/F5: pago registrado contra la NC del expediente (null = no pagó). */
   pago: { montoPagado: number; fechaPago: string } | null;
 }
 
@@ -571,12 +556,6 @@ export const ResolucionesApi = {
         ...(datos.porcentajeUit != null ? { porcentajeUit: datos.porcentajeUit } : {}),
         ...(datos.montoSinDescuento != null ? { montoSinDescuento: datos.montoSinDescuento } : {}),
       }),
-    }),
-  /** Descargo presentado después del IFI. Texto vacío = quitarlo. */
-  registrarDescargoPosterior: (expedienteId: string, texto: string, fecha: string | null) =>
-    apiClient<{ ok: true }>(`/resoluciones/${expedienteId}/descargo-posterior`, {
-      method: 'PATCH',
-      body: JSON.stringify({ texto, ...(fecha ? { fecha } : {}) }),
     }),
   emitirAmpliacion: (expedienteId: string) =>
     apiClient<{ ok: true }>(`/resoluciones/${expedienteId}/ampliacion`, { method: 'POST' }),
@@ -783,28 +762,9 @@ export interface ActoFirmePendienteDerivacion {
   montoPagado: number | null;
 }
 
-export interface ResolucionPendientePago {
-  resolucionId: string;
-  expedienteId: string;
-  numeroExpediente: string;
-  tipo: 'RSGSA' | 'RSG';
-  numeroResolucion: string | null;
-  fechaNotificacion: string | null;
-  montoSinDescuento: number | null;
-  montoConDescuento: number | null;
-}
-
-export interface PagoRegistrado {
-  id: string;
-  resolucionId: string;
-  montoPagado: number;
-  fechaPago: string;
-}
-
 export const CoactivaPagosApi = {
   listarCandidatosActoFirme: () => apiClient<CandidatoActoFirme[]>('/actos-firmes/candidatos'),
   listarPendientesDerivacion: () => apiClient<ActoFirmePendienteDerivacion[]>('/actos-firmes/pendientes-derivacion'),
-  listarResolucionesPendientesPago: () => apiClient<ResolucionPendientePago[]>('/pagos/resoluciones-pendientes'),
   declararActoFirme: (
     expedienteId: string,
     motivo: 'VENCIMIENTO_PLAZO_RECURSOS' | 'APELACION_INFUNDADA',
@@ -822,11 +782,6 @@ export const CoactivaPagosApi = {
     apiClient<{ ok: true }>(`/actos-firmes/${expedienteId}/derivacion-coactiva`, {
       method: 'PATCH',
       body: JSON.stringify({ fechaDerivacionCoactiva, requiereMedidaComplementaria }),
-    }),
-  registrarPago: (resolucionId: string, montoPagado: number, fechaPago: string) =>
-    apiClient<PagoRegistrado>(`/pagos/${resolucionId}`, {
-      method: 'POST',
-      body: JSON.stringify({ montoPagado, fechaPago }),
     }),
 };
 

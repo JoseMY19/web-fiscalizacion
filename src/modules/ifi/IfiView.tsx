@@ -16,6 +16,8 @@ import {
 import { PagadoBadge } from '../../components/common/PagadoBadge';
 import { AmpliacionPlazoCard } from '../resoluciones/AmpliacionPlazoCard';
 import { AvisoLevantamientoMedidas } from '../levantamientos/AvisoLevantamientoMedidas';
+import { DescargosLista } from '../descargos/DescargosLista';
+import { CorreccionMaterialSeccion } from '../correcciones/CorreccionMaterial';
 import { textoCaducidad } from '../resoluciones/resolucionUi';
 import { socket } from '../../lib/socket';
 import { Card, Button, Badge, Modal, Input, Textarea, Alert, EmptyState, Spinner } from '../../components/common/Common';
@@ -146,12 +148,6 @@ export const IfiView: React.FC = () => {
   const [detalleExp, setDetalleExp] = useState<ExpedienteIfiItem | null>(null);
 
   // Modales
-  const [descargoModal, setDescargoModal] = useState<{ isOpen: boolean; expId: string; numero: string }>({
-    isOpen: false,
-    expId: '',
-    numero: '',
-  });
-  const [descargoTexto, setDescargoTexto] = useState('');
 
   // `correcta: null` = el instructor todavía no decidió — nunca arranca
   // preseleccionado, para que no se guarde "correcta" sin revisar nada.
@@ -242,25 +238,6 @@ export const IfiView: React.FC = () => {
       socket.off('ifi:pendiente', cargar);
     };
   }, []);
-
-  const handleDescargoSubmit = async () => {
-    if (!descargoTexto.trim()) {
-      setMessage({ type: 'error', text: 'Debe ingresar el contenido o resumen del descargo presentado.' });
-      return;
-    }
-    setActionLoading(true);
-    try {
-      await IfiApi.registrarDescargo(descargoModal.expId, descargoTexto.trim());
-      setMessage({ type: 'success', text: `Descargo registrado para el expediente ${descargoModal.numero}.` });
-      setDescargoModal({ isOpen: false, expId: '', numero: '' });
-      setDescargoTexto('');
-      cargar();
-    } catch (err: any) {
-      setMessage({ type: 'error', text: err.message || 'Error al registrar descargo.' });
-    } finally {
-      setActionLoading(false);
-    }
-  };
 
   const cargarEvidenciaImputacion = async (expId: string) => {
     setCargandoEvidencia(true);
@@ -679,10 +656,7 @@ export const IfiView: React.FC = () => {
         <IfiDetallePanel
           expediente={detalleExp}
           onClose={() => setDetalleExp(null)}
-          onAbrirDescargo={() => {
-            setDescargoModal({ isOpen: true, expId: detalleExp.expedienteId, numero: detalleExp.numeroExpediente });
-            setDescargoTexto('');
-          }}
+          onCambioDescargos={cargar}
           onAbrirImputacion={() => abrirImputacion(detalleExp.expedienteId, detalleExp.numeroExpediente)}
           onGenerarHechosBaseLegal={() => handlePlanchazo(detalleExp.expedienteId)}
           onAbrirAnalisis={() => {
@@ -705,31 +679,6 @@ export const IfiView: React.FC = () => {
           actionLoading={actionLoading}
         />
       )}
-
-      {/* Modal Registrar Descargo */}
-      <Modal
-        isOpen={descargoModal.isOpen}
-        onClose={() => setDescargoModal({ isOpen: false, expId: '', numero: '' })}
-        title={`Registrar Descargo del Administrado (${descargoModal.numero})`}
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setDescargoModal({ isOpen: false, expId: '', numero: '' })}>
-              Cancelar
-            </Button>
-            <Button variant="primary" loading={actionLoading} onClick={handleDescargoSubmit}>
-              Guardar Descargo
-            </Button>
-          </>
-        }
-      >
-        <Textarea
-          label="Texto o Síntesis del Escrito de Descargos"
-          placeholder="Transcriba o resuma los argumentos y medios probatorios presentados por el administrado dentro del plazo de 5 días hábiles..."
-          value={descargoTexto}
-          onChange={(e) => setDescargoTexto(e.target.value)}
-          rows={5}
-        />
-      </Modal>
 
       {/* Modal Sanear Imputación */}
       <Modal
@@ -1230,7 +1179,8 @@ export const IfiView: React.FC = () => {
 interface IfiDetallePanelProps {
   expediente: ExpedienteIfiItem;
   onClose: () => void;
-  onAbrirDescargo: () => void;
+  /** O3: se registró un descargo — refresca la bandeja ("con descargo"). */
+  onCambioDescargos: () => void;
   onAbrirImputacion: () => void;
   onGenerarHechosBaseLegal: () => void;
   onAbrirAnalisis: () => void;
@@ -1257,7 +1207,7 @@ interface StepDef {
 const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
   expediente: e,
   onClose,
-  onAbrirDescargo,
+  onCambioDescargos,
   onAbrirImputacion,
   onGenerarHechosBaseLegal,
   onAbrirAnalisis,
@@ -1277,21 +1227,20 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
   const steps: StepDef[] = useMemo(() => {
     const lista: StepDef[] = [];
 
-    // Paso 1: Descargo — opcional, nunca bloquea nada.
+    // Paso 1: Descargos — opcional, nunca bloquea nada. O3: puede haber varios
+    // (hasta la resolución), cada uno con sus PDF del SGD.
     lista.push({
       numero: 1,
-      titulo: 'Descargo del administrado',
+      titulo: 'Descargos del administrado',
       estado: e.recibioDescargo ? 'completado' : 'actual',
-      descripcion: e.recibioDescargo ? (
-        <span className="flex items-center gap-[4px] text-[#047857] font-semibold">
-          <CheckIcon size={12} /> Descargo presentado y registrado.
-        </span>
-      ) : (
-        <span className="text-[#b45309]">Sin descargo aún. Paso informativo — no bloquea el resto del flujo.</span>
+      descripcion: (
+        <div className="flex flex-col gap-[6px]">
+          {!e.recibioDescargo && (
+            <span className="text-[#b45309]">Sin descargo aún. Paso informativo — no bloquea el resto del flujo.</span>
+          )}
+          <DescargosLista expedienteId={e.expedienteId} onCambio={onCambioDescargos} />
+        </div>
       ),
-      accion: e.recibioDescargo
-        ? undefined
-        : { label: '+ Registrar descargo', onClick: onAbrirDescargo, variant: 'secondary' },
     });
 
     // Paso 2: Sanear Imputación — obligatorio, una sola vez (vicio trascendente nunca se corrige).
@@ -1570,6 +1519,9 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
             </div>
           </div>
         ))}
+
+        {/* O2: corrección de error material del administrado (trazable) */}
+        <CorreccionMaterialSeccion expedienteId={e.expedienteId} />
 
         {/* Documentos adjuntos — no es secuencial, disponible en paralelo siempre */}
         <div className="border-t border-t-border pt-[16px] flex items-center justify-between">

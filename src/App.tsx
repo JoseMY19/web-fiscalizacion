@@ -13,6 +13,7 @@ import { IfiView } from './modules/ifi/IfiView';
 import { ResolucionesView } from './modules/resoluciones/ResolucionesView';
 import { RecursosView } from './modules/recursos/RecursosView';
 import { CoactivaPagosView } from './modules/coactiva-pagos/CoactivaPagosView';
+import { PagosView } from './modules/pagos/PagosView';
 import { CautelaresView } from './modules/cautelares/CautelaresView';
 import { LevantamientosView } from './modules/levantamientos/LevantamientosView';
 import { useResumenLevantamientos } from './modules/levantamientos/useResumenLevantamientos';
@@ -115,6 +116,7 @@ function MainApp() {
         <Route path="/resoluciones" element={<ResolucionesView />} />
         <Route path="/recursos" element={<RecursosView />} />
         <Route path="/coactiva-pagos" element={<CoactivaPagosView />} />
+        <Route path="/pagos" element={<PagosView />} />
         <Route path="/cautelares" element={<CautelaresView />} />
         <Route path="/levantamientos" element={<LevantamientosView />} />
         <Route path="/mapa" element={<MapaIntervencionesView />} />
