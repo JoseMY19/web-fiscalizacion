@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { BandejaRecursos, ExpedienteRecursos, RecursosApi } from '../../api';
 import { Alert, Badge, Button, Card, EmptyState, Spinner } from '../../components/common/Common';
+import { PagadoBadge } from '../../components/common/PagadoBadge';
 import { CheckCircleIcon, EyeIcon, RefreshCwIcon, ScaleIcon, SearchIcon } from '../../components/icons/Icons';
 import { RecursoPanel } from './RecursoPanel';
 import { LABEL_SITUACION, textoPlazoRecurso, textoUltimoActo, varianteSituacion } from './recursosUi';
@@ -234,7 +235,7 @@ export const RecursosView: React.FC = () => {
                         )}
                       </span>
                       <span className="flex items-center gap-[6px] flex-wrap justify-end">
-                        {f.tienePago && <Badge variant="warning">Pagó</Badge>}
+                        <PagadoBadge tienePago={f.tienePago} montoPagado={f.pago?.montoPagado} fechaPago={f.pago?.fechaPago} />
                         <Badge variant={varianteSituacion(f.situacion)}>{LABEL_SITUACION[f.situacion]}</Badge>
                       </span>
                     </button>
@@ -316,7 +317,7 @@ const TablaRecursos: React.FC<{ filas: ExpedienteRecursos[]; onVer: (f: Expedien
               <td className="py-[12px] px-[14px]">
                 <div className="flex flex-col items-start gap-[4px]">
                   <Badge variant={varianteSituacion(f.situacion)}>{LABEL_SITUACION[f.situacion]}</Badge>
-                  {f.tienePago && <Badge variant="warning">Registró pago</Badge>}
+                  <PagadoBadge tienePago={f.tienePago} montoPagado={f.pago?.montoPagado} fechaPago={f.pago?.fechaPago} />
                 </div>
               </td>
               <td className="py-[12px] px-[14px] whitespace-nowrap">

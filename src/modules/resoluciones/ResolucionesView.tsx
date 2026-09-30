@@ -4,7 +4,14 @@ import { socket } from '../../lib/socket';
 import { Card, Button, Badge, Alert, EmptyState, Spinner } from '../../components/common/Common';
 import { GavelIcon, RefreshCwIcon, CheckCircleIcon, SearchIcon, EyeIcon } from '../../components/icons/Icons';
 import { ResolucionPanel } from './ResolucionPanel';
-import { NOMBRE_TIPO, labelEtapa, textoCaducidad, varianteEtapa } from './resolucionUi';
+import { NOMBRE_TIPO, diasDesde, labelEtapa, textoCaducidad, varianteDiasEnFirma, varianteEtapa } from './resolucionUi';
+import { PagadoBadge } from '../../components/common/PagadoBadge';
+
+/** Clase de texto para el "en firma hace N días" (O5): ámbar >5, rojo >10. */
+function claseDiasEnFirma(dias: number | null): string {
+  const v = varianteDiasEnFirma(dias);
+  return v === 'danger' ? 'text-[#be123c] font-semibold' : v === 'warning' ? 'text-[#b45309] font-semibold' : 'text-text-muted';
+}
 
 type Pestana = 'enRedaccion' | 'porFirmar' | 'firmadas';
 
@@ -144,6 +151,8 @@ export const ResolucionesView: React.FC = () => {
 
   const filas = bandeja[pestana];
   const ayudaPestana = PESTANAS.find((p) => p.clave === pestana)?.ayuda;
+  // O5: la más antigua en firma define el color del contador de la pestaña.
+  const maxDiasEnFirma = bandeja.porFirmar.reduce((m, f) => Math.max(m, f.plazos.diasEnFirma ?? 0), 0);
 
   return (
     <div>
@@ -240,6 +249,7 @@ export const ResolucionesView: React.FC = () => {
                           )}
                         </span>
                         <span className="flex items-center gap-[6px] flex-wrap justify-end">
+                          <PagadoBadge tienePago={f.tienePago} montoPagado={f.montoPagado} fechaPago={f.fechaPago} />
                           {tipo && <Badge variant={tipo === 'RSGSA' ? 'danger' : 'info'}>{tipo}</Badge>}
                           <Badge variant={varianteEtapa(f)}>{labelEtapa(f)}</Badge>
                         </span>
@@ -264,7 +274,17 @@ export const ResolucionesView: React.FC = () => {
               className={`py-[10px] px-[16px] text-[13px] font-bold border-0 bg-transparent cursor-pointer flex items-center gap-[8px] ${activa ? 'border-b-2 border-b-primary-600' : 'border-b-2 border-b-transparent'} ${activa ? 'text-primary-600' : 'text-text-muted'}`}
             >
               {p.titulo}
-              <Badge variant={activa ? 'info' : 'neutral'}>{bandeja[p.clave].length}</Badge>
+              <Badge
+                variant={
+                  p.clave === 'porFirmar' && bandeja.porFirmar.length > 0
+                    ? varianteDiasEnFirma(maxDiasEnFirma)
+                    : activa
+                      ? 'info'
+                      : 'neutral'
+                }
+              >
+                {bandeja[p.clave].length}
+              </Badge>
             </button>
           );
         })}
@@ -272,6 +292,12 @@ export const ResolucionesView: React.FC = () => {
 
       <Card className="rounded-tl-none! rounded-tr-none! border-t-0!">
         {ayudaPestana && <p className="text-[12px] text-text-muted mb-[12px]">{ayudaPestana}</p>}
+        {pestana === 'porFirmar' && bandeja.porFirmar.length > 0 && (
+          <Alert type={varianteDiasEnFirma(maxDiasEnFirma) === 'purple' ? 'info' : varianteDiasEnFirma(maxDiasEnFirma) === 'danger' ? 'error' : 'warning'}>
+            Falta firmar: {bandeja.porFirmar.length} resoluci{bandeja.porFirmar.length === 1 ? 'ón espera' : 'ones esperan'} la firma del Subgerente
+            (la más antigua hace {maxDiasEnFirma} día{maxDiasEnFirma === 1 ? '' : 's'}). La firma es obligatoria para notificar.
+          </Alert>
+        )}
         {loading && filas.length === 0 ? (
           <div className="p-[40px] text-center">
             <Spinner size={32} />
@@ -340,6 +366,11 @@ const TablaResoluciones: React.FC<{
                     Resolución N° {f.numeroResolucion}
                   </div>
                 )}
+                {f.tienePago && (
+                  <div className="mt-[4px]">
+                    <PagadoBadge tienePago montoPagado={f.montoPagado} fechaPago={f.fechaPago} />
+                  </div>
+                )}
               </td>
               <td className="py-[12px] px-[14px]">
                 {tipo ? <Badge variant={tipo === 'RSGSA' ? 'danger' : 'info'}>{NOMBRE_TIPO[tipo]}</Badge> : <span className="text-text-muted">—</span>}
@@ -363,6 +394,11 @@ const TablaResoluciones: React.FC<{
                   <span className="text-text-muted">—</span>
                 )}
                 {f.plazos.ampliacionFirmada && <div className="text-[11px] text-text-muted mt-[3px]">plazo ampliado (+3 meses)</div>}
+                {f.ampliacionEstado === 'EN_ELABORACION' && f.ampliacionFechaEnvioFirma && (
+                  <div className={`text-[11px] mt-[3px] ${claseDiasEnFirma(diasDesde(f.ampliacionFechaEnvioFirma))}`}>
+                    RSG de ampliación en firma hace {diasDesde(f.ampliacionFechaEnvioFirma)} día{diasDesde(f.ampliacionFechaEnvioFirma) === 1 ? '' : 's'}
+                  </div>
+                )}
               </td>
               <td className="py-[12px] px-[14px] text-right">
                 {f.plazos.alertaAmpliacion && (

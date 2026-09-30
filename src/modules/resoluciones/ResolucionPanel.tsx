@@ -10,7 +10,6 @@ import {
   TipoResolucion,
   abrirDocumento,
   abrirDocumentoIfi,
-  descargarDocumentoAmpliacion,
   descargarDocumentoIfi,
   descargarDocumentoResolucion,
   descargarDocumentoWord,
@@ -27,8 +26,11 @@ import {
   labelEtapa,
   soloFechaIso,
   textoCaducidad,
+  varianteDiasEnFirma,
   varianteEtapa,
 } from './resolucionUi';
+import { AmpliacionPlazoCard } from './AmpliacionPlazoCard';
+import { PagadoBadge } from '../../components/common/PagadoBadge';
 
 /** Mismo modelo de pasos que IfiView (StepDef/stepper), más un estado para los pasos opcionales. */
 type PasoEstado = 'completado' | 'actual' | 'pendiente' | 'opcional';
@@ -148,11 +150,6 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
   const [porcentajeUit, setPorcentajeUit] = useState('');
   const [descargoPostTexto, setDescargoPostTexto] = useState('');
   const [descargoPostFecha, setDescargoPostFecha] = useState('');
-  // RSG de ampliación: fechas reales, nacen vacías.
-  const [ampFechaEnvio, setAmpFechaEnvio] = useState('');
-  const [ampFechaFirma, setAmpFechaFirma] = useState('');
-  const [ampNumero, setAmpNumero] = useState('');
-  const [ampFechaNotificacion, setAmpFechaNotificacion] = useState('');
   /** Pasos completados que el abogado abrió con "Editar" (el resto se muestra en solo lectura). */
   const [editando, setEditando] = useState<Set<string>>(new Set());
   const abrirEdicion = (clave: string) => setEditando((prev) => new Set(prev).add(clave));
@@ -382,44 +379,6 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
 
   const descargarResolucion = () =>
     descargarDocumentoResolucion(expedienteId, d.numeroExpediente).catch((err: any) => error(err.message || 'No se pudo generar la resolución.'));
-
-  const descargarAmpliacion = () =>
-    descargarDocumentoAmpliacion(expedienteId, d.numeroExpediente).catch((err: any) => error(err.message || 'No se pudo generar la RSG de ampliación.'));
-
-  const emitirAmpliacion = async () => {
-    const ok = await confirm({
-      title: 'Emitir RSG de ampliación',
-      message: `Se inicia la RSG de ampliación de plazo: 3 meses más contados desde el fin de los 9 meses (${fechaCorta(plazos.fechaCaducidadOriginal)}), nuevo límite ${fechaCorta(plazos.fechaCaducidadConAmpliacion)}. Solo cuenta cuando se registre la firma, y tiene que firmarse antes del ${fechaCorta(plazos.fechaCaducidadOriginal)}.`,
-      confirmLabel: 'Emitir',
-    });
-    if (!ok) return;
-    await ejecutar('ampEmitir', () => ResolucionesApi.emitirAmpliacion(expedienteId), 'RSG de ampliación iniciada. Descarga el Word y llévalo a firma.');
-  };
-
-  const enviarAmpliacion = () => {
-    if (!ampFechaEnvio) return error('Ingresa la fecha real en que se entregó la RSG de ampliación al Subgerente.');
-    if (ampFechaEnvio > hoy) return error('La fecha de envío no puede ser futura.');
-    return ejecutar('ampEnviar', () => ResolucionesApi.enviarAmpliacionAFirma(expedienteId, ampFechaEnvio), 'Envío a firma de la ampliación registrado.');
-  };
-
-  const firmarAmpliacion = async () => {
-    if (!ampFechaFirma) return error('Ingresa la fecha real en que firmó el Subgerente la ampliación.');
-    if (ampFechaFirma > hoy) return error('La fecha de firma no puede ser futura.');
-    const numero = ampNumero.trim();
-    const ok = await confirm({
-      title: 'Registrar firma de la ampliación',
-      message: `Se registrará la firma del ${fechaCorta(ampFechaFirma)}${numero ? ` — Resolución N° ${numero}` : ' (sin N°)'}. Desde ahí el plazo de caducidad pasa al ${fechaCorta(plazos.fechaCaducidadConAmpliacion)}.`,
-      confirmLabel: 'Registrar firma',
-    });
-    if (!ok) return;
-    await ejecutar('ampFirmar', () => ResolucionesApi.firmarAmpliacion(expedienteId, ampFechaFirma, numero || undefined), 'Firma de la ampliación registrada.');
-  };
-
-  const notificarAmpliacion = () => {
-    if (!ampFechaNotificacion) return error('Ingresa la fecha real de notificación de la ampliación.');
-    if (ampFechaNotificacion > hoy) return error('La fecha de notificación no puede ser futura.');
-    return ejecutar('ampNotificar', () => ResolucionesApi.notificarAmpliacion(expedienteId, ampFechaNotificacion), 'Notificación de la ampliación registrada.');
-  };
 
   const generarAntecedentes = () =>
     ejecutar('antecedentes', () => ResolucionesApi.generarSeccionAutomatica(expedienteId), 'Antecedentes generados desde el IFI.');
@@ -1067,12 +1026,19 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
                 {NOMBRE_TIPO[tipo]}
               </Badge>
               <Badge variant={varianteEtapa(d)}>{labelEtapa({ ...d, resolucionId: r?.id ?? null })}</Badge>
+              <PagadoBadge tienePago={!!d.pago} montoPagado={d.pago?.montoPagado} fechaPago={d.pago?.fechaPago} />
               {d.ifi?.archivoPorVicio && <span className="text-[12px] text-[#be123c] font-semibold">Archivo por error de fondo (vicio trascendente)</span>}
             </div>
             <div className="text-[12px] text-text-secondary">
               {EXPLICACION_TIPO[tipo]} Sugerido por el IFI; el abogado puede decidir distinto escribiendo el motivo.
               {r?.enParte ? ' Decisión: sancionar en parte (sin medida complementaria).' : ''}
             </div>
+          </div>
+        )}
+
+        {!tipo && d.pago && (
+          <div className="mb-[10px]">
+            <PagadoBadge tienePago montoPagado={d.pago.montoPagado} fechaPago={d.pago.fechaPago} size="md" />
           </div>
         )}
 
@@ -1141,7 +1107,15 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
                 )}
               </div>
               {plazos.diasEnFirma !== null && (
-                <div>
+                <div
+                  className={
+                    varianteDiasEnFirma(plazos.diasEnFirma) === 'danger'
+                      ? 'text-[#be123c] font-semibold'
+                      : varianteDiasEnFirma(plazos.diasEnFirma) === 'warning'
+                        ? 'text-[#b45309] font-semibold'
+                        : ''
+                  }
+                >
                   En firma hace <strong>{plazos.diasEnFirma}</strong> día{plazos.diasEnFirma === 1 ? '' : 's'} (desde el {fechaCorta(r?.fechaEnvioFirma)})
                 </div>
               )}
@@ -1152,13 +1126,17 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
 
       {/* AMPLIACIÓN DE PLAZO (RSG intermedia, opcional) */}
       {(d.ampliacion || (plazos.fechaCaducidadOriginal && r?.estado !== 'NOTIFICADA')) && (
-        <TarjetaAmpliacion
-          d={d}
-          hoy={hoy}
-          accionEnCurso={accionEnCurso}
-          fechas={{ ampFechaEnvio, ampFechaFirma, ampNumero, ampFechaNotificacion }}
-          setters={{ setAmpFechaEnvio, setAmpFechaFirma, setAmpNumero, setAmpFechaNotificacion }}
-          acciones={{ emitirAmpliacion, enviarAmpliacion, firmarAmpliacion, notificarAmpliacion, descargarAmpliacion }}
+        <AmpliacionPlazoCard
+          expedienteId={expedienteId}
+          numeroExpediente={d.numeroExpediente}
+          plazos={plazos}
+          ampliacion={d.ampliacion}
+          resolucionNotificada={r?.estado === 'NOTIFICADA'}
+          onMensaje={setMensaje}
+          onCambio={async () => {
+            await recargar(false);
+            onCambio();
+          }}
         />
       )}
 
@@ -1269,130 +1247,6 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
 // ============================================================================
 // Piezas
 // ============================================================================
-
-const TarjetaAmpliacion: React.FC<{
-  d: ResolucionDetalle;
-  hoy: string;
-  accionEnCurso: string | null;
-  fechas: { ampFechaEnvio: string; ampFechaFirma: string; ampNumero: string; ampFechaNotificacion: string };
-  setters: {
-    setAmpFechaEnvio: (v: string) => void;
-    setAmpFechaFirma: (v: string) => void;
-    setAmpNumero: (v: string) => void;
-    setAmpFechaNotificacion: (v: string) => void;
-  };
-  acciones: {
-    emitirAmpliacion: () => void;
-    enviarAmpliacion: () => void;
-    firmarAmpliacion: () => void;
-    notificarAmpliacion: () => void;
-    descargarAmpliacion: () => void;
-  };
-}> = ({ d, hoy, accionEnCurso, fechas, setters, acciones }) => {
-  const p = d.plazos;
-  const a = d.ampliacion;
-  const finNueve = soloFechaIso(p.fechaCaducidadOriginal);
-  const nueveVencidos = !!finNueve && hoy >= finNueve;
-  const fila = 'flex gap-[12px] items-end flex-wrap mt-[8px]';
-  return (
-    <section className="mb-[20px]">
-      <div className={estiloTituloSeccion}>Ampliación de plazo (RSG)</div>
-      <div
-        className={`${estiloBloque} ${p.alertaAmpliacion ? 'bg-[#fff1f2]! border-[#fda4af]!' : ''}`}
-      >
-        <div className="text-[12px] mb-[6px]">
-          Da 3 meses más, contados desde que vencen los 9 meses ({fechaCorta(p.fechaCaducidadOriginal)}): nuevo límite{' '}
-          <strong>{fechaCorta(p.fechaCaducidadConAmpliacion)}</strong>. Es opcional y solo se puede emitir y firmar antes del{' '}
-          {fechaCorta(p.fechaCaducidadOriginal)}. Cuenta desde que se registra la firma.
-        </div>
-        {p.alertaAmpliacion && (
-          <div className="text-[#be123c] font-bold text-[12px] mb-[6px]">
-            Faltan {p.diasParaCaducidad} días para caducar y no hay resolución final firmada. El Subgerente tarda 12 a 15 días en firmar.
-          </div>
-        )}
-        {!a ? (
-          nueveVencidos ? (
-            <Muted>Ya vencieron los 9 meses: no se puede ampliar.</Muted>
-          ) : (
-            <Button size="sm" variant={p.alertaAmpliacion ? 'danger' : 'outline'} loading={accionEnCurso === 'ampEmitir'} onClick={acciones.emitirAmpliacion}>
-              Emitir RSG de ampliación
-            </Button>
-          )
-        ) : (
-          <div className="text-[12px]">
-            <div className="flex gap-[8px] items-center flex-wrap">
-              <Badge variant={a.estado === 'NOTIFICADA' ? 'neutral' : a.estado === 'EMITIDA' ? 'success' : a.fechaEnvioFirma ? 'purple' : 'info'}>
-                {a.estado === 'NOTIFICADA' ? 'Notificada' : a.estado === 'EMITIDA' ? 'Firmada, falta notificar' : a.fechaEnvioFirma ? 'En firma' : 'En elaboración'}
-              </Badge>
-              <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={acciones.descargarAmpliacion}>
-                Descargar RSG de ampliación (Word)
-              </Button>
-            </div>
-            {a.fechaEnvioFirma && <div className="mt-[6px]">Entregada al Subgerente el {fechaCorta(a.fechaEnvioFirma)}.</div>}
-            {a.fechaFirma && (
-              <div>
-                Firmada el {fechaCorta(a.fechaFirma)}
-                {a.numeroResolucion ? ` — Resolución N° ${a.numeroResolucion}` : ' (sin N° registrado)'}.
-              </div>
-            )}
-            {a.fechaNotificacion && <div>Notificada el {fechaCorta(a.fechaNotificacion)}.</div>}
-
-            {a.estado === 'EN_ELABORACION' && !a.fechaEnvioFirma && !nueveVencidos && (
-              <div className={fila}>
-                <div className="w-[220px]">
-                  <Input type="date" label="Fecha de entrega al Subgerente" value={fechas.ampFechaEnvio} max={hoy} onChange={(e) => setters.setAmpFechaEnvio(e.target.value)} />
-                </div>
-                <Button size="sm" icon={<PenToolIcon size={14} />} loading={accionEnCurso === 'ampEnviar'} onClick={acciones.enviarAmpliacion} className="mb-[14px]!">
-                  Registrar envío a firma
-                </Button>
-              </div>
-            )}
-            {a.estado === 'EN_ELABORACION' && a.fechaEnvioFirma && !nueveVencidos && (
-              <div className={fila}>
-                <div className="w-[200px]">
-                  <Input
-                    type="date"
-                    label="Fecha de firma"
-                    value={fechas.ampFechaFirma}
-                    min={soloFechaIso(a.fechaEnvioFirma)}
-                    max={hoy}
-                    onChange={(e) => setters.setAmpFechaFirma(e.target.value)}
-                  />
-                </div>
-                <div className="flex-1 min-w-[200px]">
-                  <Input label="N° de resolución (opcional)" placeholder="Tal como figura en el papel" value={fechas.ampNumero} onChange={(e) => setters.setAmpNumero(e.target.value)} />
-                </div>
-                <Button size="sm" variant="success" loading={accionEnCurso === 'ampFirmar'} onClick={acciones.firmarAmpliacion} className="mb-[14px]!">
-                  Registrar firma
-                </Button>
-              </div>
-            )}
-            {a.estado === 'EN_ELABORACION' && nueveVencidos && (
-              <div className="text-[#be123c] mt-[6px]">Vencieron los 9 meses sin firmarse la ampliación: ya no se puede registrar.</div>
-            )}
-            {a.estado === 'EMITIDA' && (
-              <div className={fila}>
-                <div className="w-[220px]">
-                  <Input
-                    type="date"
-                    label="Fecha de notificación"
-                    value={fechas.ampFechaNotificacion}
-                    min={soloFechaIso(a.fechaFirma)}
-                    max={hoy}
-                    onChange={(e) => setters.setAmpFechaNotificacion(e.target.value)}
-                  />
-                </div>
-                <Button size="sm" variant="success" loading={accionEnCurso === 'ampNotificar'} onClick={acciones.notificarAmpliacion} className="mb-[14px]!">
-                  Registrar notificación
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </section>
-  );
-};
 
 const FilaDocumento: React.FC<{ titulo: string; detalle?: string; expandido?: React.ReactNode; children: React.ReactNode }> = ({
   titulo,

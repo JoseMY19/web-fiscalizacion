@@ -31,6 +31,7 @@ function MainApp() {
   const irA = (mod: NavModule) => navigate(mod === 'dashboard' ? '/' : `/${mod}`);
 
   const [badgeCounts, setBadgeCounts] = useState<Partial<Record<NavModule, number>>>({});
+  const [badgeAlertas, setBadgeAlertas] = useState<Partial<Record<NavModule, { count: number; title: string }>>>({});
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -40,15 +41,25 @@ function MainApp() {
         const [exp, ifi, res, riesgo] = await Promise.allSettled([
           ExpedientesApi.getPendientes(),
           IfiApi.getPendientes(),
-          ResolucionesApi.getPendientes(),
+          ResolucionesApi.getBandeja(),
           ConfiguracionApi.getExpedientesEnRiesgo(),
         ]);
 
         setBadgeCounts({
           expedientes: exp.status === 'fulfilled' && Array.isArray(exp.value) ? exp.value.length : 0,
           ifi: ifi.status === 'fulfilled' && ifi.value?.pendientes ? ifi.value.pendientes.length : 0,
-          resoluciones: res.status === 'fulfilled' && Array.isArray(res.value) ? res.value.length : 0,
+          // Pendientes = en redacción + por firmar (misma cuenta que antes, ahora desde la bandeja).
+          resoluciones: res.status === 'fulfilled' && res.value ? (res.value.enRedaccion?.length ?? 0) + (res.value.porFirmar?.length ?? 0) : 0,
           configuracion: riesgo.status === 'fulfilled' && Array.isArray(riesgo.value) ? riesgo.value.length : 0,
+        });
+        // O5: "falta firmar" — resoluciones entregadas al Subgerente, con la más antigua en el tooltip.
+        const porFirmar = res.status === 'fulfilled' ? (res.value?.porFirmar ?? []) : [];
+        const masAntigua = porFirmar.reduce((m, f) => Math.max(m, f.plazos?.diasEnFirma ?? 0), 0);
+        setBadgeAlertas({
+          resoluciones: {
+            count: porFirmar.length,
+            title: `${porFirmar.length} por firmar del Subgerente (la más antigua hace ${masAntigua} día${masAntigua === 1 ? '' : 's'})`,
+          },
         });
       } catch {
         // Silencioso
@@ -88,7 +99,7 @@ function MainApp() {
   }
 
   return (
-    <AppLayout currentModule={currentModule} onSelectModule={irA} user={user} onLogout={logout} badgeCounts={badgeCounts}>
+    <AppLayout currentModule={currentModule} onSelectModule={irA} user={user} onLogout={logout} badgeCounts={badgeCounts} badgeAlertas={badgeAlertas}>
       <Routes>
         <Route path="/" element={<DashboardView onNavigate={irA} />} />
         <Route path="/documentos" element={<DocumentosView />} />

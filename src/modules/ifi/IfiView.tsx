@@ -10,11 +10,17 @@ import {
   descargarDocumentoIfi,
   abrirDocumento,
   descargarDocumentoWord,
+  ResolucionesApi,
+  ResolucionDetalle,
 } from '../../api';
+import { PagadoBadge } from '../../components/common/PagadoBadge';
+import { AmpliacionPlazoCard } from '../resoluciones/AmpliacionPlazoCard';
+import { textoCaducidad } from '../resoluciones/resolucionUi';
 import { socket } from '../../lib/socket';
 import { Card, Button, Badge, Modal, Input, Textarea, Alert, EmptyState, Spinner } from '../../components/common/Common';
 import { useConfirm } from '../../context/ConfirmContext';
-import { formatearFechaHora, hoyLocal } from '../../lib/fechas';
+import { formatearFecha, formatearFechaHora, hoyLocal } from '../../lib/fechas';
+import { LABEL_FOTO_ACTA } from '../resoluciones/resolucionUi';
 import { FileTextIcon, RefreshCwIcon, CheckCircleIcon, EyeIcon, PenToolIcon, CheckIcon, PrinterIcon } from '../../components/icons/Icons';
 
 /**
@@ -111,13 +117,6 @@ const LABEL_MODO_NOTIFICACION: Record<string, string> = {
   PERSONAL_NEGATIVA: 'Personal — se negó a firmar/recibir',
   DOMICILIARIA_PENDIENTE: 'Domiciliaria — pendiente',
   DOMICILIARIA_EFECTIVA: 'Domiciliaria — efectiva',
-};
-
-const LABEL_FOTO_ACTA: Record<string, string> = {
-  ACTA_FISCALIZACION: 'Foto del Acta de Fiscalización',
-  NOTIFICACION_CARGO: 'Foto de la Notificación de Cargo',
-  ACTA_EXHORTACION: 'Foto del Acta de Exhortación',
-  MEDIDA_PROVISIONAL: 'Foto del Acta de Medida Provisional',
 };
 
 const estiloTarjetaEvidencia = 'bg-[#f8fafc] p-[12px] rounded-[8px] border border-border';
@@ -567,7 +566,14 @@ export const IfiView: React.FC = () => {
                 <tbody>
                   {esperando.map((e) => (
                     <tr key={e.expedienteId} className="border-b border-b-border">
-                      <td className="py-[14px] px-[16px] font-bold">{e.numeroExpediente}</td>
+                      <td className="py-[14px] px-[16px] font-bold">
+                        {e.numeroExpediente}
+                        {e.tienePago && (
+                          <div className="mt-[4px]">
+                            <PagadoBadge tienePago montoPagado={e.montoPagado} fechaPago={e.fechaPago} />
+                          </div>
+                        )}
+                      </td>
                       <td className="py-[14px] px-[16px] text-text-muted text-[12px]">
                         ⏳ Bloqueado por regla de negocio hasta que la Notificación de Cargo sea efectivamente diligenciada.
                       </td>
@@ -591,6 +597,7 @@ export const IfiView: React.FC = () => {
                   <th className="py-[12px] px-[16px] font-bold">N° Expediente</th>
                   <th className="py-[12px] px-[16px] font-bold">Estado IFI</th>
                   <th className="py-[12px] px-[16px] font-bold">Avance</th>
+                  <th className="py-[12px] px-[16px] font-bold">Plazo</th>
                   <th className="py-[12px] px-[16px] font-bold"></th>
                 </tr>
               </thead>
@@ -598,8 +605,9 @@ export const IfiView: React.FC = () => {
                 {pendientes.map((e) => {
                   const { pasoActualLabel, totalPasos, pasoNumero } = calcularPaso(e);
                   const esCaminoVicio = e.imputacionCorrecta === false;
+                  const caducidad = textoCaducidad(e.diasParaCaducidad);
                   return (
-                    <tr key={e.expedienteId} className="border-b border-b-border">
+                    <tr key={e.expedienteId} className={`border-b border-b-border ${e.alertaAmpliacion ? 'bg-[#fff1f2]' : ''}`}>
                       <td className="py-[14px] px-[16px] font-bold text-midnight-900">
                         <div className="flex items-center gap-[8px]">
                           <FileTextIcon size={16} color="var(--color-primary-600)" />
@@ -608,6 +616,11 @@ export const IfiView: React.FC = () => {
                         <div className="text-[11px] text-text-muted mt-[4px]">
                           ID: {e.expedienteId.slice(0, 8)}...
                         </div>
+                        {e.tienePago && (
+                          <div className="mt-[4px]">
+                            <PagadoBadge tienePago montoPagado={e.montoPagado} fechaPago={e.fechaPago} />
+                          </div>
+                        )}
                       </td>
 
                       <td className="py-[14px] px-[16px]">
@@ -625,7 +638,26 @@ export const IfiView: React.FC = () => {
                         </div>
                       </td>
 
-                      <td className="py-[14px] px-[16px]">
+                      <td className="py-[14px] px-[16px] whitespace-nowrap">
+                        {caducidad ? (
+                          <span className={`font-semibold text-[12px] ${caducidad.urgente ? 'text-[#be123c]' : 'text-text-secondary'}`}>{caducidad.texto}</span>
+                        ) : (
+                          <span className="text-text-muted">—</span>
+                        )}
+                        {(e.ampliacionEstado === 'EMITIDA' || e.ampliacionEstado === 'NOTIFICADA') && (
+                          <div className="text-[11px] text-text-muted mt-[3px]">plazo ampliado (+3 meses)</div>
+                        )}
+                        {e.alertaAmpliacion && (
+                          <div className="text-[11px] text-[#be123c] font-semibold mt-[3px]">emitir RSG de ampliación</div>
+                        )}
+                      </td>
+
+                      <td className="py-[14px] px-[16px] whitespace-nowrap">
+                        {e.alertaAmpliacion && (
+                          <Button variant="danger" size="sm" className="mr-[8px]!" onClick={() => setDetalleExp(e)}>
+                            {e.ampliacionEstado ? 'Ver RSG de ampliación' : 'Emitir RSG de ampliación'}
+                          </Button>
+                        )}
                         <Button variant="primary" size="sm" icon={<EyeIcon size={14} />} onClick={() => setDetalleExp(e)}>
                           Ver expediente
                         </Button>
@@ -668,6 +700,7 @@ export const IfiView: React.FC = () => {
             setNotificarModal({ isOpen: true, expId: detalleExp.expedienteId, numero: detalleExp.numeroExpediente });
           }}
           onAbrirDocumentos={() => handleAbrirDocumentosModal(detalleExp.expedienteId, detalleExp.numeroExpediente)}
+          onCambioAmpliacion={cargar}
           actionLoading={actionLoading}
         />
       )}
@@ -1206,6 +1239,8 @@ interface IfiDetallePanelProps {
   descargandoDocumento: boolean;
   onAbrirNotificar: () => void;
   onAbrirDocumentos: () => void;
+  /** O6: la ampliación cambió — refresca la bandeja (caducidad / alerta). */
+  onCambioAmpliacion: () => void;
   actionLoading: boolean;
 }
 
@@ -1231,6 +1266,7 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
   descargandoDocumento,
   onAbrirNotificar,
   onAbrirDocumentos,
+  onCambioAmpliacion,
   actionLoading,
 }) => {
   const imputacionSaneada = e.imputacionCorrecta !== null;
@@ -1482,6 +1518,8 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
 
   return (
     <Modal isOpen onClose={onClose} title={`Expediente ${e.numeroExpediente} — Detalle de instrucción`} maxWidth="680px">
+      <ResumenPlazoPagoIfi e={e} />
+      <AmpliacionEnIfi expedienteId={e.expedienteId} numeroExpediente={e.numeroExpediente} onCambio={onCambioAmpliacion} />
       <div className="flex flex-col gap-0">
         {steps.map((step, idx) => (
           <div key={step.numero} className="flex gap-[14px]">
@@ -1543,5 +1581,77 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
         </div>
       </div>
     </Modal>
+  );
+};
+
+/** O9 + O6: "Pagado" y caducidad del expediente, arriba del detalle de instrucción. */
+const ResumenPlazoPagoIfi: React.FC<{ e: ExpedienteIfiItem }> = ({ e }) => {
+  const caducidad = textoCaducidad(e.diasParaCaducidad);
+  if (!e.tienePago && !caducidad) return null;
+  return (
+    <div className="flex items-center gap-[10px] flex-wrap mb-[14px] text-[12px]">
+      <PagadoBadge tienePago={e.tienePago} montoPagado={e.montoPagado} fechaPago={e.fechaPago} size="md" />
+      {caducidad && (
+        <span className={`font-semibold ${caducidad.urgente ? 'text-[#be123c]' : 'text-text-secondary'}`}>
+          {caducidad.texto} ({formatearFecha(e.fechaCaducidad)})
+          {e.ampliacionEstado === 'EMITIDA' || e.ampliacionEstado === 'NOTIFICADA' ? ' — ampliado +3 meses' : ''}
+          {e.alertaAmpliacion ? ' — emitir RSG de ampliación' : ''}
+        </span>
+      )}
+    </div>
+  );
+};
+
+/**
+ * O6: la RSG de ampliación se puede emitir desde la notificación de la NC,
+ * antes o después del IFI. Reusa la tarjeta de Resoluciones; los plazos y la
+ * ampliación salen de GET /resoluciones/:expedienteId (sirve aunque todavía
+ * no exista resolución ni IFI notificado).
+ */
+const AmpliacionEnIfi: React.FC<{ expedienteId: string; numeroExpediente: string; onCambio: () => void }> = ({
+  expedienteId,
+  numeroExpediente,
+  onCambio,
+}) => {
+  const [detalle, setDetalle] = useState<ResolucionDetalle | null>(null);
+  const [mensaje, setMensaje] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const recargar = async () => {
+    try {
+      setDetalle(await ResolucionesApi.getDetalle(expedienteId));
+    } catch {
+      // Sin detalle no se muestra la tarjeta: no bloquea la instrucción.
+      setDetalle(null);
+    }
+  };
+
+  useEffect(() => {
+    setDetalle(null);
+    setMensaje(null);
+    recargar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expedienteId]);
+
+  if (!detalle) return null;
+  return (
+    <>
+      {mensaje && (
+        <div onClick={() => setMensaje(null)} title="Clic para cerrar" className="cursor-pointer">
+          <Alert type={mensaje.type}>{mensaje.text}</Alert>
+        </div>
+      )}
+      <AmpliacionPlazoCard
+        expedienteId={expedienteId}
+        numeroExpediente={numeroExpediente}
+        plazos={detalle.plazos}
+        ampliacion={detalle.ampliacion}
+        resolucionNotificada={detalle.resolucion?.estado === 'NOTIFICADA'}
+        onMensaje={setMensaje}
+        onCambio={async () => {
+          await recargar();
+          onCambio();
+        }}
+      />
+    </>
   );
 };

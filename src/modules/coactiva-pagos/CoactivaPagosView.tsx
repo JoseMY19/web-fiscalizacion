@@ -8,6 +8,7 @@ import {
 } from '../../api';
 import { Card, Button, Input, Alert, Badge } from '../../components/common/Common';
 import { ComboboxExpediente } from '../../components/common/ComboboxExpediente';
+import { PagadoBadge } from '../../components/common/PagadoBadge';
 import { formatearFecha, hoyLocal } from '../../lib/fechas';
 import { CreditCardIcon, GavelIcon, FileTextIcon, ScaleIcon } from '../../components/icons/Icons';
 
@@ -210,9 +211,12 @@ export const CoactivaPagosView: React.FC = () => {
                 obtenerNumeroExpediente={(c) => c.numeroExpediente}
                 renderDetalle={(c) => (
                   <>
+                    <PagadoBadge tienePago={c.tienePago} montoPagado={c.montoPagado} fechaPago={c.fechaPago} />
                     <Badge variant={c.motivo === 'APELACION_INFUNDADA' ? 'danger' : 'warning'}>{MOTIVO_CORTO[c.motivo]}</Badge>
                     {c.fechaVencimientoPlazo && (
-                      <span className="text-[11px] text-text-muted">Plazo venció {formatearFecha(c.fechaVencimientoPlazo)}</span>
+                      <span className="text-[11px] text-text-muted">
+                        Plazo venció {formatearFecha(c.fechaVencimientoPlazo)}
+                      </span>
                     )}
                   </>
                 )}
@@ -225,6 +229,15 @@ export const CoactivaPagosView: React.FC = () => {
                 onChange={(e) => setFechaFirmeza(e.target.value)}
               />
             </div>
+
+            {candidato?.tienePago && (
+              <Alert type="success">
+                <span className="inline-flex items-center gap-[8px] flex-wrap">
+                  <PagadoBadge tienePago montoPagado={candidato.montoPagado} fechaPago={candidato.fechaPago} size="md" />
+                  El administrado ya registró un pago.
+                </span>
+              </Alert>
+            )}
 
             <div className="mb-[14px]">
               <label className="block text-[13px] font-semibold mb-[6px]">
@@ -240,9 +253,11 @@ export const CoactivaPagosView: React.FC = () => {
               </select>
             </div>
 
-            <Button variant="danger" loading={actionLoading} onClick={handleDeclararFirme}>
-              Declarar Acto Firme
-            </Button>
+            <div className="flex gap-[8px] flex-wrap">
+              <Button variant="danger" loading={actionLoading} onClick={handleDeclararFirme}>
+                Declarar Acto Firme
+              </Button>
+            </div>
           </Card>
 
           <Card title="Etapa 2: Emisión de Títulos de Ejecución y Derivación Coactiva" className="overflow-visible! relative! z-[20]!">
@@ -257,6 +272,7 @@ export const CoactivaPagosView: React.FC = () => {
               obtenerNumeroExpediente={(a) => a.numeroExpediente}
               renderDetalle={(a) => (
                 <>
+                  <PagadoBadge tienePago={a.tienePago} montoPagado={a.montoPagado} fechaPago={a.fechaPago} />
                   <span className="text-[11px] text-text-muted">Firme desde {formatearFecha(a.fechaFirmeza)}</span>
                   <Badge variant={a.constanciaMultaEmitida ? 'success' : 'neutral'}>
                     {a.constanciaMultaEmitida ? 'Constancia multa emitida' : 'Sin constancia de multa'}
@@ -266,6 +282,14 @@ export const CoactivaPagosView: React.FC = () => {
               )}
               mensajeVacio="No hay expedientes con acto firme pendientes de derivar a coactiva."
             />
+            {actoFirme?.tienePago && (
+              <Alert type="success">
+                <span className="inline-flex items-center gap-[8px] flex-wrap">
+                  <PagadoBadge tienePago montoPagado={actoFirme.montoPagado} fechaPago={actoFirme.fechaPago} size="md" />
+                  Verifica el pago antes de derivar a Ejecución Coactiva.
+                </span>
+              </Alert>
+            )}
 
             <div className="flex gap-[12px] mb-[20px]">
               <Button variant="secondary" icon={<FileTextIcon size={16} />} loading={actionLoading} onClick={handleConstanciaMulta}>

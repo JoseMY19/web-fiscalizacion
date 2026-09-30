@@ -13,6 +13,7 @@ import {
   EyeIcon,
   BellIcon,
   MapPinIcon,
+  PenToolIcon,
 } from '../icons/Icons';
 
 export type NavModule =
@@ -36,6 +37,8 @@ interface AppLayoutProps {
   onLogout: () => void;
   children: React.ReactNode;
   badgeCounts?: Partial<Record<NavModule, number>>;
+  /** Contador secundario ámbar por módulo (ej. O5: resoluciones esperando la firma del Subgerente). */
+  badgeAlertas?: Partial<Record<NavModule, { count: number; title: string }>>;
 }
 
 interface NavItem {
@@ -111,6 +114,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   onLogout,
   children,
   badgeCounts = {},
+  badgeAlertas = {},
 }) => {
   const currentNav = navItems.find((n) => n.id === currentModule);
   const totalPendientes = Object.values(badgeCounts).reduce<number>(
@@ -162,6 +166,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             {navItems.filter((item) => esVisibleParaRol(item, user?.rol)).map((item) => {
               const active = currentModule === item.id;
               const count = badgeCounts[item.id];
+              const alerta = badgeAlertas[item.id];
               return (
                 <button
                   key={item.id}
@@ -174,13 +179,24 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                     </span>
                     <span>{item.label}</span>
                   </div>
-                  {typeof count === 'number' && count > 0 && (
-                    <span
-                      className="text-[11px] font-bold min-w-[19px] h-[19px] py-0 px-[6px] rounded-[10px] bg-[#ef4444] text-[#ffffff] inline-flex items-center justify-center"
-                    >
-                      {count}
-                    </span>
-                  )}
+                  <span className="inline-flex items-center gap-[4px]">
+                    {alerta && alerta.count > 0 && (
+                      <span
+                        title={alerta.title}
+                        className="text-[11px] font-bold h-[19px] py-0 px-[6px] rounded-[10px] bg-[#f59e0b] text-[#ffffff] inline-flex items-center justify-center gap-[3px]"
+                      >
+                        <PenToolIcon size={10} />
+                        {alerta.count}
+                      </span>
+                    )}
+                    {typeof count === 'number' && count > 0 && (
+                      <span
+                        className="text-[11px] font-bold min-w-[19px] h-[19px] py-0 px-[6px] rounded-[10px] bg-[#ef4444] text-[#ffffff] inline-flex items-center justify-center"
+                      >
+                        {count}
+                      </span>
+                    )}
+                  </span>
                 </button>
               );
             })}

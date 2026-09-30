@@ -137,6 +137,17 @@ export interface ExpedienteIfiItem {
   tieneAnalisis: boolean;
   recomendacion: 'SANCIONAR' | 'ARCHIVAR' | null;
   numeroInforme: string | null;
+  /** O9: hay un pago registrado (contra cualquier resolución del expediente). */
+  tienePago: boolean;
+  fechaPago: string | null;
+  montoPagado: number | null;
+  /** O6: RSG de ampliación (null = no se inició). */
+  ampliacionEstado: EstadoResolucion | null;
+  /** 9 meses desde la NC (12 con ampliación firmada); null si la NC no tiene fecha. */
+  fechaCaducidad: string | null;
+  diasParaCaducidad: number | null;
+  /** ≤30 días para caducar sin ampliación firmada: "emitir RSG de ampliación". */
+  alertaAmpliacion: boolean;
 }
 
 /** Forma real de GET /ifi/:expedienteId (ver IfiDetalleResponseDto en el backend) — el Ifi completo, para prellenar el panel de detalle. */
@@ -420,6 +431,12 @@ export interface ExpedienteResolucionItem {
   fechaNotificacion: string | null;
   ifiFechaNotificacion: string | null;
   plazos: PlazosResolucion;
+  /** O9: hay un pago registrado (contra cualquier resolución del expediente). */
+  tienePago: boolean;
+  fechaPago: string | null;
+  montoPagado: number | null;
+  /** O5: fecha de envío a firma de la RSG de ampliación. */
+  ampliacionFechaEnvioFirma: string | null;
 }
 
 export interface BandejaResoluciones {
@@ -499,6 +516,8 @@ export interface ResolucionDetalle {
     fechaFirma: string | null;
     fechaNotificacion: string | null;
   } | null;
+  /** O9: pago registrado contra cualquier resolución del expediente (null = no pagó). */
+  pago: { montoPagado: number; fechaPago: string } | null;
 }
 
 /** Descarga un Word generado al vuelo; relanza el mensaje del backend si lo rechaza. */
@@ -747,6 +766,9 @@ export interface CandidatoActoFirme {
   numeroExpediente: string;
   motivo: 'VENCIMIENTO_PLAZO_RECURSOS' | 'APELACION_INFUNDADA';
   fechaVencimientoPlazo: string | null;
+  tienePago: boolean;
+  fechaPago: string | null;
+  montoPagado: number | null;
 }
 
 export interface ActoFirmePendienteDerivacion {
@@ -756,6 +778,9 @@ export interface ActoFirmePendienteDerivacion {
   fechaFirmeza: string;
   constanciaMultaEmitida: boolean;
   constanciaMedidaComplementariaEmitida: boolean;
+  tienePago: boolean;
+  fechaPago: string | null;
+  montoPagado: number | null;
 }
 
 export interface ResolucionPendientePago {
@@ -780,7 +805,11 @@ export const CoactivaPagosApi = {
   listarCandidatosActoFirme: () => apiClient<CandidatoActoFirme[]>('/actos-firmes/candidatos'),
   listarPendientesDerivacion: () => apiClient<ActoFirmePendienteDerivacion[]>('/actos-firmes/pendientes-derivacion'),
   listarResolucionesPendientesPago: () => apiClient<ResolucionPendientePago[]>('/pagos/resoluciones-pendientes'),
-  declararActoFirme: (expedienteId: string, motivo: 'VENCIMIENTO_PLAZO_RECURSOS' | 'APELACION_INFUNDADA', fechaFirmeza: string) =>
+  declararActoFirme: (
+    expedienteId: string,
+    motivo: 'VENCIMIENTO_PLAZO_RECURSOS' | 'APELACION_INFUNDADA',
+    fechaFirmeza: string,
+  ) =>
     apiClient<any>(`/actos-firmes/${expedienteId}`, {
       method: 'POST',
       body: JSON.stringify({ motivo, fechaFirmeza }),
