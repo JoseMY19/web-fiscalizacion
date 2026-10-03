@@ -221,6 +221,9 @@ export const IfiApi = {
     }),
   generarPlanchazo: (expedienteId: string) =>
     apiClient<PlanchazoData>(`/ifi/${expedienteId}/generar-planchazo`, { method: 'POST' }),
+  /** Texto modelo (formato real del área legal) para cargar en el editor del análisis. */
+  textoModelo: (expedienteId: string) =>
+    apiClient<{ analisis: string; conclusion: string }>(`/ifi/${expedienteId}/texto-modelo`),
   registrarAnalisis: (expedienteId: string, analisisTexto: string) =>
     apiClient<{ ok: true }>(`/ifi/${expedienteId}/analisis`, {
       method: 'PATCH',
@@ -423,6 +426,8 @@ export interface ExpedienteResolucionItem {
   tienePago: boolean;
   fechaPago: string | null;
   montoPagado: number | null;
+  /** RSGSA por pago (fijado al enviar a firma): concluye y archiva el PAS. */
+  concluidaPorPago: boolean;
   /** O5: fecha de envío a firma de la RSG de ampliación. */
   ampliacionFechaEnvioFirma: string | null;
 }
@@ -448,7 +453,8 @@ export interface ResolucionDetalle {
   infracciones: Array<{ codigoNormativo: string; descripcion: string | null }>;
   tieneActaFiscalizacion: boolean;
   tieneNotificacionCargo: boolean;
-  medidasProvisionales: Array<{ numeroCorrelativo: string; tipoMedida: string }>;
+  /** `vigente`: sin levantar (módulo Levantamientos). */
+  medidasProvisionales: Array<{ numeroCorrelativo: string; tipoMedida: string; vigente: boolean }>;
   ifi: {
     estado: 'EN_ELABORACION' | 'EMITIDO' | 'NOTIFICADO';
     recomendacion: 'SANCIONAR' | 'ARCHIVAR' | null;
@@ -491,6 +497,11 @@ export interface ResolucionDetalle {
     /** Fecha real de firma del Subgerente. */
     fechaEmision: string | null;
     fechaNotificacion: string | null;
+    /** RSGSA por pago (fijado al enviar a firma): concluye y archiva, sin recurso. */
+    concluidaPorPago: boolean;
+    pagoImponerMedidaComplementaria: boolean;
+    /** null = sugerencia del sistema (hay medida provisional sin levantar). */
+    pagoExtinguirMedidaProvisional: boolean | null;
   } | null;
   /** RSG de ampliación de plazo (null = no se inició). */
   ampliacion: {
@@ -581,6 +592,14 @@ export const ResolucionesApi = {
     }),
   generarSeccionAutomatica: (expedienteId: string) =>
     apiClient<any>(`/resoluciones/${expedienteId}/generar-seccion-automatica`, { method: 'POST' }),
+  /** RSGSA por pago: texto modelo del análisis (monto y sistema del pago registrado). */
+  textoModeloPago: (expedienteId: string) => apiClient<{ analisis: string }>(`/resoluciones/${expedienteId}/texto-modelo-pago`),
+  /** RSGSA por pago: medidas que decide el abogado. */
+  decisionPago: (expedienteId: string, imponerMedidaComplementaria: boolean, extinguirMedidaProvisional: boolean | null) =>
+    apiClient<{ ok: true }>(`/resoluciones/${expedienteId}/decision-pago`, {
+      method: 'PATCH',
+      body: JSON.stringify({ imponerMedidaComplementaria, extinguirMedidaProvisional }),
+    }),
   registrarAnalisis: (expedienteId: string, analisisTexto: string) =>
     apiClient<{ ok: true }>(`/resoluciones/${expedienteId}/analisis`, {
       method: 'PATCH',

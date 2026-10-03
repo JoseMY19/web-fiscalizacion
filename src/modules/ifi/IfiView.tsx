@@ -177,6 +177,7 @@ export const IfiView: React.FC = () => {
     numero: '',
   });
   const [analisisTexto, setAnalisisTexto] = useState('');
+  const [cargandoModelo, setCargandoModelo] = useState(false);
   const [basesLegalesTexto, setBasesLegalesTexto] = useState('');
 
   // Documentos adjuntos al IFI (memos externos, descargos con anexos, fotos adicionales)
@@ -357,6 +358,27 @@ export const IfiView: React.FC = () => {
       setMessage({ type: 'error', text: err.message || 'Error al generar la sección de hechos y base legal.' });
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  /** Carga el texto modelo (formato real del área legal); si ya hay texto, pide confirmar antes de reemplazarlo. */
+  const cargarTextoModelo = async () => {
+    if (analisisTexto.trim()) {
+      const ok = await confirm({
+        title: 'Reemplazar el análisis',
+        message: 'Ya hay texto escrito. ¿Reemplazarlo por el texto modelo? Lo que escribiste se perderá si guardas.',
+        confirmLabel: 'Reemplazar',
+      });
+      if (!ok) return;
+    }
+    setCargandoModelo(true);
+    try {
+      const { analisis } = await IfiApi.textoModelo(analisisModal.expId);
+      setAnalisisTexto(analisis);
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err.message || 'No se pudo cargar el texto modelo.' });
+    } finally {
+      setCargandoModelo(false);
     }
   };
 
@@ -1032,12 +1054,20 @@ export const IfiView: React.FC = () => {
           </>
         }
       >
+        <div className="flex items-center justify-between gap-[8px] flex-wrap mb-[6px]">
+          <span className="text-[12px] text-text-muted">
+            El texto modelo trae los párrafos legales y los datos del caso con el formato del área legal. Revísalo y completa lo marcado entre [ ].
+          </span>
+          <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} loading={cargandoModelo} onClick={cargarTextoModelo}>
+            Cargar texto modelo
+          </Button>
+        </div>
         <Textarea
           label="Fundamentación del Instructor"
           placeholder="Escriba la valoración de los medios probatorios, descargos y determinación de la responsabilidad administrativa..."
           value={analisisTexto}
           onChange={(e) => setAnalisisTexto(e.target.value)}
-          rows={6}
+          rows={14}
         />
         <div className="mt-[12px]">
           <Textarea
