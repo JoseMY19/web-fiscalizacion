@@ -5,7 +5,7 @@ import {
   ResolucionesApi,
   ConfiguracionApi,
 } from '../../api';
-import { Card, Button, Spinner } from '../../components/common/Common';
+import { Card, Button, Spinner, Alert } from '../../components/common/Common';
 import {
   ExpedienteIcon,
   FileTextIcon,
@@ -13,8 +13,11 @@ import {
   ClockIcon,
   ArrowRightIcon,
   RefreshCwIcon,
+  PenToolIcon,
 } from '../../components/icons/Icons';
 import { NavModule } from '../../components/layout/AppLayout';
+import { varianteDiasEnFirma } from '../resoluciones/resolucionUi';
+import { AlertaLevantamientosDashboard } from '../levantamientos/AlertaLevantamientosDashboard';
 
 interface DashboardViewProps {
   onNavigate: (module: NavModule) => void;
@@ -27,6 +30,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
     pendientesIfi: 0,
     pendientesResolucion: 0,
     enRiesgo: 0,
+    // O5: resoluciones entregadas al Subgerente y la más antigua en firma.
+    porFirmar: 0,
+    maxDiasEnFirma: 0,
   });
 
   const loadData = async () => {
@@ -35,16 +41,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
       const [exp, ifi, res, riesgo] = await Promise.allSettled([
         ExpedientesApi.getPendientes(),
         IfiApi.getPendientes(),
-        ResolucionesApi.getPendientes(),
+        ResolucionesApi.getBandeja(),
         ConfiguracionApi.getExpedientesEnRiesgo(),
       ]);
+      const porFirmar = res.status === 'fulfilled' ? (res.value?.porFirmar ?? []) : [];
 
       setStats({
         pendientesValidacion: exp.status === 'fulfilled' && Array.isArray(exp.value) ? exp.value.length : 0,
         pendientesIfi:
           ifi.status === 'fulfilled' && ifi.value?.pendientes ? ifi.value.pendientes.length : 0,
-        pendientesResolucion: res.status === 'fulfilled' && Array.isArray(res.value) ? res.value.length : 0,
+        pendientesResolucion:
+          res.status === 'fulfilled' && res.value ? (res.value.enRedaccion?.length ?? 0) + (res.value.porFirmar?.length ?? 0) : 0,
         enRiesgo: riesgo.status === 'fulfilled' && Array.isArray(riesgo.value) ? riesgo.value.length : 0,
+        porFirmar: porFirmar.length,
+        maxDiasEnFirma: porFirmar.reduce((m, f) => Math.max(m, f.plazos?.diasEnFirma ?? 0), 0),
       });
     } finally {
       setLoading(false);
@@ -94,6 +104,26 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
           </Button>
         </div>
       </div>
+
+      {/* O5: alerta "falta firmar" — la firma del Subgerente sigue siendo obligatoria para notificar. */}
+      {!loading && stats.porFirmar > 0 && (
+        <div onClick={() => onNavigate('resoluciones')} className="cursor-pointer" title="Ir a Resoluciones → Por firmar">
+          <Alert type={varianteDiasEnFirma(stats.maxDiasEnFirma) === 'danger' ? 'error' : varianteDiasEnFirma(stats.maxDiasEnFirma) === 'warning' ? 'warning' : 'info'}>
+            <span className="inline-flex items-center gap-[8px]">
+              <PenToolIcon size={16} />
+              <span>
+                <strong>
+                  {stats.porFirmar} resoluci{stats.porFirmar === 1 ? 'ón esperando' : 'ones esperando'} firma del Subgerente
+                </strong>{' '}
+                (la más antigua hace {stats.maxDiasEnFirma} día{stats.maxDiasEnFirma === 1 ? '' : 's'}). Ver en Resoluciones → Por firmar.
+              </span>
+            </span>
+          </Alert>
+        </div>
+      )}
+
+      {/* F1: solicitudes de levantamiento de medidas provisionales en evaluación (cronómetro). */}
+      <AlertaLevantamientosDashboard onIr={() => onNavigate('levantamientos')} />
 
       {/* KPI Cards Grid */}
       <div
@@ -176,6 +206,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
               <p className="text-[12px] text-purple font-semibold mt-[4px]">
                 Emisión de RSG / RSGSA
               </p>
+              {!loading && stats.porFirmar > 0 && (
+                <p
+                  className={`text-[12px] font-semibold mt-[2px] ${
+                    varianteDiasEnFirma(stats.maxDiasEnFirma) === 'danger'
+                      ? 'text-[#be123c]'
+                      : varianteDiasEnFirma(stats.maxDiasEnFirma) === 'warning'
+                        ? 'text-[#b45309]'
+                        : 'text-text-muted'
+                  }`}
+                >
+                  {stats.porFirmar} por firmar (la más antigua hace {stats.maxDiasEnFirma} día{stats.maxDiasEnFirma === 1 ? '' : 's'})
+                </p>
+              )}
             </div>
             <div
               className="w-[46px] h-[46px] rounded-[12px] bg-purple-bg text-purple flex items-center justify-center"

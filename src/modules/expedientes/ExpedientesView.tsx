@@ -50,6 +50,8 @@ export const ExpedientesView: React.FC = () => {
     isOpen: boolean;
     intervencionId: string | null;
     numeroExpediente?: string;
+    /** O2: para mostrar el historial de correcciones de error material. */
+    expedienteId?: string;
   }>({
     isOpen: false,
     intervencionId: null,
@@ -521,6 +523,7 @@ export const ExpedientesView: React.FC = () => {
                                     isOpen: true,
                                     intervencionId: exp.intervencionId,
                                     numeroExpediente: exp.numeroExpediente,
+                                    expedienteId: exp.id,
                                   })
                                 }
                               >
@@ -578,6 +581,7 @@ export const ExpedientesView: React.FC = () => {
                                     isOpen: true,
                                     intervencionId: exp.intervencionId,
                                     numeroExpediente: exp.numeroExpediente,
+                                    expedienteId: exp.id,
                                   })
                                 }
                               >
@@ -927,6 +931,7 @@ export const ExpedientesView: React.FC = () => {
         onClose={() => setDetalleModal({ isOpen: false, intervencionId: null })}
         intervencionId={detalleModal.intervencionId}
         numeroExpediente={detalleModal.numeroExpediente}
+        expedienteId={detalleModal.expedienteId}
       />
     </div>
   );

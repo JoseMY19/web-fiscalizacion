@@ -13,7 +13,14 @@ import { IfiView } from './modules/ifi/IfiView';
 import { ResolucionesView } from './modules/resoluciones/ResolucionesView';
 import { RecursosView } from './modules/recursos/RecursosView';
 import { CoactivaPagosView } from './modules/coactiva-pagos/CoactivaPagosView';
+import { PagosView } from './modules/pagos/PagosView';
 import { CautelaresView } from './modules/cautelares/CautelaresView';
+import { LevantamientosView } from './modules/levantamientos/LevantamientosView';
+// F2 / F3: caducidad del PAS y prescripción de multas.
+import { CaducidadView } from './modules/caducidad/CaducidadView';
+import { PrescripcionView } from './modules/prescripcion/PrescripcionView';
+import { useResumenLevantamientos } from './modules/levantamientos/useResumenLevantamientos';
+import { badgesLevantamientos } from './modules/levantamientos/badgesLevantamientos';
 import { ConfiguracionView } from './modules/configuracion/ConfiguracionView';
 import { MapaIntervencionesView } from './modules/mapa/MapaIntervencionesView';
 import { ExpedientesApi, IfiApi, ResolucionesApi, ConfiguracionApi } from './api';
@@ -31,6 +38,9 @@ function MainApp() {
   const irA = (mod: NavModule) => navigate(mod === 'dashboard' ? '/' : `/${mod}`);
 
   const [badgeCounts, setBadgeCounts] = useState<Partial<Record<NavModule, number>>>({});
+  const [badgeAlertas, setBadgeAlertas] = useState<Partial<Record<NavModule, { count: number; title: string }>>>({});
+  // F1: solicitudes de levantamiento en evaluación (rojo si alguna está por vencer).
+  const badgesLev = badgesLevantamientos(useResumenLevantamientos(isAuthenticated, currentModule));
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -40,15 +50,25 @@ function MainApp() {
         const [exp, ifi, res, riesgo] = await Promise.allSettled([
           ExpedientesApi.getPendientes(),
           IfiApi.getPendientes(),
-          ResolucionesApi.getPendientes(),
+          ResolucionesApi.getBandeja(),
           ConfiguracionApi.getExpedientesEnRiesgo(),
         ]);
 
         setBadgeCounts({
           expedientes: exp.status === 'fulfilled' && Array.isArray(exp.value) ? exp.value.length : 0,
           ifi: ifi.status === 'fulfilled' && ifi.value?.pendientes ? ifi.value.pendientes.length : 0,
-          resoluciones: res.status === 'fulfilled' && Array.isArray(res.value) ? res.value.length : 0,
+          // Pendientes = en redacción + por firmar (misma cuenta que antes, ahora desde la bandeja).
+          resoluciones: res.status === 'fulfilled' && res.value ? (res.value.enRedaccion?.length ?? 0) + (res.value.porFirmar?.length ?? 0) : 0,
           configuracion: riesgo.status === 'fulfilled' && Array.isArray(riesgo.value) ? riesgo.value.length : 0,
+        });
+        // O5: "falta firmar" — resoluciones entregadas al Subgerente, con la más antigua en el tooltip.
+        const porFirmar = res.status === 'fulfilled' ? (res.value?.porFirmar ?? []) : [];
+        const masAntigua = porFirmar.reduce((m, f) => Math.max(m, f.plazos?.diasEnFirma ?? 0), 0);
+        setBadgeAlertas({
+          resoluciones: {
+            count: porFirmar.length,
+            title: `${porFirmar.length} por firmar del Subgerente (la más antigua hace ${masAntigua} día${masAntigua === 1 ? '' : 's'})`,
+          },
         });
       } catch {
         // Silencioso
@@ -88,7 +108,7 @@ function MainApp() {
   }
 
   return (
-    <AppLayout currentModule={currentModule} onSelectModule={irA} user={user} onLogout={logout} badgeCounts={badgeCounts}>
+    <AppLayout currentModule={currentModule} onSelectModule={irA} user={user} onLogout={logout} badgeCounts={{ ...badgeCounts, ...badgesLev.counts }} badgeAlertas={{ ...badgeAlertas, ...badgesLev.alertas }}>
       <Routes>
         <Route path="/" element={<DashboardView onNavigate={irA} />} />
         <Route path="/documentos" element={<DocumentosView />} />
@@ -97,9 +117,13 @@ function MainApp() {
         <Route path="/notificaciones" element={<NotificacionesView />} />
         <Route path="/ifi" element={<IfiView />} />
         <Route path="/resoluciones" element={<ResolucionesView />} />
+        <Route path="/caducidad" element={<CaducidadView />} />
         <Route path="/recursos" element={<RecursosView />} />
         <Route path="/coactiva-pagos" element={<CoactivaPagosView />} />
+        <Route path="/prescripcion" element={<PrescripcionView />} />
+        <Route path="/pagos" element={<PagosView />} />
         <Route path="/cautelares" element={<CautelaresView />} />
+        <Route path="/levantamientos" element={<LevantamientosView />} />
         <Route path="/mapa" element={<MapaIntervencionesView />} />
         <Route path="/configuracion" element={<ConfiguracionView />} />
         <Route path="*" element={<Navigate to="/" replace />} />

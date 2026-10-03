@@ -13,6 +13,10 @@ import {
   EyeIcon,
   BellIcon,
   MapPinIcon,
+  PenToolIcon,
+  UnlockIcon,
+  ClockIcon,
+  XCircleIcon,
 } from '../icons/Icons';
 
 export type NavModule =
@@ -23,9 +27,13 @@ export type NavModule =
   | 'notificaciones'
   | 'ifi'
   | 'resoluciones'
+  | 'caducidad'
   | 'recursos'
   | 'coactiva-pagos'
+  | 'prescripcion'
+  | 'pagos'
   | 'cautelares'
+  | 'levantamientos'
   | 'mapa'
   | 'configuracion';
 
@@ -36,6 +44,8 @@ interface AppLayoutProps {
   onLogout: () => void;
   children: React.ReactNode;
   badgeCounts?: Partial<Record<NavModule, number>>;
+  /** Contador secundario ámbar por módulo (ej. O5: resoluciones esperando la firma del Subgerente). */
+  badgeAlertas?: Partial<Record<NavModule, { count: number; title: string; icon?: React.ReactNode }>>;
 }
 
 interface NavItem {
@@ -58,9 +68,15 @@ const navItems: NavItemConDef[] = [
   { id: 'notificaciones', label: 'Notificación de Cédulas', icon: <MailIcon size={18} /> },
   { id: 'ifi', label: 'Instrucción e IFI', icon: <FileTextIcon size={18} /> },
   { id: 'resoluciones', label: 'Resolución Sancionadora', icon: <GavelIcon size={18} /> },
+  // F2: caducidad del PAS (9 / 12 meses sin resolución final notificada).
+  { id: 'caducidad', label: 'Caducidad del PAS', icon: <ClockIcon size={18} /> },
   { id: 'recursos', label: 'Recursos Impugnativos', icon: <ScaleIcon size={18} /> },
   { id: 'coactiva-pagos', label: 'Acto Firme y Cobranza', icon: <CreditCardIcon size={18} /> },
+  // F3: prescripción de la exigibilidad de multas (solo a pedido de parte).
+  { id: 'prescripcion', label: 'Prescripción de Multas', icon: <XCircleIcon size={18} /> },
+  { id: 'pagos', label: 'Registro de Pagos', icon: <CreditCardIcon size={18} /> },
   { id: 'cautelares', label: 'Medidas Cautelares', icon: <ShieldAlertIcon size={18} /> },
+  { id: 'levantamientos', label: 'Levantamiento de Medidas', icon: <UnlockIcon size={18} /> },
   { id: 'consulta-campo', label: 'Exhortación y Consulta', icon: <EyeIcon size={18} /> },
   { id: 'documentos', label: 'Control Documentario', icon: <FileTextIcon size={18} /> },
   { id: 'mapa', label: 'Mapa de Cobertura', icon: <MapPinIcon size={18} /> },
@@ -91,12 +107,15 @@ export const MODULOS_ROL_PRUEBA: NavModule[] = [
   'resoluciones',
   'consulta-campo',
   'cautelares',
+  'pagos',
 ];
 
 /** Si el rol puede entrar a ese módulo (menú y rutas usan la misma regla). */
 export function puedeVerModulo(modulo: NavModule, rol: string | undefined): boolean {
   if (rol === 'PRUEBA') return MODULOS_ROL_PRUEBA.includes(modulo);
   if (rol === 'NOTIFICADOR') return modulo === 'dashboard' || modulo === 'notificaciones';
+  // F5: rol temporal mínimo de Caja/plataforma — solo registra pagos por N° de NC.
+  if (rol === 'CAJA') return modulo === 'dashboard' || modulo === 'pagos';
   return true;
 }
 
@@ -111,6 +130,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   onLogout,
   children,
   badgeCounts = {},
+  badgeAlertas = {},
 }) => {
   const currentNav = navItems.find((n) => n.id === currentModule);
   const totalPendientes = Object.values(badgeCounts).reduce<number>(
@@ -119,7 +139,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   );
 
   const cleanName = (user?.nombres || 'Carla Vega').replace(/\s*\(admin\s*dev\)/gi, '').trim();
-  const cleanRole = user?.rol === 'ADMIN' ? 'Administrador' : user?.rol === 'FISCALIZADOR' ? 'Inspector de Campo' : user?.rol === 'PRUEBA' ? 'Usuario de Prueba' : user?.rol ?? 'Oficina';
+  const cleanRole = user?.rol === 'ADMIN' ? 'Administrador' : user?.rol === 'FISCALIZADOR' ? 'Inspector de Campo' : user?.rol === 'PRUEBA' ? 'Usuario de Prueba' : user?.rol === 'CAJA' ? 'Caja / Plataforma' : user?.rol ?? 'Oficina';
 
   return (
     <div className="flex min-h-screen bg-bg-app">
@@ -162,6 +182,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             {navItems.filter((item) => esVisibleParaRol(item, user?.rol)).map((item) => {
               const active = currentModule === item.id;
               const count = badgeCounts[item.id];
+              const alerta = badgeAlertas[item.id];
               return (
                 <button
                   key={item.id}
@@ -174,13 +195,24 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                     </span>
                     <span>{item.label}</span>
                   </div>
-                  {typeof count === 'number' && count > 0 && (
-                    <span
-                      className="text-[11px] font-bold min-w-[19px] h-[19px] py-0 px-[6px] rounded-[10px] bg-[#ef4444] text-[#ffffff] inline-flex items-center justify-center"
-                    >
-                      {count}
-                    </span>
-                  )}
+                  <span className="inline-flex items-center gap-[4px]">
+                    {alerta && alerta.count > 0 && (
+                      <span
+                        title={alerta.title}
+                        className="text-[11px] font-bold h-[19px] py-0 px-[6px] rounded-[10px] bg-[#f59e0b] text-[#ffffff] inline-flex items-center justify-center gap-[3px]"
+                      >
+                        {alerta.icon ?? <PenToolIcon size={10} />}
+                        {alerta.count}
+                      </span>
+                    )}
+                    {typeof count === 'number' && count > 0 && (
+                      <span
+                        className="text-[11px] font-bold min-w-[19px] h-[19px] py-0 px-[6px] rounded-[10px] bg-[#ef4444] text-[#ffffff] inline-flex items-center justify-center"
+                      >
+                        {count}
+                      </span>
+                    )}
+                  </span>
                 </button>
               );
             })}
