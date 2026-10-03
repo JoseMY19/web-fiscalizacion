@@ -250,6 +250,7 @@ export const ResolucionesView: React.FC = () => {
                         </span>
                         <span className="flex items-center gap-[6px] flex-wrap justify-end">
                           <PagadoBadge tienePago={f.tienePago} montoPagado={f.montoPagado} fechaPago={f.fechaPago} />
+                          {f.concluidaPorPago && <Badge variant="success">Concluido por pago</Badge>}
                           {tipo && <Badge variant={tipo === 'RSGSA' ? 'danger' : 'info'}>{tipo}</Badge>}
                           <Badge variant={varianteEtapa(f)}>{labelEtapa(f)}</Badge>
                         </span>
@@ -369,6 +370,7 @@ const TablaResoluciones: React.FC<{
                 {f.tienePago && (
                   <div className="mt-[4px]">
                     <PagadoBadge tienePago montoPagado={f.montoPagado} fechaPago={f.fechaPago} />
+                    {f.concluidaPorPago && <Badge variant="success">Concluido por pago</Badge>}
                   </div>
                 )}
               </td>

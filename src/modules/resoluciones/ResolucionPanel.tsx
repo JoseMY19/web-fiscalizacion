@@ -284,6 +284,10 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
   const tipo: TipoResolucion | null = r?.tipo ?? d.tipoCorrespondiente;
   const esRsg = tipo === 'RSG';
   const editable = !!r && r.estado === 'EN_ELABORACION' && !r.fechaEnvioFirma;
+  /** RSGSA por pago: hay un pago de la NC (o ya quedó fijado al enviar a firma). */
+  const esPagada = !!r && r.tipo === 'RSGSA' && (r.fechaEnvioFirma || r.estado !== 'EN_ELABORACION' ? r.concluidaPorPago : !!d?.pago);
+  const medidasSinLevantar = d?.medidasProvisionales.filter((m) => m.vigente) ?? [];
+  const extinguirSugerido = medidasSinLevantar.length > 0;
   const enFirma = !!r && r.estado === 'EN_ELABORACION' && !!r.fechaEnvioFirma;
   const firmada = r?.estado === 'EMITIDA' || r?.estado === 'NOTIFICADA';
   const ifiNotificado = d.ifi?.estado === 'NOTIFICADO';
@@ -366,6 +370,27 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
 
   const generarAntecedentes = () =>
     ejecutar('antecedentes', () => ResolucionesApi.generarSeccionAutomatica(expedienteId), 'Antecedentes generados desde el IFI.');
+
+  /** RSGSA por pago: carga el texto modelo del análisis (pide confirmar si ya hay texto). */
+  const cargarTextoModeloPago = async () => {
+    if (analisis.trim()) {
+      const ok = await confirm({
+        title: 'Reemplazar el análisis',
+        message: 'Ya hay texto escrito. ¿Reemplazarlo por el texto modelo del pago?',
+        confirmLabel: 'Reemplazar',
+      });
+      if (!ok) return;
+    }
+    try {
+      const { analisis: texto } = await ResolucionesApi.textoModeloPago(expedienteId);
+      setAnalisis(texto);
+    } catch (err: any) {
+      error(err.message || 'No se pudo cargar el texto modelo.');
+    }
+  };
+
+  const guardarDecisionPago = (imponer: boolean, extinguir: boolean | null) =>
+    ejecutar('decision-pago', () => ResolucionesApi.decisionPago(expedienteId, imponer, extinguir), 'Medidas de la resolución por pago guardadas.');
 
   const guardarAnalisis = () => {
     if (!analisis.trim()) return error(esRsg ? 'Redacta el desarrollo de la RSG antes de guardar.' : 'Redacta el análisis antes de guardar.');
@@ -609,6 +634,14 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
             Motivo del vicio registrado en el IFI: {d.ifi.motivoVicioTrascendente}
           </Alert>
         )}
+        {esPagada && (
+          <div className="flex items-center justify-between gap-[8px] flex-wrap mb-[6px]">
+            <span className="text-[12px] text-text-muted">Texto del modelo "RSGSA pagada" con el monto y el sistema del pago registrado.</span>
+            <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={cargarTextoModeloPago}>
+              Cargar texto modelo del pago
+            </Button>
+          </div>
+        )}
         <Textarea
           value={analisis}
           onChange={(e) => setAnalisis(e.target.value)}
@@ -752,6 +785,59 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
         </div>
       ) : undefined,
     });
+    // RSGSA por pago: las medidas dependen del administrado — las decide el abogado.
+    if (esPagada && r) {
+      const imponer = r.pagoImponerMedidaComplementaria;
+      const extinguir = r.pagoExtinguirMedidaProvisional ?? extinguirSugerido;
+      pasos.push({
+        clave: 'medidas-pago',
+        titulo: 'Medidas en la resolución por pago',
+        estado: 'opcional',
+        descripcion: (
+          <Muted>
+            Dependen de lo que hizo el administrado (subsanó, retiró, regularizó…). Los modelos no imponen la medida complementaria; la medida
+            provisional se da por extinguida solo si sigue sin levantarse.
+          </Muted>
+        ),
+        contenido: (
+          <div className="flex flex-col gap-[8px]">
+            <label className={`flex items-start gap-[8px] text-[13px] ${editable && r.medidaComplementaria ? 'cursor-pointer' : 'opacity-60'}`}>
+              <input
+                type="checkbox"
+                className="mt-[3px]"
+                checked={imponer}
+                disabled={!editable || !r.medidaComplementaria || accionEnCurso === 'decision-pago'}
+                onChange={(e) => guardarDecisionPago(e.target.checked, r.pagoExtinguirMedidaProvisional)}
+              />
+              <span>
+                Imponer la medida complementaria{r.medidaComplementaria ? ` de ${r.medidaComplementaria}` : ''}
+                {!r.medidaComplementaria && <span className="text-text-muted"> (primero registra la medida complementaria)</span>}
+              </span>
+            </label>
+            <label className={`flex items-start gap-[8px] text-[13px] ${editable ? 'cursor-pointer' : 'opacity-60'}`}>
+              <input
+                type="checkbox"
+                className="mt-[3px]"
+                checked={extinguir}
+                disabled={!editable || accionEnCurso === 'decision-pago'}
+                onChange={(e) => guardarDecisionPago(imponer, e.target.checked)}
+              />
+              <span>
+                Dar por extinguida la medida provisional
+                <span className="block text-[11px] text-text-muted">
+                  {medidasSinLevantar.length > 0
+                    ? `Sin levantar: ${medidasSinLevantar.map((m) => `${m.tipoMedida} (Acta N°${m.numeroCorrelativo})`).join(', ')}.`
+                    : d.medidasProvisionales.length > 0
+                      ? 'Las medidas provisionales de este expediente ya se levantaron.'
+                      : 'Este expediente no tiene medida provisional.'}
+                  {r.pagoExtinguirMedidaProvisional === null ? ' (sugerido por el sistema)' : ''}
+                </span>
+              </span>
+            </label>
+          </div>
+        ),
+      });
+    }
   } else {
     // 3. Retiro de la multa del estado de cuenta (solo RSG)
     const retiro = r?.tareaRetiroEstadoCuenta;
@@ -1010,6 +1096,14 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
               {r?.enParte ? ' Decisión: sancionar en parte (sin medida complementaria).' : ''}
             </div>
           </div>
+        )}
+
+        {esPagada && d.pago && (
+          <Alert type="success">
+            <strong>El administrado pagó {montoTexto(d.pago.montoPagado)} el {fechaCorta(d.pago.fechaPago)}.</strong> Corresponde la RSGSA por pago:
+            declara la infracción, tiene la multa por cancelada, concluye y archiva el PAS. No cabe recurso (art. 69.2 Ord. 464) y no pasa a
+            Recursos ni a Acto firme. El Word no lleva el cuadro de multa ni el descuento.
+          </Alert>
         )}
 
         {!tipo && d.pago && (
