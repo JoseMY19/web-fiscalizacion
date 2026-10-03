@@ -4,7 +4,7 @@ import { apiClient } from './client';
 // O2 — CORRECCIÓN DE ERROR MATERIAL (trazable: antes → después, autor, motivo)
 // ============================================================================
 
-export type CampoCorreccionMaterial = 'NOMBRES_RAZON_SOCIAL' | 'NUMERO_DOCUMENTO' | 'DOMICILIO' | 'DISTRITO' | 'GIRO_USO';
+export type CampoCorreccionMaterial = 'NOMBRES_RAZON_SOCIAL' | 'NUMERO_DOCUMENTO' | 'DOMICILIO' | 'DISTRITO' | 'GIRO_USO' | 'DOMICILIO_DNI';
 
 export const LABEL_CAMPO_CORRECCION: Record<CampoCorreccionMaterial, string> = {
   NOMBRES_RAZON_SOCIAL: 'Nombres / razón social',
@@ -12,6 +12,7 @@ export const LABEL_CAMPO_CORRECCION: Record<CampoCorreccionMaterial, string> = {
   DOMICILIO: 'Domicilio',
   DISTRITO: 'Distrito',
   GIRO_USO: 'Giro / uso',
+  DOMICILIO_DNI: 'Domicilio según DNI (PIDE)',
 };
 
 export interface CorreccionMaterialItem {

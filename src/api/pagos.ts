@@ -4,11 +4,13 @@ import { apiClient } from './client';
 // F5 — PAGOS POR NC (registro manual de Caja/plataforma, sin integración)
 // ============================================================================
 
-export type SistemaOrigenPago = 'SIFAT' | 'SISTEMA_INTERNET' | 'OTRO';
+export type SistemaOrigenPago = 'SIFAT' | 'SISTEMA_INTERNET' | 'SISMULTA' | 'SISDAFIM' | 'OTRO';
 
 export const LABEL_SISTEMA_ORIGEN: Record<SistemaOrigenPago, string> = {
   SIFAT: 'SIFAT',
   SISTEMA_INTERNET: 'Sistema de internet',
+  SISMULTA: 'SISMULTA',
+  SISDAFIM: 'SISDAFIM',
   OTRO: 'Otro',
 };
 
