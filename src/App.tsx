@@ -19,6 +19,8 @@ import { LevantamientosView } from './modules/levantamientos/LevantamientosView'
 // F2 / F3: caducidad del PAS y prescripción de multas.
 import { CaducidadView } from './modules/caducidad/CaducidadView';
 import { PrescripcionView } from './modules/prescripcion/PrescripcionView';
+// F4: ejecución coactiva.
+import { CoactivaView } from './modules/coactiva/CoactivaView';
 import { useResumenLevantamientos } from './modules/levantamientos/useResumenLevantamientos';
 import { badgesLevantamientos } from './modules/levantamientos/badgesLevantamientos';
 import { ConfiguracionView } from './modules/configuracion/ConfiguracionView';
@@ -120,6 +122,7 @@ function MainApp() {
         <Route path="/caducidad" element={<CaducidadView />} />
         <Route path="/recursos" element={<RecursosView />} />
         <Route path="/coactiva-pagos" element={<CoactivaPagosView />} />
+        <Route path="/coactiva" element={<CoactivaView />} />
         <Route path="/prescripcion" element={<PrescripcionView />} />
         <Route path="/pagos" element={<PagosView />} />
         <Route path="/cautelares" element={<CautelaresView />} />

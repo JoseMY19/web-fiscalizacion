@@ -17,6 +17,7 @@ import {
   UnlockIcon,
   ClockIcon,
   XCircleIcon,
+  BuildingIcon,
 } from '../icons/Icons';
 
 export type NavModule =
@@ -30,6 +31,7 @@ export type NavModule =
   | 'caducidad'
   | 'recursos'
   | 'coactiva-pagos'
+  | 'coactiva'
   | 'prescripcion'
   | 'pagos'
   | 'cautelares'
@@ -72,6 +74,8 @@ const navItems: NavItemConDef[] = [
   { id: 'caducidad', label: 'Caducidad del PAS', icon: <ClockIcon size={18} /> },
   { id: 'recursos', label: 'Recursos Impugnativos', icon: <ScaleIcon size={18} /> },
   { id: 'coactiva-pagos', label: 'Acto Firme y Cobranza', icon: <CreditCardIcon size={18} /> },
+  // F4: expediente coactivo (REC, medidas cautelares, suspensiones, devolución a PAS).
+  { id: 'coactiva', label: 'Ejecución Coactiva', icon: <BuildingIcon size={18} /> },
   // F3: prescripción de la exigibilidad de multas (solo a pedido de parte).
   { id: 'prescripcion', label: 'Prescripción de Multas', icon: <XCircleIcon size={18} /> },
   { id: 'pagos', label: 'Registro de Pagos', icon: <CreditCardIcon size={18} /> },
