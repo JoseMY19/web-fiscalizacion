@@ -1145,3 +1145,6 @@ export async function descargarDocumentoWord(
 }
 // F1 — Levantamiento de medidas provisionales (archivo propio para no mezclarlo con el resto).
 export * from './levantamientos';
+// F2 / F3 — Caducidad del PAS y prescripción de la exigibilidad (archivos propios).
+export * from './caducidad';
+export * from './prescripcion';

@@ -15,6 +15,8 @@ import {
   MapPinIcon,
   PenToolIcon,
   UnlockIcon,
+  ClockIcon,
+  XCircleIcon,
 } from '../icons/Icons';
 
 export type NavModule =
@@ -25,8 +27,10 @@ export type NavModule =
   | 'notificaciones'
   | 'ifi'
   | 'resoluciones'
+  | 'caducidad'
   | 'recursos'
   | 'coactiva-pagos'
+  | 'prescripcion'
   | 'pagos'
   | 'cautelares'
   | 'levantamientos'
@@ -64,8 +68,12 @@ const navItems: NavItemConDef[] = [
   { id: 'notificaciones', label: 'Notificación de Cédulas', icon: <MailIcon size={18} /> },
   { id: 'ifi', label: 'Instrucción e IFI', icon: <FileTextIcon size={18} /> },
   { id: 'resoluciones', label: 'Resolución Sancionadora', icon: <GavelIcon size={18} /> },
+  // F2: caducidad del PAS (9 / 12 meses sin resolución final notificada).
+  { id: 'caducidad', label: 'Caducidad del PAS', icon: <ClockIcon size={18} /> },
   { id: 'recursos', label: 'Recursos Impugnativos', icon: <ScaleIcon size={18} /> },
   { id: 'coactiva-pagos', label: 'Acto Firme y Cobranza', icon: <CreditCardIcon size={18} /> },
+  // F3: prescripción de la exigibilidad de multas (solo a pedido de parte).
+  { id: 'prescripcion', label: 'Prescripción de Multas', icon: <XCircleIcon size={18} /> },
   { id: 'pagos', label: 'Registro de Pagos', icon: <CreditCardIcon size={18} /> },
   { id: 'cautelares', label: 'Medidas Cautelares', icon: <ShieldAlertIcon size={18} /> },
   { id: 'levantamientos', label: 'Levantamiento de Medidas', icon: <UnlockIcon size={18} /> },

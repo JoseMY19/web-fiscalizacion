@@ -33,6 +33,8 @@ import {
 } from './resolucionUi';
 import { AmpliacionPlazoCard } from './AmpliacionPlazoCard';
 import { AvisoLevantamientoMedidas } from '../levantamientos/AvisoLevantamientoMedidas';
+// F2: aviso de caducidad (caducado / vencido sin declarar → "Declarar caducidad").
+import { AvisoCaducidadExpediente } from '../caducidad/AvisoCaducidadExpediente';
 import { PagadoBadge } from '../../components/common/PagadoBadge';
 
 /** Mismo modelo de pasos que IfiView (StepDef/stepper), más un estado para los pasos opcionales. */
@@ -981,6 +983,8 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
 
       {/* F1: aviso si una medida provisional se levantó o tiene solicitud en evaluación (solo informa). */}
       <AvisoLevantamientoMedidas expedienteId={expedienteId} />
+      {/* F2: expediente caducado o con el plazo de caducidad vencido. */}
+      <AvisoCaducidadExpediente expedienteId={expedienteId} />
 
       {/* O2: corrección de error material del administrado (trazable), hasta la firma de la resolución. */}
       <section className="mb-[20px]">

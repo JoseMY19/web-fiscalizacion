@@ -16,6 +16,8 @@ import {
 import { PagadoBadge } from '../../components/common/PagadoBadge';
 import { AmpliacionPlazoCard } from '../resoluciones/AmpliacionPlazoCard';
 import { AvisoLevantamientoMedidas } from '../levantamientos/AvisoLevantamientoMedidas';
+// F2: aviso de caducidad (caducado / vencido sin declarar → "Declarar caducidad").
+import { AvisoCaducidadExpediente } from '../caducidad/AvisoCaducidadExpediente';
 import { DescargosLista } from '../descargos/DescargosLista';
 import { CorreccionMaterialSeccion } from '../correcciones/CorreccionMaterial';
 import { textoCaducidad } from '../resoluciones/resolucionUi';
@@ -1470,6 +1472,7 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
     <Modal isOpen onClose={onClose} title={`Expediente ${e.numeroExpediente} — Detalle de instrucción`} maxWidth="680px">
       <ResumenPlazoPagoIfi e={e} />
       <AvisoLevantamientoMedidas expedienteId={e.expedienteId} />
+      <AvisoCaducidadExpediente expedienteId={e.expedienteId} />
       <AmpliacionEnIfi expedienteId={e.expedienteId} numeroExpediente={e.numeroExpediente} onCambio={onCambioAmpliacion} />
       <div className="flex flex-col gap-0">
         {steps.map((step, idx) => (
