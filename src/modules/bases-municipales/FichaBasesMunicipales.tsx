@@ -113,7 +113,7 @@ export const FichaBasesMunicipales: React.FC<{ documento?: string | null; expedi
   const licencias = estado?.find((e) => e?.tipo === 'LICENCIAS') ?? null;
   const itse = estado?.find((e) => e?.tipo === 'ITSE') ?? null;
   const sinBases = estado !== null && !licencias && !itse;
-  const ultima = [licencias, itse].filter(Boolean).sort((a, b) => (a!.fecha < b!.fecha ? 1 : -1))[0];
+  const ultima = [licencias?.fecha, itse?.fecha].filter((f): f is string => !!f).sort().pop() ?? null;
   const max = compacta ? 2 : 10;
 
   return (
@@ -122,7 +122,7 @@ export const FichaBasesMunicipales: React.FC<{ documento?: string | null; expedi
         <div className="mr-auto">
           <div className="font-semibold text-text-main">Licencia de funcionamiento e ITSE</div>
           <div className="text-[11px] text-text-muted">
-            {sinBases ? 'Bases municipales sin cargar' : ultima ? `Bases municipales · actualizadas ${formatearFecha(ultima.fecha)}` : 'Bases municipales'}
+            {sinBases ? 'Bases municipales sin cargar' : ultima ? `Bases municipales · actualizadas ${formatearFecha(ultima)}` : 'Bases municipales'}
           </div>
         </div>
         <form
