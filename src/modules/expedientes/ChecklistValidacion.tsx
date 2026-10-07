@@ -3,7 +3,6 @@ import { ChecklistValidacion as Checklist, ChecklistValidacionApi, ItemChecklist
 import { AlertTriangleIcon, CheckCircleIcon, CheckIcon, ChevronRightIcon, XCircleIcon } from '../../components/icons/Icons';
 import { cn } from '../../lib/cn';
 import { Button } from '../../components/common/Common';
-import { BotonCorregirDato } from '../correcciones/CorreccionMaterial';
 
 /**
  * Checklist de completitud (reunión: "validar es solo revisar que esté
@@ -114,10 +113,9 @@ export const ChecklistValidacion: React.FC<{ expedienteId: string; soloSiPendien
                   </div>
                   {x.detalle && <div className="text-[12px] text-text-secondary mt-[2px] leading-[1.45]">{x.detalle}</div>}
                 </div>
-                {/* Se corrige aquí mismo, en oficina (campo ya no recibe observados). */}
                 {x.accion?.tipo === 'EDITAR' && (
-                  <div className="shrink-0 self-center">
-                    <BotonCorregirDato expedienteId={expedienteId} etiqueta="Corregir" variante="secondary" onCorregido={cargar} />
+                  <div className="shrink-0 self-center text-[11px] text-text-muted">
+                    Observa el expediente para corregirlo
                   </div>
                 )}
                 {x.accion?.tipo === 'FOTO' && (
