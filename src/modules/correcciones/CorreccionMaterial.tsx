@@ -1,16 +1,18 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  CampoCorreccionMaterial,
+  CAMPOS_ADMINISTRADO,
+  CampoAdministrado,
   CorreccionesApi,
   CorreccionMaterialItem,
   EstadoCorrecciones,
+  InfraccionCorregible,
   LABEL_CAMPO_CORRECCION,
 } from '../../api/correcciones';
+import { CodigoCuisRegistro, CuisMantenimientoApi, EscalaCuisRegistro } from '../../api/cuisMantenimiento';
 import { Alert, Button, Input, Modal, Spinner, Textarea } from '../../components/common/Common';
 import { formatearFechaHora } from '../../lib/fechas';
+import { cn } from '../../lib/cn';
 import { PenToolIcon } from '../../components/icons/Icons';
-
-const CAMPOS = Object.keys(LABEL_CAMPO_CORRECCION) as CampoCorreccionMaterial[];
 
 /** "Historial de correcciones" (fecha, autor, campo, antes → después, motivo). Solo lectura. */
 export const HistorialCorrecciones: React.FC<{ historial: CorreccionMaterialItem[] }> = ({ historial }) =>
@@ -59,16 +61,16 @@ export const HistorialCorreccionesExpediente: React.FC<{ expedienteId: string }>
   return <HistorialCorrecciones historial={historial} />;
 };
 
+
 interface Props {
   expedienteId: string;
-  /** Tras corregir: el panel recarga los datos del administrado que muestra. */
+  /** Tras corregir: el panel recarga los datos que muestra. */
   onCorregido?: () => void;
 }
 
 /**
- * O2 — "Corregir error material" + historial, en el IFI y en la Resolución.
- * La corrección queda trazada (antes → después, autor, motivo); la identidad
- * del administrado y los vicios de imputación no se corrigen por esta vía.
+ * "Editar datos" + historial, en Validación, IFI y Resolución. Cada cambio
+ * queda trazado (antes → después, autor, motivo).
  */
 export const CorreccionMaterialSeccion: React.FC<Props> = ({ expedienteId, onCorregido }) => {
   const [estado, setEstado] = useState<EstadoCorrecciones | null>(null);
@@ -93,8 +95,8 @@ export const CorreccionMaterialSeccion: React.FC<Props> = ({ expedienteId, onCor
     <div className="border-t border-t-border pt-[14px] mt-[4px]">
       <div className="flex items-center justify-between gap-[8px] flex-wrap mb-[8px]">
         <div>
-          <div className="text-[13px] font-bold text-midnight-900">Corrección de error material</div>
-          <div className="text-[11px] text-text-muted">Datos del administrado mal escritos (nombre, documento, domicilio…). Queda registrado.</div>
+          <div className="text-[13px] font-bold text-midnight-900">Datos del expediente</div>
+          <div className="text-[11px] text-text-muted">Administrado e infracción. Lo que se corrige queda registrado.</div>
         </div>
         <Button
           variant="secondary"
@@ -106,7 +108,7 @@ export const CorreccionMaterialSeccion: React.FC<Props> = ({ expedienteId, onCor
             setModal(true);
           }}
         >
-          Corregir error material
+          Editar datos
         </Button>
       </div>
       {error && <Alert type="error">{error}</Alert>}
@@ -117,14 +119,14 @@ export const CorreccionMaterialSeccion: React.FC<Props> = ({ expedienteId, onCor
       <div className="text-[12px] font-semibold text-text-secondary mb-[4px]">Historial de correcciones</div>
       {estado ? <HistorialCorrecciones historial={estado.historial} /> : !error && <Spinner size={14} />}
 
-      {modal && estado?.administrado && (
-        <CorregirModal
+      {modal && estado && (
+        <EditarDatosModal
           expedienteId={expedienteId}
-          valores={estado.administrado.valores}
+          estado={estado}
           onClose={() => setModal(false)}
           onCorregido={async () => {
             setModal(false);
-            setAviso('Corrección registrada. Si el IFI o la resolución ya tenían antecedentes generados, regenéralos para que tomen el dato corregido.');
+            setAviso('Datos corregidos. Si el IFI o la resolución ya tenían antecedentes generados, regenéralos para que tomen el dato nuevo.');
             await cargar();
             onCorregido?.();
           }}
@@ -135,10 +137,15 @@ export const CorreccionMaterialSeccion: React.FC<Props> = ({ expedienteId, onCor
 };
 
 /**
- * Botón compacto "Corregir dato" para ponerlo junto a los datos del
- * administrado (p. ej. al sanear la imputación). Misma corrección trazable.
+ * Botón "Editar datos" para ponerlo donde se ven los datos (checklist de
+ * validación, sanear imputación). Abre la misma pantalla de edición.
  */
-export const BotonCorregirDato: React.FC<Props> = ({ expedienteId, onCorregido }) => {
+export const BotonCorregirDato: React.FC<Props & { etiqueta?: string; variante?: 'ghost' | 'secondary' | 'primary' }> = ({
+  expedienteId,
+  onCorregido,
+  etiqueta = 'Editar datos',
+  variante = 'ghost',
+}) => {
   const [estado, setEstado] = useState<EstadoCorrecciones | null>(null);
   const [abierto, setAbierto] = useState(false);
   const [cargando, setCargando] = useState(false);
@@ -150,7 +157,7 @@ export const BotonCorregirDato: React.FC<Props> = ({ expedienteId, onCorregido }
     try {
       const e = await CorreccionesApi.obtener(expedienteId);
       setEstado(e);
-      if (e.puedeCorregir && e.administrado) setAbierto(true);
+      if (e.puedeCorregir) setAbierto(true);
       else setError(e.motivoNoCorregible ?? 'No se puede corregir en esta etapa.');
     } catch (err: any) {
       setError(err.message || 'No se pudo cargar los datos.');
@@ -161,14 +168,14 @@ export const BotonCorregirDato: React.FC<Props> = ({ expedienteId, onCorregido }
 
   return (
     <>
-      <Button variant="ghost" size="sm" icon={<PenToolIcon size={13} />} loading={cargando} onClick={abrir}>
-        Corregir dato
+      <Button variant={variante} size="sm" icon={<PenToolIcon size={13} />} loading={cargando} onClick={abrir}>
+        {etiqueta}
       </Button>
       {error && <span className="text-[11px] text-text-muted">{error}</span>}
-      {abierto && estado?.administrado && (
-        <CorregirModal
+      {abierto && estado && (
+        <EditarDatosModal
           expedienteId={expedienteId}
-          valores={estado.administrado.valores}
+          estado={estado}
           onClose={() => setAbierto(false)}
           onCorregido={() => {
             setAbierto(false);
@@ -180,30 +187,81 @@ export const BotonCorregirDato: React.FC<Props> = ({ expedienteId, onCorregido }
   );
 };
 
-const CorregirModal: React.FC<{
+// ─── Pantalla de edición ───
+
+type EdicionInfraccion = { cuisCodigoId: string; codigo: string; cuisEscalaMontoId: string | null; escalas: EscalaCuisRegistro[] | null };
+
+const claseCampo = 'w-full py-[9px] px-[12px] text-[13px] rounded-[6px] border border-border bg-bg-card text-text-main outline-none focus:border-primary-600';
+
+/** Formulario con los datos ya escritos: se cambia lo que esté mal y se guarda con un solo motivo. */
+export const EditarDatosModal: React.FC<{
   expedienteId: string;
-  valores: Record<CampoCorreccionMaterial, string | null>;
+  estado: EstadoCorrecciones;
   onClose: () => void;
   onCorregido: () => void;
-}> = ({ expedienteId, valores, onClose, onCorregido }) => {
-  const [campo, setCampo] = useState<CampoCorreccionMaterial | ''>('');
-  const [valorNuevo, setValorNuevo] = useState('');
+}> = ({ expedienteId, estado, onClose, onCorregido }) => {
+  const inicial = estado.administrado?.valores ?? null;
+  const [valores, setValores] = useState<Record<CampoAdministrado, string>>(
+    () => Object.fromEntries(CAMPOS_ADMINISTRADO.map((c) => [c, inicial?.[c] ?? ''])) as Record<CampoAdministrado, string>,
+  );
+  const [infracciones, setInfracciones] = useState<Record<string, EdicionInfraccion>>(() =>
+    Object.fromEntries(
+      estado.infracciones.map((i) => [i.intervencionCuisId, { cuisCodigoId: i.cuisCodigoId, codigo: i.codigo, cuisEscalaMontoId: i.cuisEscalaMontoId, escalas: null }]),
+    ),
+  );
   const [motivo, setMotivo] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Escalas de los códigos actuales (para elegir la que falta o cambiarla).
+  useEffect(() => {
+    estado.infracciones.forEach((i) => {
+      CuisMantenimientoApi.listar({ q: i.codigo, tamano: 20 })
+        .then((r) => {
+          const c = r.items.find((x) => x.id === i.cuisCodigoId);
+          if (c) setInfracciones((s) => ({ ...s, [i.intervencionCuisId]: { ...s[i.intervencionCuisId], escalas: c.escalas } }));
+        })
+        .catch(() => undefined);
+    });
+  }, [estado.infracciones]);
+
+  const cambiosAdministrado = CAMPOS_ADMINISTRADO.filter((c) => valores[c].trim() !== (inicial?.[c] ?? '').trim());
+  const cambiosInfraccion = estado.infracciones.filter((i) => {
+    const e = infracciones[i.intervencionCuisId];
+    return e && (e.cuisCodigoId !== i.cuisCodigoId || e.cuisEscalaMontoId !== i.cuisEscalaMontoId);
+  });
+  const hayCambios = cambiosAdministrado.length > 0 || cambiosInfraccion.length > 0;
+
   const guardar = async () => {
     setError(null);
-    if (!campo) return setError('Elige el campo a corregir.');
-    if (!valorNuevo.trim()) return setError('Escribe el valor corregido.');
-    if ((valores[campo] ?? '').trim() === valorNuevo.trim()) return setError('El valor nuevo es igual al actual.');
-    if (!motivo.trim()) return setError('El motivo es obligatorio.');
+    if (!hayCambios) return setError('No cambiaste ningún dato.');
+    if (cambiosAdministrado.some((c) => !valores[c].trim())) return setError('No se puede dejar un dato en blanco.');
+    const sinEscala = cambiosInfraccion.find((i) => {
+      const e = infracciones[i.intervencionCuisId];
+      return (e.escalas?.length ?? 0) > 0 && !e.cuisEscalaMontoId;
+    });
+    if (sinEscala) return setError(`Elige la escala del código ${infracciones[sinEscala.intervencionCuisId].codigo}.`);
+    if (!motivo.trim()) return setError('Escribe el motivo de la corrección.');
     setGuardando(true);
     try {
-      await CorreccionesApi.corregir(expedienteId, { campo, valorNuevo: valorNuevo.trim(), motivo: motivo.trim() });
+      if (cambiosAdministrado.length > 0) {
+        await CorreccionesApi.corregir(expedienteId, {
+          valores: Object.fromEntries(cambiosAdministrado.map((c) => [c, valores[c].trim()])),
+          motivo: motivo.trim(),
+        });
+      }
+      for (const i of cambiosInfraccion) {
+        const e = infracciones[i.intervencionCuisId];
+        await CorreccionesApi.corregirInfraccion(expedienteId, {
+          intervencionCuisId: i.intervencionCuisId,
+          cuisCodigoId: e.cuisCodigoId,
+          cuisEscalaMontoId: e.cuisEscalaMontoId,
+          motivo: motivo.trim(),
+        });
+      }
       onCorregido();
     } catch (err: any) {
-      setError(err.message || 'No se pudo registrar la corrección.');
+      setError(err.message || 'No se pudo guardar la corrección.');
     } finally {
       setGuardando(false);
     }
@@ -213,52 +271,163 @@ const CorregirModal: React.FC<{
     <Modal
       isOpen
       onClose={onClose}
-      title="Corregir error material"
-      maxWidth="560px"
+      title="Editar datos del expediente"
+      maxWidth="760px"
       footer={
         <>
+          <span className="mr-auto text-[12px] text-text-muted">
+            {hayCambios ? `${cambiosAdministrado.length + cambiosInfraccion.length} cambio(s) por guardar` : 'Sin cambios'}
+          </span>
           <Button variant="secondary" onClick={onClose}>
             Cancelar
           </Button>
-          <Button loading={guardando} onClick={guardar}>
-            Registrar corrección
+          <Button loading={guardando} disabled={!hayCambios} onClick={guardar}>
+            Guardar cambios
           </Button>
         </>
       }
     >
       {error && <Alert type="error">{error}</Alert>}
-      <div className="mb-[14px] w-full">
-        <label className="block text-[13px] font-semibold text-text-secondary mb-[6px]">Campo</label>
-        <select
-          value={campo}
-          onChange={(e) => {
-            setCampo(e.target.value as CampoCorreccionMaterial | '');
-            setValorNuevo('');
-          }}
-          className="w-full py-[10px] px-[14px] text-[14px] rounded-sm border border-border bg-[#ffffff] text-text-main outline-none"
-        >
-          <option value="">— Elegir —</option>
-          {CAMPOS.map((c) => (
-            <option key={c} value={c}>
-              {LABEL_CAMPO_CORRECCION[c]}
-            </option>
-          ))}
-        </select>
-      </div>
-      {campo && (
-        <div className="bg-[#f8fafc] py-[8px] px-[12px] rounded-[6px] border border-border text-[13px] mb-[14px]">
-          <span className="text-text-muted">Valor actual: </span>
-          <strong>{valores[campo] ?? '(vacío)'}</strong>
-        </div>
+
+      <h4 className="text-[13px] font-bold text-text-main mb-[8px]">Administrado</h4>
+      {!estado.administrado ? (
+        <p className="text-[12px] text-text-muted mb-[12px]">La intervención no tiene administrado registrado.</p>
+      ) : (
+        <>
+          {!estado.administrado.identificado && (
+            <p className="text-[12px] text-text-secondary mb-[8px]">
+              Figura como <strong>no identificado</strong>: si escribes su nombre o documento, pasa a identificado.
+            </p>
+          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-[14px]">
+            {CAMPOS_ADMINISTRADO.map((c) => {
+              const cambiado = cambiosAdministrado.includes(c);
+              return (
+                <div key={c} className={cn(c === 'NOMBRES_RAZON_SOCIAL' || c === 'DOMICILIO' || c === 'DOMICILIO_DNI' ? 'sm:col-span-2' : '')}>
+                  <Input
+                    label={LABEL_CAMPO_CORRECCION[c]}
+                    value={valores[c]}
+                    onChange={(e) => setValores((v) => ({ ...v, [c]: e.target.value }))}
+                    helperText={cambiado ? `Antes: ${inicial?.[c] || '(vacío)'}` : undefined}
+                    className={cambiado ? 'border-primary-600!' : undefined}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
-      <Input label="Valor corregido" value={valorNuevo} disabled={!campo} onChange={(e) => setValorNuevo(e.target.value)} />
+
+      <h4 className="text-[13px] font-bold text-text-main mt-[4px] mb-[8px]">Infracción imputada</h4>
+      {estado.infracciones.length === 0 ? (
+        <p className="text-[12px] text-text-muted mb-[12px]">No hay código de infracción registrado.</p>
+      ) : (
+        estado.infracciones.map((i) => (
+          <FilaInfraccion
+            key={i.intervencionCuisId}
+            actual={i}
+            valor={infracciones[i.intervencionCuisId]}
+            onCambio={(v) => setInfracciones((s) => ({ ...s, [i.intervencionCuisId]: v }))}
+          />
+        ))
+      )}
+
       <Textarea
-        label="Motivo (obligatorio)"
+        label="Motivo de la corrección"
         placeholder="Ej. error de digitación en campo: el DNI del acta física dice 40123456"
         value={motivo}
         onChange={(e) => setMotivo(e.target.value)}
-        rows={3}
+        rows={2}
       />
     </Modal>
+  );
+};
+
+/** Código y escala de una infracción: buscar otro código y elegir su escala. */
+const FilaInfraccion: React.FC<{
+  actual: InfraccionCorregible;
+  valor: EdicionInfraccion;
+  onCambio: (v: EdicionInfraccion) => void;
+}> = ({ actual, valor, onCambio }) => {
+  const [buscando, setBuscando] = useState(false);
+  const [q, setQ] = useState('');
+  const [resultados, setResultados] = useState<CodigoCuisRegistro[]>([]);
+
+  const buscar = async () => {
+    if (!q.trim()) return;
+    const r = await CuisMantenimientoApi.listar({ q: q.trim(), tamano: 10 }).catch(() => null);
+    setResultados(r?.items.filter((c) => c.activo) ?? []);
+  };
+
+  const elegir = (c: CodigoCuisRegistro) => {
+    onCambio({ cuisCodigoId: c.id, codigo: c.codigoNormativo, escalas: c.escalas, cuisEscalaMontoId: c.escalas.length === 1 ? c.escalas[0].id : null });
+    setBuscando(false);
+    setResultados([]);
+    setQ('');
+  };
+
+  const cambiado = valor.cuisCodigoId !== actual.cuisCodigoId || valor.cuisEscalaMontoId !== actual.cuisEscalaMontoId;
+
+  return (
+    <div className={cn('rounded-[8px] border p-[10px] mb-[12px]', cambiado ? 'border-primary-600' : 'border-border')}>
+      <div className="flex items-end gap-[10px] flex-wrap">
+        <div className="min-w-[110px]">
+          <div className="text-[11px] text-text-muted mb-[4px]">Código</div>
+          <div className="text-[14px] font-semibold text-text-main tabular-nums py-[8px]">{valor.codigo}</div>
+        </div>
+        <div className="flex-1 min-w-[200px]">
+          <div className="text-[11px] text-text-muted mb-[4px]">Escala</div>
+          <select
+            value={valor.cuisEscalaMontoId ?? ''}
+            onChange={(e) => onCambio({ ...valor, cuisEscalaMontoId: e.target.value || null })}
+            className={claseCampo}
+            disabled={!valor.escalas}
+          >
+            <option value="">{valor.escalas === null ? 'Cargando…' : valor.escalas.length === 0 ? 'Este código no tiene escala' : '— Elegir escala —'}</option>
+            {valor.escalas?.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.escala} · {e.valorPorcentaje}% UIT{e.condicion ? ` · ${e.condicion}` : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+        <Button variant="ghost" size="sm" onClick={() => setBuscando((b) => !b)}>
+          {buscando ? 'Cancelar' : 'Cambiar código'}
+        </Button>
+      </div>
+      {cambiado && (
+        <p className="text-[11px] text-text-muted mt-[6px]">
+          Antes: {actual.codigo} · {actual.escalaTexto ?? 'sin escala'}
+        </p>
+      )}
+      {buscando && (
+        <div className="mt-[10px]">
+          <form
+            className="flex gap-[8px]"
+            onSubmit={(e) => {
+              e.preventDefault();
+              buscar();
+            }}
+          >
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Código (8.02.47) o palabras" className={claseCampo} autoFocus />
+            <Button size="sm" type="submit">
+              Buscar
+            </Button>
+          </form>
+          {resultados.length > 0 && (
+            <ul className="mt-[6px] max-h-[220px] overflow-y-auto border border-border rounded-[6px] divide-y divide-border-subtle">
+              {resultados.map((c) => (
+                <li key={c.id}>
+                  <button type="button" onClick={() => elegir(c)} className="w-full text-left py-[7px] px-[10px] text-[12px] hover:bg-bg-hover cursor-pointer">
+                    <strong className="text-text-main tabular-nums">{c.idInterno}</strong>
+                    <span className="text-text-secondary"> — {c.textoCompletoPdf ?? ''}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
   );
 };

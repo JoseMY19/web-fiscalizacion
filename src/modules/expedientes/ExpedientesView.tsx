@@ -23,6 +23,7 @@ import {
 } from '../../components/icons/Icons';
 import { ExpedienteDetalleModal } from './ExpedienteDetalleModal';
 import { socket } from '../../lib/socket';
+import { BotonCorregirDato } from '../correcciones/CorreccionMaterial';
 
 function formatEstado(estado: string): string {
   const map: Record<string, string> = {
@@ -142,7 +143,7 @@ export const ExpedientesView: React.FC = () => {
       faltan.length > 0
         ? {
             title: 'Expediente incompleto',
-            message: `Al expediente ${numero} le falta: ${faltan.map((x) => x.etiqueta).join('; ')}. Si es un dato que el fiscalizador puede completar o corregir, obsérvalo. ¿Aprobar igual?`,
+            message: `Al expediente ${numero} le falta: ${faltan.map((x) => x.etiqueta).join('; ')}. Puedes completarlo aquí con "Corregir" o en el checklist del detalle. ¿Aprobar igual?`,
             confirmLabel: 'Aprobar igual',
             variant: 'danger',
           }
@@ -609,18 +610,8 @@ export const ExpedientesView: React.FC = () => {
                               >
                                 Aprobar
                               </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={actionLoading}
-                                onClick={() => {
-                                  setObservarModal({ isOpen: true, id: exp.id, numero: exp.numeroExpediente });
-                                  setObservacionesTexto('');
-                                }}
-                                className="border-[#fca5a5]! text-[#b91c1c]! bg-[#fef2f2]!"
-                              >
-                                Observar
-                              </Button>
+                              {/* Se corrige en oficina: campo ya no recibe observados. */}
+                              <BotonCorregirDato expedienteId={exp.id} etiqueta="Corregir" variante="secondary" onCorregido={cargar} />
                               {!exp.fechaIngresoFisico && (
                                 <Button
                                   variant="secondary"

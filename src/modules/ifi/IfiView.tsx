@@ -20,6 +20,7 @@ import { AvisoLevantamientoMedidas } from '../levantamientos/AvisoLevantamientoM
 import { AvisoCaducidadExpediente } from '../caducidad/AvisoCaducidadExpediente';
 // Nulidad de GOP: qué se anuló y qué rehacer (y renotificar la NC si se anuló).
 import { AvisoRetroaccion } from '../retroaccion/AvisoRetroaccion';
+import { ChecklistValidacion } from '../expedientes/ChecklistValidacion';
 import { FichaBasesMunicipales } from '../bases-municipales/FichaBasesMunicipales';
 import { EditorTextoEnriquecido } from '../../components/common/EditorTextoEnriquecido';
 import { DescargosLista } from '../descargos/DescargosLista';
@@ -1550,6 +1551,8 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
       <AvisoLevantamientoMedidas expedienteId={e.expedienteId} />
       <AvisoCaducidadExpediente expedienteId={e.expedienteId} />
       <AvisoRetroaccion expedienteId={e.expedienteId} />
+      {/* Datos pendientes de la validación: se completan aquí mismo. */}
+      <ChecklistValidacion expedienteId={e.expedienteId} soloSiPendiente />
       {/* Licencia e ITSE del administrado (bases municipales): ¿subsanó? */}
       <FichaBasesMunicipales expedienteId={e.expedienteId} compacta />
       <AmpliacionEnIfi expedienteId={e.expedienteId} numeroExpediente={e.numeroExpediente} onCambio={onCambioAmpliacion} />

@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ChecklistValidacion as Checklist, ChecklistValidacionApi, ItemChecklist } from '../../api';
 import { AlertTriangleIcon, CheckCircleIcon, CheckIcon, ChevronRightIcon, XCircleIcon } from '../../components/icons/Icons';
 import { cn } from '../../lib/cn';
+import { Button } from '../../components/common/Common';
+import { BotonCorregirDato } from '../correcciones/CorreccionMaterial';
 
 /**
  * Checklist de completitud (reunión: "validar es solo revisar que esté
@@ -29,17 +31,23 @@ const ESTILO: Record<Nivel, { barra: string; fondo: string; texto: string }> = {
   falta: { barra: 'bg-danger', fondo: 'bg-danger-bg', texto: 'text-danger' },
 };
 
-export const ChecklistValidacion: React.FC<{ expedienteId: string }> = ({ expedienteId }) => {
+/** `soloSiPendiente`: en el IFI solo aparece si queda algo por completar. */
+export const ChecklistValidacion: React.FC<{ expedienteId: string; soloSiPendiente?: boolean }> = ({ expedienteId, soloSiPendiente }) => {
   const [c, setC] = useState<Checklist | null>(null);
   const [verOk, setVerOk] = useState(false);
 
-  useEffect(() => {
+  const cargar = useCallback(() => {
     ChecklistValidacionApi.obtener(expedienteId)
       .then(setC)
       .catch(() => setC(null));
   }, [expedienteId]);
 
+  useEffect(() => {
+    cargar();
+  }, [cargar]);
+
   if (!c) return null;
+  if (soloSiPendiente && c.items.every((x) => x.ok)) return null;
 
   const total = c.items.length;
   const verificados = c.items.filter((x) => x.ok);
@@ -106,6 +114,17 @@ export const ChecklistValidacion: React.FC<{ expedienteId: string }> = ({ expedi
                   </div>
                   {x.detalle && <div className="text-[12px] text-text-secondary mt-[2px] leading-[1.45]">{x.detalle}</div>}
                 </div>
+                {/* Se corrige aquí mismo, en oficina (campo ya no recibe observados). */}
+                {x.accion?.tipo === 'EDITAR' && (
+                  <div className="shrink-0 self-center">
+                    <BotonCorregirDato expedienteId={expedienteId} etiqueta="Corregir" variante="secondary" onCorregido={cargar} />
+                  </div>
+                )}
+                {x.accion?.tipo === 'FOTO' && (
+                  <div className="shrink-0 self-center">
+                    <SubirFotoActa intervencionId={c.intervencionId} actaTipo={x.accion.actaTipo} onSubida={cargar} />
+                  </div>
+                )}
               </li>
             );
           })}
@@ -148,5 +167,45 @@ export const ChecklistValidacion: React.FC<{ expedienteId: string }> = ({ expedi
         </div>
       )}
     </section>
+  );
+};
+
+/** Sube desde la PC la foto que falta de un acta (escaneada o desde el celular). */
+const SubirFotoActa: React.FC<{ intervencionId: string; actaTipo: string; onSubida: () => void }> = ({ intervencionId, actaTipo, onSubida }) => {
+  const input = useRef<HTMLInputElement>(null);
+  const [subiendo, setSubiendo] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const subir = async (archivo: File) => {
+    setSubiendo(true);
+    setError(null);
+    try {
+      await ChecklistValidacionApi.subirFoto(intervencionId, actaTipo, archivo);
+      onSubida();
+    } catch (err: any) {
+      setError(err.message || 'No se pudo subir la foto.');
+    } finally {
+      setSubiendo(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-end gap-[2px]">
+      <Button size="sm" variant="secondary" loading={subiendo} onClick={() => input.current?.click()}>
+        Subir foto
+      </Button>
+      <input
+        ref={input}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) subir(f);
+          e.target.value = '';
+        }}
+      />
+      {error && <span className="text-[11px] text-danger">{error}</span>}
+    </div>
   );
 };
