@@ -289,56 +289,72 @@ export const EditarDatosModal: React.FC<{
     >
       {error && <Alert type="error">{error}</Alert>}
 
-      <h4 className="text-[13px] font-bold text-text-main mb-[8px]">Administrado</h4>
-      {!estado.administrado ? (
-        <p className="text-[12px] text-text-muted mb-[12px]">La intervención no tiene administrado registrado.</p>
-      ) : (
-        <>
-          {!estado.administrado.identificado && (
-            <p className="text-[12px] text-text-secondary mb-[8px]">
-              Figura como <strong>no identificado</strong>: si escribes su nombre o documento, pasa a identificado.
-            </p>
-          )}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-[14px]">
-            {CAMPOS_ADMINISTRADO.map((c) => {
-              const cambiado = cambiosAdministrado.includes(c);
-              return (
-                <div key={c} className={cn(c === 'NOMBRES_RAZON_SOCIAL' || c === 'DOMICILIO' || c === 'DOMICILIO_DNI' ? 'sm:col-span-2' : '')}>
-                  <Input
-                    label={LABEL_CAMPO_CORRECCION[c]}
-                    value={valores[c]}
-                    onChange={(e) => setValores((v) => ({ ...v, [c]: e.target.value }))}
-                    helperText={cambiado ? `Antes: ${inicial?.[c] || '(vacío)'}` : undefined}
-                    className={cambiado ? 'border-primary-600!' : undefined}
-                  />
-                </div>
-              );
-            })}
+      <div className="mb-[16px]">
+        <div className="text-[11px] font-bold uppercase tracking-wide text-text-muted pb-[8px] border-b border-b-border mb-[12px]">
+          Administrado
+        </div>
+        {!estado.administrado ? (
+          <p className="text-[12px] text-text-muted">La intervención no tiene administrado registrado.</p>
+        ) : (
+          <>
+            {!estado.administrado.identificado && (
+              <p className="text-[12px] text-text-secondary mb-[12px]">
+                Figura como <strong>no identificado</strong>: si escribes su nombre o documento, pasa a identificado.
+              </p>
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-[16px] gap-y-[12px]">
+              {CAMPOS_ADMINISTRADO.map((c) => {
+                const cambiado = cambiosAdministrado.includes(c);
+                return (
+                  <div key={c} className={cn(c === 'NOMBRES_RAZON_SOCIAL' || c === 'DOMICILIO' || c === 'DOMICILIO_DNI' ? 'sm:col-span-2' : '')}>
+                    <Input
+                      label={LABEL_CAMPO_CORRECCION[c]}
+                      value={valores[c]}
+                      onChange={(e) => setValores((v) => ({ ...v, [c]: e.target.value }))}
+                      helperText={cambiado ? `Antes: ${inicial?.[c] || '(vacío)'}` : undefined}
+                      helperTextClassName={cambiado ? 'text-primary-600' : undefined}
+                      className={cambiado ? 'border-primary-600!' : undefined}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="mb-[16px]">
+        <div className="text-[11px] font-bold uppercase tracking-wide text-text-muted pb-[8px] border-b border-b-border mb-[12px]">
+          Infracción imputada
+        </div>
+        {estado.infracciones.length === 0 ? (
+          <p className="text-[12px] text-text-muted">No hay código de infracción registrado.</p>
+        ) : (
+          <div className="space-y-[12px]">
+            {estado.infracciones.map((i) => (
+              <FilaInfraccion
+                key={i.intervencionCuisId}
+                actual={i}
+                valor={infracciones[i.intervencionCuisId]}
+                onCambio={(v) => setInfracciones((s) => ({ ...s, [i.intervencionCuisId]: v }))}
+              />
+            ))}
           </div>
-        </>
-      )}
+        )}
+      </div>
 
-      <h4 className="text-[13px] font-bold text-text-main mt-[4px] mb-[8px]">Infracción imputada</h4>
-      {estado.infracciones.length === 0 ? (
-        <p className="text-[12px] text-text-muted mb-[12px]">No hay código de infracción registrado.</p>
-      ) : (
-        estado.infracciones.map((i) => (
-          <FilaInfraccion
-            key={i.intervencionCuisId}
-            actual={i}
-            valor={infracciones[i.intervencionCuisId]}
-            onCambio={(v) => setInfracciones((s) => ({ ...s, [i.intervencionCuisId]: v }))}
-          />
-        ))
-      )}
-
-      <Textarea
-        label="Motivo de la corrección"
-        placeholder="Ej. error de digitación en campo: el DNI del acta física dice 40123456"
-        value={motivo}
-        onChange={(e) => setMotivo(e.target.value)}
-        rows={2}
-      />
+      <div>
+        <div className="text-[11px] font-bold uppercase tracking-wide text-text-muted pb-[8px] border-b border-b-border mb-[12px]">
+          Motivo de la corrección
+        </div>
+        <p className="text-[11px] text-text-muted mb-[8px]">Obligatorio. Queda registrado junto con el antes y el después.</p>
+        <Textarea
+          placeholder="Ej. error de digitación en campo: el DNI del acta física dice 40123456"
+          value={motivo}
+          onChange={(e) => setMotivo(e.target.value)}
+          rows={2}
+        />
+      </div>
     </Modal>
   );
 };
@@ -369,14 +385,12 @@ const FilaInfraccion: React.FC<{
   const cambiado = valor.cuisCodigoId !== actual.cuisCodigoId || valor.cuisEscalaMontoId !== actual.cuisEscalaMontoId;
 
   return (
-    <div className={cn('rounded-[8px] border p-[10px] mb-[12px]', cambiado ? 'border-primary-600' : 'border-border')}>
-      <div className="flex items-end gap-[10px] flex-wrap">
-        <div className="min-w-[110px]">
-          <div className="text-[11px] text-text-muted mb-[4px]">Código</div>
-          <div className="text-[14px] font-semibold text-text-main tabular-nums py-[8px]">{valor.codigo}</div>
-        </div>
-        <div className="flex-1 min-w-[200px]">
-          <div className="text-[11px] text-text-muted mb-[4px]">Escala</div>
+    <div className={cn('rounded-[8px] border p-[14px]', cambiado ? 'border-primary-600' : 'border-border')}>
+      <div className="text-[18px] font-bold text-text-main tabular-nums mb-[12px]">{valor.codigo}</div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-[16px] gap-y-[8px] mb-[12px]">
+        <div className="w-full">
+          <label className="block text-[13px] font-semibold text-text-secondary mb-[6px]">Escala</label>
           <select
             value={valor.cuisEscalaMontoId ?? ''}
             onChange={(e) => onCambio({ ...valor, cuisEscalaMontoId: e.target.value || null })}
@@ -391,19 +405,23 @@ const FilaInfraccion: React.FC<{
             ))}
           </select>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => setBuscando((b) => !b)}>
-          {buscando ? 'Cancelar' : 'Cambiar código'}
-        </Button>
+        <div className="flex items-end">
+          <Button variant="ghost" size="sm" className="w-full" onClick={() => setBuscando((b) => !b)}>
+            {buscando ? 'Cancelar' : 'Cambiar código'}
+          </Button>
+        </div>
       </div>
+
       {cambiado && (
-        <p className="text-[11px] text-text-muted mt-[6px]">
+        <p className="text-[11px] text-text-muted mb-[12px]">
           Antes: {actual.codigo} · {actual.escalaTexto ?? 'sin escala'}
         </p>
       )}
+
       {buscando && (
-        <div className="mt-[10px]">
+        <div className="mt-[12px] pt-[12px] border-t border-t-border">
           <form
-            className="flex gap-[8px]"
+            className="flex gap-[8px] mb-[12px]"
             onSubmit={(e) => {
               e.preventDefault();
               buscar();
@@ -415,7 +433,7 @@ const FilaInfraccion: React.FC<{
             </Button>
           </form>
           {resultados.length > 0 && (
-            <ul className="mt-[6px] max-h-[220px] overflow-y-auto border border-border rounded-[6px] divide-y divide-border-subtle">
+            <ul className="max-h-[220px] overflow-y-auto border border-border rounded-[6px] divide-y divide-border-subtle">
               {resultados.map((c) => (
                 <li key={c.id}>
                   <button type="button" onClick={() => elegir(c)} className="w-full text-left py-[7px] px-[10px] text-[12px] hover:bg-bg-hover cursor-pointer">
