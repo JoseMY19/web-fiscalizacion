@@ -23,7 +23,8 @@ import { AvisoRetroaccion } from '../retroaccion/AvisoRetroaccion';
 import { FichaBasesMunicipales } from '../bases-municipales/FichaBasesMunicipales';
 import { EditorTextoEnriquecido } from '../../components/common/EditorTextoEnriquecido';
 import { DescargosLista } from '../descargos/DescargosLista';
-import { CorreccionMaterialSeccion } from '../correcciones/CorreccionMaterial';
+import { BotonCorregirDato, CorreccionMaterialSeccion } from '../correcciones/CorreccionMaterial';
+import { cn } from '../../lib/cn';
 import { textoCaducidad } from '../resoluciones/resolucionUi';
 import { socket } from '../../lib/socket';
 import { Card, Button, Badge, Modal, Input, Textarea, Alert, EmptyState, Spinner } from '../../components/common/Common';
@@ -134,12 +135,28 @@ const estiloTituloEvidencia = 'font-bold text-midnight-900 mb-[8px] text-[13px]'
 
 const NoRegistrado: React.FC = () => <span className="text-text-muted italic">No registrado</span>;
 
-/** Fila etiqueta/valor. Valor vacío → "No registrado", nunca texto inventado. */
-const DatoEvidencia: React.FC<{ label: string; valor: string | null | undefined }> = ({ label, valor }) => (
-  <div className="mb-[4px]">
-    <strong>{label}:</strong> {valor && valor.trim() ? valor : <NoRegistrado />}
-  </div>
+/** Fila etiqueta/valor en dos columnas (dentro de un <dl>). Vacío → "No registrado". */
+const FilaEvidencia: React.FC<{ etiqueta: string; valor: string | null | undefined; destacado?: boolean }> = ({ etiqueta, valor, destacado }) => (
+  <>
+    <dt className="text-[12px] text-text-muted">{etiqueta}</dt>
+    <dd className={cn('min-w-0', destacado && 'font-semibold text-text-main')}>{valor && valor.trim() ? valor : <NoRegistrado />}</dd>
+  </>
 );
+
+/**
+ * Cómo se entregó la NC, en una línea. Si fue personal con firma y no hay
+ * receptor distinto registrado, la recibió el propio administrado.
+ */
+function textoEntregaNc(nc: { modoNotificacion: string | null; receptorNombre: string | null; receptorDocumento: string | null; receptorRelacion: string | null }): string {
+  const modo = nc.modoNotificacion ? (LABEL_MODO_NOTIFICACION[nc.modoNotificacion] ?? nc.modoNotificacion) : 'modo de entrega no registrado';
+  if (nc.receptorNombre?.trim()) {
+    const doc = nc.receptorDocumento?.trim() ? ` (${nc.receptorDocumento})` : '';
+    const relacion = nc.receptorRelacion?.trim() ? `, ${nc.receptorRelacion}` : '';
+    return `${modo}. Recibió ${nc.receptorNombre}${doc}${relacion}.`;
+  }
+  if (nc.modoNotificacion === 'PERSONAL_FIRMA') return 'Entregada en persona: la recibió y firmó el propio administrado.';
+  return `${modo}.`;
+}
 
 export const IfiView: React.FC = () => {
   const confirm = useConfirm();
@@ -746,72 +763,88 @@ export const IfiView: React.FC = () => {
         ) : evidencia ? (
           <div className="text-[13px] flex flex-col gap-[12px] mb-[18px]">
             <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-[12px]">
-              {/* A quién se dirigió la NC — pregunta 1 */}
-              <div className={estiloTarjetaEvidencia}>
-                <h4 className={estiloTituloEvidencia}>A quién se dirigió la Notificación de Cargo</h4>
+              {/* Administrado imputado + cómo se notificó — pregunta 1 */}
+              <section className={estiloTarjetaEvidencia}>
+                <div className="flex items-center justify-between gap-[8px] mb-[8px]">
+                  <h4 className={cn(estiloTituloEvidencia, 'mb-0!')}>Administrado imputado</h4>
+                  {evidencia.administrado && (
+                    <div className="flex items-center gap-[6px] flex-wrap justify-end">
+                      <BotonCorregirDato expedienteId={imputacionModal.expId} onCorregido={() => cargarEvidenciaImputacion(imputacionModal.expId)} />
+                    </div>
+                  )}
+                </div>
                 {!evidencia.administrado ? (
                   <p className="text-text-muted">No hay datos del administrado registrados en la intervención.</p>
                 ) : (
                   <>
                     {!evidencia.administrado.identificado && (
                       <div className="mb-[6px]">
-                        <Badge variant="warning">Administrado NO identificado en campo</Badge>
+                        <Badge variant="warning">No identificado en campo</Badge>
                       </div>
                     )}
-                    <DatoEvidencia label="Nombre / Razón social" valor={evidencia.administrado.nombresRazonSocial} />
-                    <DatoEvidencia label="Documento" valor={evidencia.administrado.numeroDocumento} />
-                    <DatoEvidencia
-                      label="Domicilio"
-                      valor={
-                        [evidencia.administrado.domicilio, evidencia.administrado.distrito].filter((v) => v && v.trim()).join(', ') || null
-                      }
-                    />
-                    <DatoEvidencia label="Giro / uso" valor={evidencia.administrado.giroUso} />
+                    <dl className="grid grid-cols-[96px_1fr] gap-x-[10px] gap-y-[5px]">
+                      <FilaEvidencia etiqueta="Nombre" valor={evidencia.administrado.nombresRazonSocial} destacado />
+                      <FilaEvidencia etiqueta="Documento" valor={evidencia.administrado.numeroDocumento} />
+                      <FilaEvidencia
+                        etiqueta="Domicilio"
+                        valor={[evidencia.administrado.domicilio, evidencia.administrado.distrito].filter((v) => v && v.trim()).join(', ') || null}
+                      />
+                      <FilaEvidencia etiqueta="Giro / uso" valor={evidencia.administrado.giroUso} />
+                    </dl>
                   </>
                 )}
-                <div className="border-t border-t-border mt-[8px] pt-[8px]">
+                <div className="border-t border-border mt-[10px] pt-[8px] text-[12px] text-text-secondary">
                   {!evidencia.notificacionCargo ? (
-                    <p className="text-text-muted">La intervención no tiene Notificación de Cargo registrada.</p>
+                    <span className="text-text-muted">La intervención no tiene Notificación de Cargo registrada.</span>
                   ) : (
                     <>
-                      <div className="font-semibold mb-[4px]">
-                        Quién recibió la NC N° {evidencia.notificacionCargo.numeroCorrelativo}
-                      </div>
-                      <DatoEvidencia label="Receptor" valor={evidencia.notificacionCargo.receptorNombre} />
-                      <DatoEvidencia label="Documento del receptor" valor={evidencia.notificacionCargo.receptorDocumento} />
-                      <DatoEvidencia label="Relación con el predio/negocio" valor={evidencia.notificacionCargo.receptorRelacion} />
-                      <DatoEvidencia
-                        label="Modo de notificación"
-                        valor={
-                          evidencia.notificacionCargo.modoNotificacion
-                            ? LABEL_MODO_NOTIFICACION[evidencia.notificacionCargo.modoNotificacion] ?? evidencia.notificacionCargo.modoNotificacion
-                            : null
-                        }
-                      />
+                      <span className="font-semibold text-text-main">NC N° {evidencia.notificacionCargo.numeroCorrelativo}</span>
+                      {' · '}
+                      {textoEntregaNc(evidencia.notificacionCargo)}
                     </>
                   )}
                 </div>
-              </div>
+              </section>
 
               {/* Infracción imputada — pregunta 2 */}
-              <div className={estiloTarjetaEvidencia}>
+              <section className={estiloTarjetaEvidencia}>
                 <h4 className={estiloTituloEvidencia}>Infracción imputada</h4>
                 {evidencia.codigosCuis.length === 0 ? (
                   <p className="text-text-muted">No hay código de infracción registrado.</p>
                 ) : (
-                  <div className="flex flex-col gap-[8px]">
+                  <div className="flex flex-col gap-[12px]">
                     {evidencia.codigosCuis.map((c, i) => (
                       <div key={`${c.codigoNormativo}-${i}`}>
-                        <Badge variant="info">{c.codigoNormativo}</Badge>
-                        <div className="mt-[4px]">{c.descripcion?.trim() ? c.descripcion : <NoRegistrado />}</div>
-                        <div className="text-[11px] text-text-muted mt-[2px]">
-                          Fuente normativa: {c.fuenteNormativa?.trim() ? c.fuenteNormativa : 'No registrada'}
+                        <div className="flex items-center gap-[8px] flex-wrap">
+                          <Badge variant="info">{c.codigoNormativo}</Badge>
+                          {c.escala && (
+                            <span className="text-[12px] text-text-secondary">
+                              Escala {c.escala}
+                              {c.porcentajeAplicado != null ? ` · ${c.porcentajeAplicado}% UIT` : ''}
+                              {c.montoCalculado != null ? ` · S/ ${c.montoCalculado.toLocaleString('es-PE', { minimumFractionDigits: 2 })}` : ''}
+                            </span>
+                          )}
                         </div>
+                        {c.descripcion?.trim() ? (
+                          <p className="mt-[6px] text-text-main">{c.descripcion}</p>
+                        ) : c.textoCuis?.trim() ? (
+                          <>
+                            <p className="mt-[6px] text-[12px] text-text-secondary leading-[1.5] line-clamp-5" title={c.textoCuis}>
+                              {c.textoCuis}
+                            </p>
+                            <p className="text-[11px] text-text-light mt-[2px]">Texto del CUIS tal como sale de la ordenanza (la descripción depurada aún no está cargada).</p>
+                          </>
+                        ) : (
+                          <p className="mt-[6px]">
+                            <NoRegistrado />
+                          </p>
+                        )}
+                        <p className="text-[11px] text-text-muted mt-[4px]">{c.fuenteNormativa?.trim() ? c.fuenteNormativa : 'Fuente normativa no registrada'}</p>
                       </div>
                     ))}
                   </div>
                 )}
-              </div>
+              </section>
             </div>
 
             {/* Hechos verificados — pregunta 3 */}
@@ -899,9 +932,8 @@ export const IfiView: React.FC = () => {
                 )}
               </div>
               <p className="text-[11px] text-text-muted mt-[8px]">
-                Los registros externos (DJ de Rentas, SUNARP, Licencias de Funcionamiento) por ahora se consultan fuera
-                del sistema. Si te sirven como prueba, súbelos como documento adjunto del IFI (botón "Documentos
-                adjuntos" en el detalle del expediente).
+                La licencia y el ITSE se ven en la ficha del detalle del expediente. Otros registros (DJ de Rentas, SUNARP) se consultan fuera del
+                sistema: si sirven como prueba, súbelos como documento adjunto del IFI.
               </p>
             </div>
           </div>

@@ -134,6 +134,52 @@ export const CorreccionMaterialSeccion: React.FC<Props> = ({ expedienteId, onCor
   );
 };
 
+/**
+ * Botón compacto "Corregir dato" para ponerlo junto a los datos del
+ * administrado (p. ej. al sanear la imputación). Misma corrección trazable.
+ */
+export const BotonCorregirDato: React.FC<Props> = ({ expedienteId, onCorregido }) => {
+  const [estado, setEstado] = useState<EstadoCorrecciones | null>(null);
+  const [abierto, setAbierto] = useState(false);
+  const [cargando, setCargando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const abrir = async () => {
+    setCargando(true);
+    setError(null);
+    try {
+      const e = await CorreccionesApi.obtener(expedienteId);
+      setEstado(e);
+      if (e.puedeCorregir && e.administrado) setAbierto(true);
+      else setError(e.motivoNoCorregible ?? 'No se puede corregir en esta etapa.');
+    } catch (err: any) {
+      setError(err.message || 'No se pudo cargar los datos.');
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  return (
+    <>
+      <Button variant="ghost" size="sm" icon={<PenToolIcon size={13} />} loading={cargando} onClick={abrir}>
+        Corregir dato
+      </Button>
+      {error && <span className="text-[11px] text-text-muted">{error}</span>}
+      {abierto && estado?.administrado && (
+        <CorregirModal
+          expedienteId={expedienteId}
+          valores={estado.administrado.valores}
+          onClose={() => setAbierto(false)}
+          onCorregido={() => {
+            setAbierto(false);
+            onCorregido?.();
+          }}
+        />
+      )}
+    </>
+  );
+};
+
 const CorregirModal: React.FC<{
   expedienteId: string;
   valores: Record<CampoCorreccionMaterial, string | null>;

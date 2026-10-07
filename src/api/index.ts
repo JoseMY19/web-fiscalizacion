@@ -300,6 +300,8 @@ export interface EvidenciaImputacion {
   codigosCuis: Array<{
     codigoNormativo: string;
     descripcion: string | null;
+    /** Texto del CUIS tal como sale de la ordenanza (mientras la descripción depurada no esté cargada). */
+    textoCuis: string | null;
     fuenteNormativa: string | null;
     escala: string | null;
     condicionEscala: string | null;
