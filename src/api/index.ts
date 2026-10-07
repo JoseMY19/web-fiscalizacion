@@ -1176,3 +1176,5 @@ export * from './coactiva';
 export * from './retroaccion';
 // RSG de ampliación: domicilio de un documento del SGD.
 export * from './ampliacion';
+// Visitas del notificador (bajo puerta).
+export * from './visitasNotificacion';

@@ -1,6 +1,7 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { NotificacionesApi, NotificacionItem, AuthApi } from '../../api';
 import { Card, Button, Badge, Modal, Input, Textarea, Alert, EmptyState, Spinner } from '../../components/common/Common';
+import { VisitasNotificacionModal } from './VisitasNotificacionModal';
 import { hoyLocal } from '../../lib/fechas';
 import { MailIcon, RefreshCwIcon, UserIcon, CheckCircleIcon } from '../../components/icons/Icons';
 import { socket } from '../../lib/socket';
@@ -22,6 +23,9 @@ export const NotificacionesView: React.FC = () => {
   // Modal Reprogramar
   const [reprogramarModal, setReprogramarModal] = useState<{ isOpen: boolean; id: string }>({ isOpen: false, id: '' });
   const [motivoReprogramacion, setMotivoReprogramacion] = useState('');
+
+  // Visitas del notificador: 1ª sin éxito (acta de aviso) → 2ª bajo puerta con fotos.
+  const [visitasId, setVisitasId] = useState<string | null>(null);
 
   // Modal Entrega Domiciliaria
   const [entregaModal, setEntregaModal] = useState<{ isOpen: boolean; id: string }>({ isOpen: false, id: '' });
@@ -236,6 +240,9 @@ export const NotificacionesView: React.FC = () => {
                             >
                               Reprogramar
                             </Button>
+                            <Button variant="secondary" size="sm" onClick={() => setVisitasId(notif.id)}>
+                              Visitas / bajo puerta
+                            </Button>
                             <Button
                               variant="success"
                               size="sm"
@@ -256,6 +263,8 @@ export const NotificacionesView: React.FC = () => {
           </div>
         )}
       </Card>
+
+      {visitasId && <VisitasNotificacionModal id={visitasId} onClose={() => setVisitasId(null)} onCambio={() => cargar()} />}
 
       {/* Modal Asignar Notificador */}
       <Modal
