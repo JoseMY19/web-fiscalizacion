@@ -39,6 +39,8 @@ export interface MultaPrescripcionItem {
   resultado: 'PRESCRITA' | 'NO_PRESCRITA' | null;
   motivoResultado: string | null;
   suspensiones: Array<{ id: string; motivo: MotivoSuspensionPrescripcion; desde: string; hasta: string | null; detalle: string | null }>;
+  /** El expediente está en coactiva: notificación de la REC 1 (suspende el cómputo). */
+  inicioCoactiva: { fecha: string; numeroExpedienteCoactivo: string } | null;
   calculo: {
     inicioComputo: string;
     vencimientoBase: string;

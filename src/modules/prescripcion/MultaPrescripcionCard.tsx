@@ -142,6 +142,34 @@ export const MultaPrescripcionCard: React.FC<Props> = ({ solicitudId, multa: m, 
       <div className="mt-[8px] text-[12px]">
         <div className="font-semibold">Suspensiones del cómputo</div>
         {m.suspensiones.length === 0 && <div className="text-text-muted">Ninguna registrada.</div>}
+        {/* Ejecución coactiva del sistema: se ofrece la suspensión (un clic, nunca automática). */}
+        {m.inicioCoactiva && editable && !m.suspensiones.some((s) => s.motivo === 'INICIO_COACTIVA') && (
+          <div className="flex items-center gap-[8px] flex-wrap py-[4px] px-[8px] my-[4px] rounded-[6px] bg-[#fff7ed] border border-[#fed7aa]">
+            <span>
+              Está en coactiva (Exp. coactivo N° {m.inicioCoactiva.numeroExpedienteCoactivo}): REC 1 notificada el{' '}
+              <strong>{formatearFecha(m.inicioCoactiva.fecha)}</strong>.
+            </span>
+            <Button
+              size="sm"
+              variant="secondary"
+              loading={accion === k('susp-coa')}
+              onClick={() =>
+                ejecutar(
+                  k('susp-coa'),
+                  () =>
+                    PrescripcionApi.agregarSuspension(solicitudId, m.id, {
+                      motivo: 'INICIO_COACTIVA',
+                      desde: m.inicioCoactiva!.fecha.slice(0, 10),
+                      detalle: `REC 1 del Exp. coactivo N° ${m.inicioCoactiva!.numeroExpedienteCoactivo}`,
+                    }),
+                  'Suspensión por inicio de coactiva registrada (la decisión de esta multa se reinició).',
+                )
+              }
+            >
+              Agregar suspensión por inicio de coactiva
+            </Button>
+          </div>
+        )}
         {m.suspensiones.map((s) => (
           <div key={s.id} className="flex items-center gap-[8px] flex-wrap py-[2px]">
             <span>
