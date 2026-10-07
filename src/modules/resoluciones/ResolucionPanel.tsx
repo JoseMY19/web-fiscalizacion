@@ -1226,17 +1226,19 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
         <div className={estiloTituloSeccion}>Documentos del expediente</div>
         <div className="border border-border rounded-[8px] overflow-hidden">
           {d.tieneActaFiscalizacion && (
-            <FilaDocumento titulo="Acta de Fiscalización (Word)">
+            <FilaDocumento titulo="Acta de Fiscalización">
               <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={() => descargarDocumentoWord(d.intervencionId, 'FISCALIZACION')}>
                 Descargar
               </Button>
+              <BotonesVerFoto fotos={fotos} actaTipo="ACTA_FISCALIZACION" onVer={abrirDocumento} />
             </FilaDocumento>
           )}
           {d.tieneNotificacionCargo && (
-            <FilaDocumento titulo="Notificación de Cargo (Excel)">
+            <FilaDocumento titulo="Notificación de Cargo">
               <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={() => descargarDocumentoWord(d.intervencionId, 'NOTIFICACION_CARGO')}>
                 Descargar
               </Button>
+              <BotonesVerFoto fotos={fotos} actaTipo="NOTIFICACION_CARGO" onVer={abrirDocumento} />
             </FilaDocumento>
           )}
           {d.medidasProvisionales.map((m) => (
@@ -1251,7 +1253,9 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
               </Button>
             </FilaDocumento>
           ))}
-          {fotos.map((f, i) => (
+          {fotos
+            .filter((f) => !(f.actaTipo === 'ACTA_FISCALIZACION' && d.tieneActaFiscalizacion) && !(f.actaTipo === 'NOTIFICACION_CARGO' && d.tieneNotificacionCargo))
+            .map((f, i) => (
             <FilaDocumento key={f.id} titulo={f.actaTipo ? LABEL_FOTO_ACTA[f.actaTipo] ?? `Foto (${f.actaTipo})` : `Foto de la intervención ${i + 1}`}>
               <Button size="sm" variant="outline" icon={<EyeIcon size={14} />} onClick={() => abrirDocumento(f.id)}>
                 Ver
@@ -1398,4 +1402,17 @@ const Stepper: React.FC<{ pasos: StepDef[] }> = ({ pasos }) => (
       </div>
     ))}
   </div>
+);
+
+/** "Ver" de la foto del acta física, en la misma fila que su documento. */
+const BotonesVerFoto: React.FC<{ fotos: { id: string; actaTipo: string | null }[]; actaTipo: string; onVer: (id: string) => void }> = ({ fotos, actaTipo, onVer }) => (
+  <>
+    {fotos
+      .filter((f) => f.actaTipo === actaTipo)
+      .map((f) => (
+        <Button key={f.id} size="sm" variant="outline" icon={<EyeIcon size={14} />} onClick={() => onVer(f.id)} className="ml-[6px]!">
+          Ver
+        </Button>
+      ))}
+  </>
 );
