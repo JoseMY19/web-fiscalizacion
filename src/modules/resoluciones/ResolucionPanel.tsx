@@ -40,6 +40,7 @@ import { AvisoCoactivaExpediente } from '../coactiva/AvisoCoactivaExpediente';
 // Nulidad de GOP: qué se anuló (la resolución se rehace).
 import { AvisoRetroaccion } from '../retroaccion/AvisoRetroaccion';
 import { FichaBasesMunicipales } from '../bases-municipales/FichaBasesMunicipales';
+import { EditorTextoEnriquecido, VistaTextoEnriquecido } from '../../components/common/EditorTextoEnriquecido';
 import { PagadoBadge } from '../../components/common/PagadoBadge';
 
 /** Mismo modelo de pasos que IfiView (StepDef/stepper), más un estado para los pasos opcionales. */
@@ -647,10 +648,10 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
             </Button>
           </div>
         )}
-        <Textarea
+        <EditorTextoEnriquecido
           value={analisis}
-          onChange={(e) => setAnalisis(e.target.value)}
-          rows={esRsg ? 12 : 8}
+          onChange={setAnalisis}
+          alto={esRsg ? 'lg' : 'md'}
           placeholder={esRsg ? 'Desarrollo de la RSG a favor del administrado…' : 'Análisis y fundamentación de la sanción…'}
         />
         <Button
@@ -666,7 +667,7 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
       </div>
     ) : r.analisisTexto ? (
       <div>
-        <div className={estiloTextoLargo}>{r.analisisTexto}</div>
+        <VistaTextoEnriquecido className={estiloTextoLargo} texto={r.analisisTexto} />
         {botonEditar('analisis')}
       </div>
     ) : undefined,
@@ -1285,7 +1286,7 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
                     )}
                     <div>
                       <div className="font-bold text-[12px] mb-[4px]">{esRsg ? 'Desarrollo' : 'Análisis'}</div>
-                      {r.analisisTexto ? <div className={estiloTextoLargo}>{r.analisisTexto}</div> : <Muted>Todavía no redactado.</Muted>}
+                      {r.analisisTexto ? <VistaTextoEnriquecido className={estiloTextoLargo} texto={r.analisisTexto} /> : <Muted>Todavía no redactado.</Muted>}
                     </div>
                   </div>
                 ) : undefined

@@ -21,6 +21,7 @@ import { AvisoCaducidadExpediente } from '../caducidad/AvisoCaducidadExpediente'
 // Nulidad de GOP: qué se anuló y qué rehacer (y renotificar la NC si se anuló).
 import { AvisoRetroaccion } from '../retroaccion/AvisoRetroaccion';
 import { FichaBasesMunicipales } from '../bases-municipales/FichaBasesMunicipales';
+import { EditorTextoEnriquecido } from '../../components/common/EditorTextoEnriquecido';
 import { DescargosLista } from '../descargos/DescargosLista';
 import { CorreccionMaterialSeccion } from '../correcciones/CorreccionMaterial';
 import { textoCaducidad } from '../resoluciones/resolucionUi';
@@ -693,6 +694,13 @@ export const IfiView: React.FC = () => {
             setAnalisisModal({ isOpen: true, expId: detalleExp.expedienteId, numero: detalleExp.numeroExpediente });
             setAnalisisTexto('');
             setBasesLegalesTexto('');
+            // Si ya hay un análisis guardado, se edita ese (con su formato), no se empieza en blanco.
+            IfiApi.getDetalle(detalleExp.expedienteId)
+              .then((ifi) => {
+                setAnalisisTexto((actual) => actual || ifi.analisisTexto || '');
+                setBasesLegalesTexto((actual) => actual || ifi.basesLegalesAdicionales || '');
+              })
+              .catch(() => undefined);
           }}
           onRecomendar={(rec) => handleRecomendacion(detalleExp.expedienteId, detalleExp.numeroExpediente, rec)}
           onAbrirFirmar={() => {
@@ -1049,6 +1057,7 @@ export const IfiView: React.FC = () => {
         isOpen={analisisModal.isOpen}
         onClose={() => setAnalisisModal({ isOpen: false, expId: '', numero: '' })}
         title={`Análisis Jurídico del Instructor (${analisisModal.numero})`}
+        maxWidth="900px"
         footer={
           <>
             <Button variant="secondary" onClick={() => setAnalisisModal({ isOpen: false, expId: '', numero: '' })}>
@@ -1068,12 +1077,11 @@ export const IfiView: React.FC = () => {
             Cargar texto modelo
           </Button>
         </div>
-        <Textarea
+        <EditorTextoEnriquecido
           label="Fundamentación del Instructor"
           placeholder="Escriba la valoración de los medios probatorios, descargos y determinación de la responsabilidad administrativa..."
           value={analisisTexto}
-          onChange={(e) => setAnalisisTexto(e.target.value)}
-          rows={14}
+          onChange={setAnalisisTexto}
         />
         <div className="mt-[12px]">
           <Textarea
