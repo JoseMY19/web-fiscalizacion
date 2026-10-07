@@ -24,7 +24,7 @@ export interface CodigoCuisRegistro {
   codigoNormativo: string;
   categoria: { numero: string; nombre: string };
   subcategoria: { id: string; numero: string; nombre: string };
-  descripcion: string | null;
+  /** Descripción del código (campo real del catálogo: texto_completo_pdf). */
   textoCompletoPdf: string | null;
   fuenteNormativa: string | null;
   vigenteDesde: string | null;
@@ -40,18 +40,17 @@ export interface CodigoCuisRegistro {
 export interface CodigoCuisDatos {
   subcategoriaId: string;
   codigoNormativo: string;
-  descripcion: string | null;
+  textoCompletoPdf: string | null;
   fuenteNormativa: string | null;
   vigenteDesde: string | null;
   vigenteHasta: string | null;
   requiereDesambiguacion: boolean;
 }
 
-export type FiltroEstadoCuis = 'TODOS' | 'SIN_DESCRIPCION' | 'SIN_MEDIDA' | 'INACTIVOS';
+export type FiltroEstadoCuis = 'TODOS' | 'SIN_MEDIDA' | 'INACTIVOS';
 
 export interface ResumenCatalogoCuis {
   activos: number;
-  conDescripcion: number;
   conMedidaComplementaria: number;
 }
 

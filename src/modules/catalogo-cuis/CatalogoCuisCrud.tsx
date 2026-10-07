@@ -18,9 +18,9 @@ import { cn } from '../../lib/cn';
 
 /**
  * Mantenimiento del catálogo CUIS (Ordenanza 464), como licencias e ITSE:
- * completar la descripción depurada y las medidas (el PDF no permitió
- * separarlas), corregir escalas y agregar o desactivar códigos. Lo que se
- * guarda aquí lo ven el IFI, la resolución y la app de campo al sincronizar.
+ * corregir la descripción (campo texto_completo_pdf), cargar las medidas por
+ * escala, corregir escalas y agregar o desactivar códigos. Lo que se guarda
+ * aquí lo ven el IFI, la resolución y la app de campo al sincronizar.
  */
 
 const TAMANO = 20;
@@ -76,25 +76,18 @@ export const CatalogoCuisCrud: React.FC = () => {
     <div>
       {mensaje && <Alert type={mensaje.type}>{mensaje.text}</Alert>}
 
-      {/* Avance de la depuración del catálogo */}
+      {/* Avance de la carga de medidas complementarias por escala */}
       {r && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px] mb-[14px] text-[12px]">
-          {[
-            { etiqueta: 'Descripción depurada', n: r.conDescripcion },
-            { etiqueta: 'Con medida complementaria', n: r.conMedidaComplementaria },
-          ].map((x) => (
-            <div key={x.etiqueta}>
-              <div className="flex justify-between mb-[4px] text-text-secondary">
-                <span>{x.etiqueta}</span>
-                <span className="tabular-nums">
-                  {x.n.toLocaleString('es-PE')} de {r.activos.toLocaleString('es-PE')} códigos
-                </span>
-              </div>
-              <div className="h-[5px] rounded-full bg-border-subtle overflow-hidden">
-                <div className="h-full bg-primary-600 rounded-full w-(--avance)" style={{ ['--avance' as string]: `${pct(x.n)}%` }} />
-              </div>
-            </div>
-          ))}
+        <div className="mb-[14px] text-[12px] max-w-[520px]">
+          <div className="flex justify-between mb-[4px] text-text-secondary">
+            <span>Códigos con medida complementaria cargada</span>
+            <span className="tabular-nums">
+              {r.conMedidaComplementaria.toLocaleString('es-PE')} de {r.activos.toLocaleString('es-PE')}
+            </span>
+          </div>
+          <div className="h-[5px] rounded-full bg-border-subtle overflow-hidden">
+            <div className="h-full bg-primary-600 rounded-full w-(--avance)" style={{ ['--avance' as string]: `${pct(r.conMedidaComplementaria)}%` }} />
+          </div>
         </div>
       )}
 
@@ -145,7 +138,6 @@ export const CatalogoCuisCrud: React.FC = () => {
           className={claseSelect}
         >
           <option value="TODOS">Todos</option>
-          <option value="SIN_DESCRIPCION">Falta descripción</option>
           <option value="SIN_MEDIDA">Falta medida complementaria</option>
           <option value="INACTIVOS">Desactivados</option>
         </select>
@@ -178,22 +170,15 @@ export const CatalogoCuisCrud: React.FC = () => {
                     {!c.activo && <div className="text-[11px] text-danger">Desactivado</div>}
                   </td>
                   <td className="py-[9px] px-[12px] align-top max-w-[520px]">
-                    {c.descripcion ? (
-                      <div className="text-text-main line-clamp-2">{c.descripcion}</div>
-                    ) : (
-                      <>
-                        <div className="text-[11px] font-semibold text-warning">Falta descripción</div>
-                        <div className="text-text-muted line-clamp-1" title={c.textoCompletoPdf ?? ''}>
-                          {c.textoCompletoPdf ?? '—'}
-                        </div>
-                      </>
-                    )}
+                    <div className="text-text-main line-clamp-2" title={c.textoCompletoPdf ?? ''}>
+                      {c.textoCompletoPdf ?? '—'}
+                    </div>
                   </td>
                   <td className="py-[9px] px-[12px] align-top whitespace-nowrap tabular-nums">{resumenEscalas(c.escalas)}</td>
                   <td className="py-[9px] px-[12px] align-top text-right tabular-nums">{c.usos || '—'}</td>
                   <td className="py-[9px] px-[12px] align-top text-right">
                     <button type="button" onClick={() => setEditando(c)} className="text-primary-600 font-semibold hover:underline cursor-pointer">
-                      {c.descripcion ? 'Editar' : 'Completar'}
+                      Editar
                     </button>
                   </td>
                 </tr>
@@ -257,7 +242,7 @@ function aFormulario(c: CodigoCuisRegistro | null, taxonomia: TaxonomiaCuis): Co
   return {
     subcategoriaId: c?.subcategoria.id ?? taxonomia.categorias[0]?.subcategorias[0]?.id ?? '',
     codigoNormativo: c?.codigoNormativo ?? '',
-    descripcion: c?.descripcion ?? '',
+    textoCompletoPdf: c?.textoCompletoPdf ?? '',
     fuenteNormativa: c?.fuenteNormativa ?? 'Ordenanza N.° 464-MDSJL, El Peruano 28/08/2024',
     vigenteDesde: c?.vigenteDesde?.slice(0, 10) ?? '',
     vigenteHasta: c?.vigenteHasta?.slice(0, 10) ?? '',
@@ -268,7 +253,7 @@ function aFormulario(c: CodigoCuisRegistro | null, taxonomia: TaxonomiaCuis): Co
 const limpiar = (d: CodigoCuisDatos): CodigoCuisDatos => ({
   ...d,
   codigoNormativo: d.codigoNormativo.trim(),
-  descripcion: d.descripcion?.trim() || null,
+  textoCompletoPdf: d.textoCompletoPdf?.trim() || null,
   fuenteNormativa: d.fuenteNormativa?.trim() || null,
   vigenteDesde: d.vigenteDesde || null,
   vigenteHasta: d.vigenteHasta || null,
@@ -370,20 +355,7 @@ const EditorCodigo: React.FC<{
         </p>
       )}
 
-      <div className={cn('grid gap-[16px]', codigo?.textoCompletoPdf ? 'grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]' : 'grid-cols-1')}>
-        {/* Texto de la ordenanza: la referencia para escribir la descripción y las medidas */}
-        {codigo?.textoCompletoPdf && (
-          <aside>
-            <div className="text-[11px] font-semibold text-text-muted mb-[4px]">Texto de la ordenanza (tal como salió del PDF)</div>
-            <div className="text-[12px] leading-[1.6] text-text-secondary bg-bg-subtle border border-border rounded-[8px] p-[10px] max-h-[340px] overflow-y-auto whitespace-pre-wrap">
-              {codigo.textoCompletoPdf}
-            </div>
-            <p className="text-[11px] text-text-light mt-[4px]">
-              El PDF mezcla las columnas: aquí vienen juntas la infracción y la medida. Sepáralas en "Descripción" y en "Medida complementaria" de cada escala.
-            </p>
-          </aside>
-        )}
-
+      <div>
         <div>
           <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] gap-x-[12px]">
             <Input
@@ -410,11 +382,11 @@ const EditorCodigo: React.FC<{
             </p>
           )}
           <Textarea
-            label="Descripción de la infracción"
-            value={form.descripcion ?? ''}
-            onChange={(e) => set('descripcion', e.target.value)}
-            rows={4}
-            placeholder="Texto exacto de la infracción según la ordenanza (sin la medida)."
+            label="Descripción"
+            value={form.textoCompletoPdf ?? ''}
+            onChange={(e) => set('textoCompletoPdf', e.target.value)}
+            rows={6}
+            placeholder="Texto del código según la ordenanza."
           />
           <div className="grid grid-cols-1 sm:grid-cols-[1fr_150px_150px] gap-x-[12px]">
             <Input label="Fuente normativa" value={form.fuenteNormativa ?? ''} onChange={(e) => set('fuenteNormativa', e.target.value)} />
