@@ -142,7 +142,7 @@ export const ExpedientesView: React.FC = () => {
       faltan.length > 0
         ? {
             title: 'Expediente incompleto',
-            message: `Al expediente ${numero} le falta: ${faltan.map((x) => x.etiqueta).join('; ')}. Lo correcto es observarlo para que se complete. ¿Aprobar igual?`,
+            message: `Al expediente ${numero} le falta: ${faltan.map((x) => x.etiqueta).join('; ')}. Si es un dato que el fiscalizador puede completar o corregir, obsérvalo. ¿Aprobar igual?`,
             confirmLabel: 'Aprobar igual',
             variant: 'danger',
           }
