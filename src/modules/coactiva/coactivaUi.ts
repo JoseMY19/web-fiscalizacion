@@ -6,6 +6,7 @@ type Variante = 'success' | 'warning' | 'danger' | 'info' | 'purple' | 'neutral'
 export const LABEL_TIPO_REC: Record<TipoResolucionCoactiva, string> = {
   REQUERIMIENTO_PAGO: 'Requerimiento de pago (7 días hábiles)',
   MEDIDA_CAUTELAR: 'Medida cautelar (embargo)',
+  SECUESTRO_BIENES: 'REC 3 — Secuestro de bienes (excepcional)',
   EJECUCION_MEDIDA_COMPLEMENTARIA: 'Ejecución de la medida complementaria',
   LEVANTAMIENTO_MEDIDA: 'Levantamiento de medida / embargo',
   SUSPENSION: 'Resuelve suspensión',

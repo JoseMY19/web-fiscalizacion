@@ -18,6 +18,7 @@ import {
 import { NavModule } from '../../components/layout/AppLayout';
 import { varianteDiasEnFirma } from '../resoluciones/resolucionUi';
 import { AlertaLevantamientosDashboard } from '../levantamientos/AlertaLevantamientosDashboard';
+import { AlertaCoactivaDashboard } from '../coactiva/AlertaCoactivaDashboard';
 
 interface DashboardViewProps {
   onNavigate: (module: NavModule) => void;
@@ -124,6 +125,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
 
       {/* F1: solicitudes de levantamiento de medidas provisionales en evaluación (cronómetro). */}
       <AlertaLevantamientosDashboard onIr={() => onNavigate('levantamientos')} />
+      <AlertaCoactivaDashboard onIr={() => onNavigate('coactiva')} />
 
       {/* KPI Cards Grid */}
       <div

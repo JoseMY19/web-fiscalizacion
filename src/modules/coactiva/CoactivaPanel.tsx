@@ -296,6 +296,7 @@ const FormIniciar: React.FC<{ c: CasoCoactivoItem; accion: string | null; ejecut
 const TIPOS_REC: TipoResolucionCoactiva[] = [
   'REQUERIMIENTO_PAGO',
   'MEDIDA_CAUTELAR',
+  'SECUESTRO_BIENES',
   'EJECUCION_MEDIDA_COMPLEMENTARIA',
   'LEVANTAMIENTO_MEDIDA',
   'SUSPENSION',
@@ -315,6 +316,7 @@ const FormRec: React.FC<{ c: CasoCoactivoItem; accion: string | null; ejecutar: 
   const [descripcion, setDescripcion] = useState('');
   const [fecha, setFecha] = useState('');
   const [pdfs, setPdfs] = useState<File[]>([]);
+  const [otraCausal, setOtraCausal] = useState(false);
   const hoy = hoyLocal();
 
   useEffect(() => setNumeroRec(String(c.situacion.siguienteRec)), [c.situacion.siguienteRec]);
@@ -326,7 +328,8 @@ const FormRec: React.FC<{ c: CasoCoactivoItem; accion: string | null; ejecutar: 
       </Button>
     );
   }
-  const pideDescripcion = tipo === 'OTRA' || (tipo === 'MEDIDA_CAUTELAR' && forma === 'OTRA');
+  const esOtraCausal = tipo === 'CUMPLIMIENTO_ARCHIVO' && otraCausal;
+  const pideDescripcion = tipo === 'OTRA' || (tipo === 'MEDIDA_CAUTELAR' && forma === 'OTRA') || esOtraCausal;
   return (
     <div className="mt-[10px] border-t border-t-border pt-[10px]">
       <div className={claseFilaTramite}>
@@ -359,6 +362,12 @@ const FormRec: React.FC<{ c: CasoCoactivoItem; accion: string | null; ejecutar: 
           <Input type="date" label="Fecha de emisión" value={fecha} max={hoy} onChange={(ev) => setFecha(ev.target.value)} />
         </div>
       </div>
+      {tipo === 'CUMPLIMIENTO_ARCHIVO' && (
+        <label className="flex items-center gap-[8px] text-[13px] mt-[8px] cursor-pointer">
+          <input type="checkbox" checked={otraCausal} onChange={(ev) => setOtraCausal(ev.target.checked)} />
+          Archivo por otra causal prevista en la normativa (no por pago / suspensión definitiva)
+        </label>
+      )}
       {pideDescripcion && (
         <Input label="Descripción (obligatoria)" value={descripcion} onChange={(ev) => setDescripcion(ev.target.value)} placeholder="De qué trata la resolución / la medida" />
       )}
@@ -385,6 +394,7 @@ const FormRec: React.FC<{ c: CasoCoactivoItem; accion: string | null; ejecutar: 
                   formaMedidaCautelar: tipo === 'MEDIDA_CAUTELAR' ? forma : undefined,
                   detalle: detalle.trim() || undefined,
                   descripcion: descripcion.trim() || undefined,
+                  otraCausal: esOtraCausal || undefined,
                   fechaEmision: fecha,
                   archivos: pdfs,
                 }),

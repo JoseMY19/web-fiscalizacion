@@ -7,6 +7,7 @@ import { apiClient, BASE_URL, getToken } from './client';
 export type TipoResolucionCoactiva =
   | 'REQUERIMIENTO_PAGO'
   | 'MEDIDA_CAUTELAR'
+  | 'SECUESTRO_BIENES'
   | 'EJECUCION_MEDIDA_COMPLEMENTARIA'
   | 'LEVANTAMIENTO_MEDIDA'
   | 'SUSPENSION'
@@ -133,6 +134,7 @@ export const CoactivaApi = {
       formaMedidaCautelar?: FormaMedidaCautelar;
       detalle?: string;
       descripcion?: string;
+      otraCausal?: boolean;
       fechaEmision: string;
       archivos: File[];
     },
@@ -143,6 +145,7 @@ export const CoactivaApi = {
     if (p.formaMedidaCautelar) fd.append('formaMedidaCautelar', p.formaMedidaCautelar);
     if (p.detalle) fd.append('detalle', p.detalle);
     if (p.descripcion) fd.append('descripcion', p.descripcion);
+    if (p.otraCausal) fd.append('otraCausal', 'true');
     fd.append('fechaEmision', p.fechaEmision);
     p.archivos.forEach((a) => fd.append('archivos', a));
     return apiClient<{ id: string }>(`${exp(id)}/resoluciones`, { method: 'POST', body: fd });
