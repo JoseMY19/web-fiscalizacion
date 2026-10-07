@@ -72,6 +72,9 @@ export const SolicitudPanel: React.FC<Props> = ({ solicitudId, onClose, onCambio
   const [fechaEnvio, setFechaEnvio] = useState('');
   const [fechaHoraFirma, setFechaHoraFirma] = useState('');
   const [numeroCarta, setNumeroCarta] = useState('');
+  const [conActa, setConActa] = useState(false);
+  const [fechaHoraActa, setFechaHoraActa] = useState('');
+  const [numeroActa, setNumeroActa] = useState('');
   const [fechaNotificacion, setFechaNotificacion] = useState('');
   const [medio, setMedio] = useState<MedioNotificacionCarta | ''>('');
   const [nuevosPdf, setNuevosPdf] = useState<File[]>([]);
@@ -330,6 +333,38 @@ export const SolicitudPanel: React.FC<Props> = ({ solicitudId, onClose, onCambio
         )}
       </Paso>
 
+      {/* EXCEPCIONAL: acta de levantamiento en lugar de carta (flujograma) */}
+      {s.tipoCarta && s.tipoCarta !== 'DENEGATORIA' && !correspondeCartaVencimiento && !s.fechaEnvioFirma && !firmada && (
+        <div className="mb-[12px] -mt-[6px] text-[13px]">
+          <label className="flex items-center gap-[8px] cursor-pointer">
+            <input type="checkbox" checked={conActa} onChange={(e) => setConActa(e.target.checked)} />
+            Se levantó con <strong>acta de levantamiento</strong> (excepcional) en lugar de carta
+          </label>
+          {conActa && (
+            <div className={fila}>
+              <div className="w-[230px]">
+                <Input type="datetime-local" label="Fecha y hora del acta" value={fechaHoraActa} max={ahoraInputLima()} onChange={(e) => setFechaHoraActa(e.target.value)} />
+              </div>
+              <div className="flex-1 min-w-[180px]">
+                <Input label="N° de acta" placeholder="Tal como figura en el papel" value={numeroActa} onChange={(e) => setNumeroActa(e.target.value)} />
+              </div>
+              <Button
+                size="sm"
+                variant="success"
+                loading={accion === 'acta'}
+                disabled={!fechaHoraActa || !numeroActa.trim()}
+                className="mb-[14px]!"
+                onClick={() =>
+                  ejecutar('acta', () => LevantamientosApi.registrarActa(s.id, isoDesdeInputLima(fechaHoraActa), numeroActa.trim()), 'Acta de levantamiento registrada. Falta notificar.')
+                }
+              >
+                Registrar acta
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* 4. ENVÍO A FIRMA */}
       <Paso n={4} titulo="Envío a firma del Subgerente" hecho={!!s.fechaEnvioFirma}>
         {s.fechaEnvioFirma ? (
@@ -353,7 +388,7 @@ export const SolicitudPanel: React.FC<Props> = ({ solicitudId, onClose, onCambio
         {firmada ? (
           <>
             <div>
-              Carta N° <strong>{s.numeroCarta}</strong>, firmada el {formatearFechaHora(s.fechaHoraFirma)}.
+              {s.esActaLevantamiento ? 'Acta de levantamiento' : 'Carta'} N° <strong>{s.numeroCarta}</strong>, firmada el {formatearFechaHora(s.fechaHoraFirma)}.
             </div>
             <div className={s.atendidaDentroDelPlazo ? 'text-[#047857] font-semibold' : 'text-[#be123c] font-semibold'}>
               {s.atendidaDentroDelPlazo ? 'Atendida dentro del plazo.' : `Atendida fuera del plazo (vencía el ${formatearFechaHora(s.venceEn)}).`}

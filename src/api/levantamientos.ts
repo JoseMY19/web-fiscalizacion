@@ -55,6 +55,8 @@ export interface SolicitudLevantamientoItem {
   fechaEnvioFirma: string | null;
   fechaHoraFirma: string | null;
   numeroCarta: string | null;
+  /** Se levantó con acta (excepcional) en lugar de carta. */
+  esActaLevantamiento: boolean;
   atendidaDentroDelPlazo: boolean | null;
   fechaNotificacion: string | null;
   medioNotificacion: MedioNotificacionCarta | null;
@@ -132,6 +134,12 @@ export const LevantamientosApi = {
     apiClient<{ ok: true }>(`/levantamientos/${id}/enviar-a-firma`, { method: 'PATCH', body: JSON.stringify({ fechaEnvio }) }),
   firmar: (id: string, fechaHoraFirma: string, numeroCarta: string) =>
     apiClient<{ ok: true; atendidaDentroDelPlazo: boolean }>(`/levantamientos/${id}/firmar`, {
+      method: 'PATCH',
+      body: JSON.stringify({ fechaHoraFirma, numeroCarta }),
+    }),
+  /** Excepcional: acta de levantamiento en lugar de carta. */
+  registrarActa: (id: string, fechaHoraFirma: string, numeroCarta: string) =>
+    apiClient<{ ok: true; atendidaDentroDelPlazo: boolean }>(`/levantamientos/${id}/acta`, {
       method: 'PATCH',
       body: JSON.stringify({ fechaHoraFirma, numeroCarta }),
     }),
