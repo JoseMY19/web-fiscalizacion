@@ -1178,3 +1178,5 @@ export * from './retroaccion';
 export * from './ampliacion';
 // Visitas del notificador (bajo puerta).
 export * from './visitasNotificacion';
+// Validación: checklist de completitud.
+export * from './checklistValidacion';

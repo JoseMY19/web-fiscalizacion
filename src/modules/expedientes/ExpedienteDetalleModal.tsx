@@ -15,6 +15,7 @@ import {
   AlertTriangleIcon,
   UsersIcon,
 } from '../../components/icons/Icons';
+import { ChecklistValidacion } from './ChecklistValidacion';
 
 interface ExpedienteDetalleModalProps {
   isOpen: boolean;
@@ -92,6 +93,8 @@ export const ExpedienteDetalleModal: React.FC<ExpedienteDetalleModalProps> = ({
 
       {!loading && data && (
         <div>
+          {/* Validación = revisar que esté completo (reunión). */}
+          {expedienteId && <ChecklistValidacion expedienteId={expedienteId} />}
           {/* Subheader Badge Bar */}
           <div
             className="flex items-center justify-between py-[12px] px-[16px] bg-bg-subtle rounded-md mb-[20px] border border-border"

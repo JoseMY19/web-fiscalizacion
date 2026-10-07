@@ -9,6 +9,7 @@ import {
 import { Button, Badge, Modal, Input, Textarea, Alert, EmptyState, Spinner } from '../../components/common/Common';
 import { formatearFecha, formatearHora, hoyLocal } from '../../lib/fechas';
 import { useConfirm } from '../../context/ConfirmContext';
+import { ChecklistValidacionApi } from '../../api';
 import { generarUuid } from '../../lib/uuid';
 import {
   ExpedienteIcon,
@@ -134,7 +135,19 @@ export const ExpedientesView: React.FC = () => {
   }, []);
 
   const handleAprobar = async (id: string, numero: string) => {
-    const ok = await confirm({ message: `¿Confirmas la aprobación del expediente ${numero}? Pasará a la fase de Instrucción (SP4).` });
+    // Validación = revisar que esté completo: avisar qué falta antes de aprobar.
+    const checklist = await ChecklistValidacionApi.obtener(id).catch(() => null);
+    const faltan = checklist?.items.filter((x) => !x.ok && x.obligatorio) ?? [];
+    const ok = await confirm(
+      faltan.length > 0
+        ? {
+            title: 'Expediente incompleto',
+            message: `Al expediente ${numero} le falta: ${faltan.map((x) => x.etiqueta).join('; ')}. Lo correcto es observarlo para que se complete. ¿Aprobar igual?`,
+            confirmLabel: 'Aprobar igual',
+            variant: 'danger',
+          }
+        : { message: `¿Confirmas la aprobación del expediente ${numero}? Pasará a la fase de Instrucción (SP4).` },
+    );
     if (!ok) return;
     setActionLoading(true);
     try {
