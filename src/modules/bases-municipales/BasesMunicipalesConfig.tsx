@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { BasesMunicipalesApi, EstadoBaseMunicipal } from '../../api';
 import { Alert, Button, Card } from '../../components/common/Common';
 import { formatearFechaHora } from '../../lib/fechas';
-import { FichaBasesMunicipales } from './FichaBasesMunicipales';
+import { FichaBasesMunicipales, invalidarEstadoBases } from './FichaBasesMunicipales';
 
 const claseInputArchivo =
   'text-[12px] text-text-secondary file:mr-[8px] file:py-[4px] file:px-[10px] file:rounded-sm file:border file:border-border file:bg-[#ffffff] file:text-[12px] file:cursor-pointer';
@@ -38,6 +38,7 @@ export const BasesMunicipalesConfig: React.FC = () => {
       const r = await BasesMunicipalesApi.importar(clave, archivo);
       setMensaje({ type: 'success', text: `Importadas ${r.filas.toLocaleString('es-PE')} filas. Reemplazan a la carga anterior.` });
       setArchivos((a) => ({ ...a, [clave]: null }));
+      invalidarEstadoBases();
       cargar();
     } catch (err: any) {
       setMensaje({ type: 'error', text: err.message || 'No se pudo importar el Excel.' });
