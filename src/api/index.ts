@@ -511,6 +511,9 @@ export interface ResolucionDetalle {
     fechaEnvioFirma: string | null;
     fechaFirma: string | null;
     fechaNotificacion: string | null;
+    /** Opcional: notificar en el domicilio señalado en un documento del SGD. */
+    notificarDocumentoSgd: string | null;
+    notificarDomicilio: string | null;
   } | null;
   /** O9/F5: pago registrado contra la NC del expediente (null = no pagó). */
   pago: { montoPagado: number; fechaPago: string } | null;
@@ -1171,3 +1174,5 @@ export * from './prescripcion';
 export * from './coactiva';
 // Nulidad de GOP → retroacción del expediente.
 export * from './retroaccion';
+// RSG de ampliación: domicilio de un documento del SGD.
+export * from './ampliacion';

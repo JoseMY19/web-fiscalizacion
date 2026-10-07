@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ResolucionDetalle, ResolucionesApi, descargarDocumentoAmpliacion } from '../../api';
+import { AmpliacionApi, ResolucionDetalle, ResolucionesApi, descargarDocumentoAmpliacion } from '../../api';
 import { Badge, Button, Input } from '../../components/common/Common';
 import { FileTextIcon, PenToolIcon } from '../../components/icons/Icons';
 import { useConfirm } from '../../context/ConfirmContext';
@@ -47,6 +47,8 @@ export const AmpliacionPlazoCard: React.FC<Props> = ({
   const [fechaFirma, setFechaFirma] = useState('');
   const [numero, setNumero] = useState('');
   const [fechaNotificacion, setFechaNotificacion] = useState('');
+  const [documentoSgd, setDocumentoSgd] = useState(a?.notificarDocumentoSgd ?? '');
+  const [domicilioSgd, setDomicilioSgd] = useState(a?.notificarDomicilio ?? '');
 
   if (!a && !(p.fechaCaducidadOriginal && !resolucionNotificada)) return null;
 
@@ -156,6 +158,37 @@ export const AmpliacionPlazoCard: React.FC<Props> = ({
             )}
             {a.fechaNotificacion && <div>Notificada el {fechaCorta(a.fechaNotificacion)}.</div>}
 
+            {a.notificarDocumentoSgd && (
+              <div className="mt-[6px]">
+                Se notifica en el domicilio señalado en el Documento <strong>{a.notificarDocumentoSgd}</strong>: {a.notificarDomicilio}.
+              </div>
+            )}
+            {a.estado === 'EN_ELABORACION' && !a.fechaEnvioFirma && !nueveVencidos && (
+              <div className={fila}>
+                <div className="w-[200px]">
+                  <Input label="Documento SGD (opcional)" placeholder="Ej. S-56578-2025" value={documentoSgd} onChange={(e) => setDocumentoSgd(e.target.value)} />
+                </div>
+                <div className="flex-1 min-w-[220px]">
+                  <Input label="Domicilio que señala ese documento" value={domicilioSgd} onChange={(e) => setDomicilioSgd(e.target.value)} />
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  loading={accionEnCurso === 'ampDomicilio'}
+                  className="mb-[14px]!"
+                  onClick={() => {
+                    if (!!documentoSgd.trim() !== !!domicilioSgd.trim()) return error('Indica el documento y el domicilio, o deja ambos vacíos.');
+                    return ejecutar(
+                      'ampDomicilio',
+                      () => AmpliacionApi.domicilioNotificacion(expedienteId, documentoSgd.trim(), domicilioSgd.trim()),
+                      documentoSgd.trim() ? 'Domicilio de notificación guardado.' : 'Se notificará en el domicilio de la NC.',
+                    );
+                  }}
+                >
+                  Guardar domicilio
+                </Button>
+              </div>
+            )}
             {a.estado === 'EN_ELABORACION' && !a.fechaEnvioFirma && !nueveVencidos && (
               <div className={fila}>
                 <div className="w-[220px]">
