@@ -23,10 +23,10 @@ const grupoDe = (clave: string) => GRUPOS.find((g) => g.incluye(clave))?.nombre 
 type Nivel = 'ok' | 'aviso' | 'falta';
 const nivelDe = (x: ItemChecklist): Nivel => (x.ok ? 'ok' : x.obligatorio ? 'falta' : 'aviso');
 
-const ESTILO: Record<Nivel, { barra: string; acento: string; fondo: string; texto: string }> = {
-  ok: { barra: 'bg-success', acento: 'border-l-success', fondo: 'bg-success-bg', texto: 'text-success' },
-  aviso: { barra: 'bg-warning', acento: 'border-l-warning', fondo: 'bg-warning-bg', texto: 'text-warning' },
-  falta: { barra: 'bg-danger', acento: 'border-l-danger', fondo: 'bg-danger-bg', texto: 'text-danger' },
+const ESTILO: Record<Nivel, { barra: string; fondo: string; texto: string }> = {
+  ok: { barra: 'bg-success', fondo: 'bg-success-bg', texto: 'text-success' },
+  aviso: { barra: 'bg-warning', fondo: 'bg-warning-bg', texto: 'text-warning' },
+  falta: { barra: 'bg-danger', fondo: 'bg-danger-bg', texto: 'text-danger' },
 };
 
 export const ChecklistValidacion: React.FC<{ expedienteId: string }> = ({ expedienteId }) => {
@@ -61,7 +61,7 @@ export const ChecklistValidacion: React.FC<{ expedienteId: string }> = ({ expedi
     .filter((g) => g.items.length > 0);
 
   return (
-    <section className={cn('rounded-[10px] border border-border border-l-[4px] bg-bg-card mb-[16px] overflow-hidden', e.acento)}>
+    <section className="rounded-[10px] border border-border bg-bg-card mb-[16px] overflow-hidden">
       {/* Encabezado: estado + avance */}
       <div className="flex items-center gap-[12px] py-[12px] px-[16px]">
         <div className={cn('w-[36px] h-[36px] rounded-full flex items-center justify-center shrink-0', e.fondo, e.texto)}>
@@ -126,23 +126,24 @@ export const ChecklistValidacion: React.FC<{ expedienteId: string }> = ({ expedi
             {verOk ? 'Ocultar lo verificado' : `Ver lo verificado (${verificados.length})`}
           </button>
           {verOk && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-[20px] gap-y-[12px] px-[16px] pb-[14px]">
+            // Una fila por grupo: nombre a la izquierda, lo verificado en línea.
+            <dl className="px-[16px] pb-[12px] text-[12px]">
               {gruposOk.map((g) => (
-                <div key={g.nombre}>
-                  <div className="text-[10px] font-bold uppercase tracking-[0.06em] text-text-light mb-[5px]">{g.nombre}</div>
-                  <ul className="flex flex-col gap-[4px]">
+                <div key={g.nombre} className="flex gap-[12px] py-[6px] border-t border-border-subtle first:border-t-0">
+                  <dt className="w-[150px] shrink-0 text-text-muted">{g.nombre}</dt>
+                  <dd className="flex-1 min-w-0 flex flex-wrap gap-x-[14px] gap-y-[3px] text-text-secondary">
                     {g.items.map((x) => (
-                      <li key={x.clave} className="flex items-center gap-[7px] text-[12px] text-text-secondary">
-                        <span className="w-[16px] h-[16px] rounded-full bg-success-bg text-success flex items-center justify-center shrink-0">
-                          <CheckIcon size={10} />
+                      <span key={x.clave} className="inline-flex items-center gap-[5px]">
+                        <span className="text-success">
+                          <CheckIcon size={12} />
                         </span>
                         {x.etiqueta}
-                      </li>
+                      </span>
                     ))}
-                  </ul>
+                  </dd>
                 </div>
               ))}
-            </div>
+            </dl>
           )}
         </div>
       )}
