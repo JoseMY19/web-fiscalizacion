@@ -83,10 +83,7 @@ export const CautelaresView: React.FC = () => {
       <div className="flex items-start gap-[12px] flex-wrap mb-[16px]">
         <div className="mr-auto">
           <h2 className="text-[18px] font-extrabold text-midnight-900">Medidas cautelares</h2>
-          <p className="text-[13px] text-text-muted mt-[2px] max-w-[720px]">
-            Resolución de urgencia del Subgerente para casos graves (paralización de obra, retiro o demolición en vía pública…). Se redacta aquí, se
-            firma, se ejecuta en campo y se anexa al expediente. No es la medida provisional del acta de campo.
-          </p>
+          <p className="text-[13px] text-text-muted mt-[2px]">Resoluciones de urgencia del Subgerente para casos graves.</p>
         </div>
         <Button icon={<PlusIcon size={16} />} onClick={() => setFormulario({ medida: null })}>
           Nueva medida cautelar
@@ -95,15 +92,34 @@ export const CautelaresView: React.FC = () => {
 
       {mensaje && <Alert type={mensaje.type}>{mensaje.text}</Alert>}
 
-      {/* El recorrido de una medida, en una línea */}
-      <ol className="flex flex-wrap gap-x-[24px] gap-y-[6px] text-[12px] text-text-secondary mb-[16px]">
-        {['Se emite la resolución (Word) y la firma el Subgerente', 'Se ejecuta en campo', 'Se anexa al expediente del PAS (cuando exista)'].map((t, i) => (
-          <li key={t} className="flex items-center gap-[7px]">
-            <span className="w-[18px] h-[18px] rounded-full bg-midnight-900 text-text-white text-[10px] font-bold flex items-center justify-center">{i + 1}</span>
-            {t}
-          </li>
-        ))}
-      </ol>
+      {/* Qué es y cuándo se usa (plegable): el módulo es excepcional y poco frecuente. */}
+      <details className="group mb-[16px] text-[13px]">
+        <summary className="cursor-pointer select-none text-primary-600 font-semibold w-fit list-none">
+          <span className="group-open:hidden">¿Qué es y cuándo se usa?</span>
+          <span className="hidden group-open:inline">Ocultar explicación</span>
+        </summary>
+        <dl className="mt-[10px] max-w-[760px] grid grid-cols-[150px_1fr] gap-x-[16px] gap-y-[8px] text-text-secondary">
+          <dt className="font-semibold text-text-main">Para qué</dt>
+          <dd>
+            Para casos graves donde no se puede esperar al final del PAS: ocupación de vía pública o de zonas de riesgo, construcciones que ponen
+            en peligro a la gente. La Subgerencia ordena por resolución paralizar, retirar o demoler de inmediato.
+          </dd>
+          <dt className="font-semibold text-text-main">Cómo se llega</dt>
+          <dd>
+            Desde una intervención ya registrada (acta de campo) y, por lo general, con informes de otras áreas (Gestión de Riesgo de Desastres,
+            Planeamiento Urbano). No hace falta que exista la NC ni el expediente.
+          </dd>
+          <dt className="font-semibold text-text-main">Quién la hace</dt>
+          <dd>El abogado de la Subgerencia redacta la resolución aquí (sale en Word con el modelo real) y la firma el Subgerente.</dd>
+          <dt className="font-semibold text-text-main">Después</dt>
+          <dd>
+            Se ejecuta en un operativo (fiscalización, con resguardo de Serenazgo si se marca), se registra la fecha y, cuando la intervención tenga
+            expediente, se anexa para que se vea en el PAS.
+          </dd>
+          <dt className="font-semibold text-text-main">No confundir con</dt>
+          <dd>La medida provisional: esa la impone el fiscalizador en el momento, con el acta de campo, y no pasa por este módulo.</dd>
+        </dl>
+      </details>
 
       <section className="rounded-[10px] border border-border bg-bg-card overflow-hidden">
         <div className="flex gap-[2px] px-[10px] pt-[8px] border-b border-border">
@@ -283,7 +299,7 @@ const DetalleMedida: React.FC<{ medida: MedidaCautelarItem; onClose: () => void;
         </div>
       </PasoTramite>
 
-      <PasoTramite n={2} titulo="Ejecución en campo" hecho={m.estado !== 'EMITIDA'}>
+      <PasoTramite n={2} titulo="Ejecución (operativo)" hecho={m.estado !== 'EMITIDA'}>
         {m.estado === 'EMITIDA' ? (
           <div className="flex items-end gap-[10px] flex-wrap">
             <div className="w-[180px]">
