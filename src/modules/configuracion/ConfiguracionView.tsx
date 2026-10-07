@@ -3,7 +3,6 @@ import {
   ConfiguracionApi,
   UsuariosAdminApi,
   FeriadoItem,
-  CuisCodigoItem,
   ParametroUitItem,
 } from '../../api';
 import { Card, Button, Badge, Input, Alert, EmptyState } from '../../components/common/Common';
@@ -19,6 +18,7 @@ import {
   UserIcon,
 } from '../../components/icons/Icons';
 import { BasesMunicipalesConfig } from '../bases-municipales/BasesMunicipalesConfig';
+import { CatalogoCuisCrud } from '../catalogo-cuis/CatalogoCuisCrud';
 
 export const ConfiguracionView: React.FC = () => {
   const confirm = useConfirm();
@@ -35,9 +35,6 @@ export const ConfiguracionView: React.FC = () => {
   const [descripcionFeriado, setDescripcionFeriado] = useState('');
 
   // Estados CUIS
-  const [queryCuis, setQueryCuis] = useState('');
-  const [resultadosCuis, setResultadosCuis] = useState<CuisCodigoItem[]>([]);
-  const [buscandoCuis, setBuscandoCuis] = useState(false);
 
   // Estados UIT
   const [parametrosUit, setParametrosUit] = useState<ParametroUitItem[]>([]);
@@ -94,20 +91,6 @@ export const ConfiguracionView: React.FC = () => {
       setMessage({ type: 'error', text: err.message || 'Error al agregar feriado.' });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleBuscarCuis = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!queryCuis.trim()) return;
-    setBuscandoCuis(true);
-    try {
-      const res = await ConfiguracionApi.buscarCuis(queryCuis.trim());
-      setResultadosCuis(Array.isArray(res) ? res : []);
-    } catch (err: any) {
-      setMessage({ type: 'error', text: err.message || 'Error al buscar en catálogo CUIS.' });
-    } finally {
-      setBuscandoCuis(false);
     }
   };
 
@@ -292,56 +275,10 @@ export const ConfiguracionView: React.FC = () => {
         </div>
       )}
 
-      {/* Tab 3: Catálogo CUIS */}
+      {/* Tab 3: Catálogo CUIS — mantenimiento (como licencias e ITSE) */}
       {activeTab === 'cuis' && (
-        <Card title="Buscador Oficial del Cuadro Único de Infracciones y Sanciones (CUIS)">
-          <form onSubmit={handleBuscarCuis} className="flex gap-[10px] mb-[20px]">
-            <div className="flex-1">
-              <Input
-                placeholder="Buscar por código (ej. 7.01.01) o palabras clave (construcción, clausura, ruidos, licencia)..."
-                value={queryCuis}
-                onChange={(e) => setQueryCuis(e.target.value)}
-              />
-            </div>
-            <Button variant="primary" type="submit" loading={buscandoCuis} icon={<SearchIcon size={16} />}>
-              Buscar en Catálogo
-            </Button>
-          </form>
-
-          {resultadosCuis.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-[13px] text-left">
-                <thead>
-                  <tr className="bg-[#f8fafc] border-b border-b-border">
-                    <th className="py-[10px] px-[14px]">Código</th>
-                    <th className="py-[10px] px-[14px]">Descripción de la Infracción</th>
-                    <th className="py-[10px] px-[14px]">Monto / Escala</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {resultadosCuis.map((c, i) => (
-                    <tr key={c.id || i} className="border-b border-b-border">
-                      <td className="py-[12px] px-[14px] font-bold text-primary-600 whitespace-nowrap">
-                        {c.codigo || (c as any).codigo_ordenanza || (c as any).id_interno}
-                      </td>
-                      <td className="py-[12px] px-[14px] text-text-main">
-                        {c.descripcion || (c as any).texto_completo_pdf}
-                      </td>
-                      <td className="py-[12px] px-[14px] whitespace-nowrap">
-                        <Badge variant="info">
-                          {c.escala || (c.montoUit ? `${c.montoUit} % UIT` : 'Ver detalle')}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="text-[13px] text-text-muted text-center p-[24px]">
-              Ingrese un término de búsqueda para consultar las infracciones tipificadas en la Ordenanza 464-MDSJL.
-            </p>
-          )}
+        <Card title="Catálogo CUIS (Ordenanza 464-MDSJL)">
+          <CatalogoCuisCrud />
         </Card>
       )}
 
