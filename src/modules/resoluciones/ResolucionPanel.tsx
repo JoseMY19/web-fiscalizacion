@@ -39,6 +39,7 @@ import { AvisoCaducidadExpediente } from '../caducidad/AvisoCaducidadExpediente'
 import { AvisoCoactivaExpediente } from '../coactiva/AvisoCoactivaExpediente';
 // Nulidad de GOP: qué se anuló (la resolución se rehace).
 import { AvisoRetroaccion } from '../retroaccion/AvisoRetroaccion';
+import { FichaBasesMunicipales } from '../bases-municipales/FichaBasesMunicipales';
 import { PagadoBadge } from '../../components/common/PagadoBadge';
 
 /** Mismo modelo de pasos que IfiView (StepDef/stepper), más un estado para los pasos opcionales. */
@@ -1078,6 +1079,8 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
       {/* F4: devuelto por coactiva. */}
       <AvisoCoactivaExpediente expedienteId={expedienteId} />
       <AvisoRetroaccion expedienteId={expedienteId} />
+      {/* Licencia e ITSE del administrado (bases municipales): ¿subsanó? */}
+      <FichaBasesMunicipales expedienteId={expedienteId} compacta />
 
       {/* O2: corrección de error material del administrado (trazable), hasta la firma de la resolución. */}
       <section className="mb-[20px]">

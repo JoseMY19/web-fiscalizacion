@@ -20,6 +20,7 @@ import { AvisoLevantamientoMedidas } from '../levantamientos/AvisoLevantamientoM
 import { AvisoCaducidadExpediente } from '../caducidad/AvisoCaducidadExpediente';
 // Nulidad de GOP: qué se anuló y qué rehacer (y renotificar la NC si se anuló).
 import { AvisoRetroaccion } from '../retroaccion/AvisoRetroaccion';
+import { FichaBasesMunicipales } from '../bases-municipales/FichaBasesMunicipales';
 import { DescargosLista } from '../descargos/DescargosLista';
 import { CorreccionMaterialSeccion } from '../correcciones/CorreccionMaterial';
 import { textoCaducidad } from '../resoluciones/resolucionUi';
@@ -1509,6 +1510,8 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
       <AvisoLevantamientoMedidas expedienteId={e.expedienteId} />
       <AvisoCaducidadExpediente expedienteId={e.expedienteId} />
       <AvisoRetroaccion expedienteId={e.expedienteId} />
+      {/* Licencia e ITSE del administrado (bases municipales): ¿subsanó? */}
+      <FichaBasesMunicipales expedienteId={e.expedienteId} compacta />
       <AmpliacionEnIfi expedienteId={e.expedienteId} numeroExpediente={e.numeroExpediente} onCambio={onCambioAmpliacion} />
       <div className="flex flex-col gap-0">
         {steps.map((step, idx) => (

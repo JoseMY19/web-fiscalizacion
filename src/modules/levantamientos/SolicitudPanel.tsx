@@ -24,6 +24,7 @@ import {
   tipoMedidaTexto,
   useAhora,
 } from './levantamientoUi';
+import { FichaBasesMunicipales } from '../bases-municipales/FichaBasesMunicipales';
 
 const estiloBloque = 'bg-[#f8fafc] py-[12px] px-[14px] rounded-[8px] border border-border text-[13px]';
 const estiloTitulo = 'text-[13px] font-extrabold text-midnight-900 mb-[8px] uppercase tracking-[0.4px] flex items-center gap-[8px]';
@@ -244,6 +245,9 @@ export const SolicitudPanel: React.FC<Props> = ({ solicitudId, onClose, onCambio
           )}
         </Alert>
       )}
+
+      {/* Licencia e ITSE (bases municipales): ayuda a decidir si subsanó. */}
+      <FichaBasesMunicipales expedienteId={m.expedienteId} documento={m.expedienteId ? null : m.administradoDocumento} compacta />
 
       {/* 1. SOLICITUD */}
       <Paso n={1} titulo="Solicitud registrada" hecho>

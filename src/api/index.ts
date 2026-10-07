@@ -1180,3 +1180,5 @@ export * from './ampliacion';
 export * from './visitasNotificacion';
 // Validación: checklist de completitud.
 export * from './checklistValidacion';
+// Bases municipales: licencias e ITSE.
+export * from './basesMunicipales';

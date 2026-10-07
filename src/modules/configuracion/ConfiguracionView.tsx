@@ -18,10 +18,11 @@ import {
   ShieldAlertIcon,
   UserIcon,
 } from '../../components/icons/Icons';
+import { BasesMunicipalesConfig } from '../bases-municipales/BasesMunicipalesConfig';
 
 export const ConfiguracionView: React.FC = () => {
   const confirm = useConfirm();
-  const [activeTab, setActiveTab] = useState<'plazos' | 'feriados' | 'cuis' | 'uit' | 'seguridad'>('plazos');
+  const [activeTab, setActiveTab] = useState<'plazos' | 'feriados' | 'cuis' | 'uit' | 'seguridad' | 'bases'>('plazos');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -180,6 +181,14 @@ export const ConfiguracionView: React.FC = () => {
         </button>
 
         <button
+          onClick={() => setActiveTab('bases')}
+          className={`py-[10px] px-[18px] text-[13px] font-bold rounded-sm cursor-pointer flex items-center gap-[8px] ${activeTab === 'bases' ? 'border border-primary-600 bg-primary-50 text-primary-600' : 'border border-border bg-[#ffffff] text-text-secondary'}`}
+        >
+          <SearchIcon size={16} />
+          Licencias e ITSE
+        </button>
+
+        <button
           onClick={() => setActiveTab('uit')}
           className={`py-[10px] px-[18px] text-[13px] font-bold rounded-sm cursor-pointer flex items-center gap-[8px] ${activeTab === 'uit' ? 'border border-primary-600' : 'border border-border'} ${activeTab === 'uit' ? 'bg-primary-50' : 'bg-[#ffffff]'} ${activeTab === 'uit' ? 'text-primary-600' : 'text-text-secondary'}`}
         >
@@ -194,6 +203,8 @@ export const ConfiguracionView: React.FC = () => {
           Seguridad & Sesiones (Admin)
         </button>
       </div>
+
+      {activeTab === 'bases' && <BasesMunicipalesConfig />}
 
       {/* Tab 1: Plazos en Riesgo */}
       {activeTab === 'plazos' && (
