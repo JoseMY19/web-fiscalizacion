@@ -10,6 +10,7 @@ import {
 } from '../../api';
 import { Alert, Badge, Button, Input, Modal, Spinner, Textarea } from '../../components/common/Common';
 import { useConfirm } from '../../context/ConfirmContext';
+import { RetrotraerNulidad } from '../retroaccion/RetrotraerNulidad';
 import { CheckIcon, EyeIcon, FileTextIcon } from '../../components/icons/Icons';
 import {
   LABEL_DECISION_GOP,
@@ -57,6 +58,7 @@ export const RecursoPanel: React.FC<Props> = ({ expedienteId, numeroExpediente, 
   const [errorCarga, setErrorCarga] = useState<string | null>(null);
   const [mensaje, setMensaje] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [accion, setAccion] = useState<string | null>(null);
+  const [retrotraido, setRetrotraido] = useState(false);
   const hoy = hoyLocal();
 
   // Formularios. Las fechas son hechos reales: nacen vacías, nunca "hoy" por defecto.
@@ -580,12 +582,16 @@ export const RecursoPanel: React.FC<Props> = ({ expedienteId, numeroExpediente, 
               Se agotó la vía administrativa: declara el <strong>acto firme</strong> (motivo: apelación infundada) en Acto firme / Cobranza.
             </span>
           )}
-          {ape.decisionGop === 'NULIDAD' && (
-            <Alert type="warning">
-              <strong>Nulidad — pendiente de definir con legal.</strong> Solo se registró la decisión
-              {ape.motivoNulidad ? ` (motivo: ${ape.motivoNulidad})` : ''}. A qué etapa vuelve el expediente (NC, IFI o resolución) todavía
-              no está definido: el sistema no cambia nada más hasta confirmarlo con los abogados.
-            </Alert>
+          {ape.decisionGop === 'NULIDAD' && !retrotraido && (
+            <RetrotraerNulidad
+              apelacionId={ape.id}
+              motivoNulidad={ape.motivoNulidad}
+              onHecho={(texto) => {
+                setRetrotraido(true);
+                setMensaje({ type: 'success', text: texto });
+                onCambio();
+              }}
+            />
           )}
         </div>
       ) : (
@@ -603,7 +609,7 @@ export const RecursoPanel: React.FC<Props> = ({ expedienteId, numeroExpediente, 
               <option value="">— Elegir —</option>
               <option value="FUNDADA">{LABEL_DECISION_GOP.FUNDADA}</option>
               <option value="INFUNDADA">{LABEL_DECISION_GOP.INFUNDADA}</option>
-              <option value="NULIDAD">{LABEL_DECISION_GOP.NULIDAD} (pendiente de definir con legal)</option>
+              <option value="NULIDAD">{LABEL_DECISION_GOP.NULIDAD} (luego se elige hasta dónde se retrotrae)</option>
             </select>
             {decision === 'NULIDAD' && (
               <Textarea label="Motivo de la nulidad" rows={3} value={motivoNulidad} onChange={(e) => setMotivoNulidad(e.target.value)} />

@@ -18,6 +18,8 @@ import { AmpliacionPlazoCard } from '../resoluciones/AmpliacionPlazoCard';
 import { AvisoLevantamientoMedidas } from '../levantamientos/AvisoLevantamientoMedidas';
 // F2: aviso de caducidad (caducado / vencido sin declarar → "Declarar caducidad").
 import { AvisoCaducidadExpediente } from '../caducidad/AvisoCaducidadExpediente';
+// Nulidad de GOP: qué se anuló y qué rehacer (y renotificar la NC si se anuló).
+import { AvisoRetroaccion } from '../retroaccion/AvisoRetroaccion';
 import { DescargosLista } from '../descargos/DescargosLista';
 import { CorreccionMaterialSeccion } from '../correcciones/CorreccionMaterial';
 import { textoCaducidad } from '../resoluciones/resolucionUi';
@@ -578,6 +580,9 @@ export const IfiView: React.FC = () => {
                       </td>
                       <td className="py-[14px] px-[16px] text-text-muted text-[12px]">
                         ⏳ Bloqueado por regla de negocio hasta que la Notificación de Cargo sea efectivamente diligenciada.
+                        <div className="mt-[8px] text-text-main text-[13px]">
+                          <AvisoRetroaccion expedienteId={e.expedienteId} onCambio={cargar} />
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -1503,6 +1508,7 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
       <ResumenPlazoPagoIfi e={e} />
       <AvisoLevantamientoMedidas expedienteId={e.expedienteId} />
       <AvisoCaducidadExpediente expedienteId={e.expedienteId} />
+      <AvisoRetroaccion expedienteId={e.expedienteId} />
       <AmpliacionEnIfi expedienteId={e.expedienteId} numeroExpediente={e.numeroExpediente} onCambio={onCambioAmpliacion} />
       <div className="flex flex-col gap-0">
         {steps.map((step, idx) => (

@@ -1169,3 +1169,5 @@ export * from './caducidad';
 export * from './prescripcion';
 // F4 — Ejecución coactiva (archivo propio).
 export * from './coactiva';
+// Nulidad de GOP → retroacción del expediente.
+export * from './retroaccion';
