@@ -1,4 +1,5 @@
 import React from 'react';
+import { puedeVerModulo as puedeVerModuloPermisos, PermisosUsuario } from '../../lib/permisos';
 import {
   DashboardIcon,
   ExpedienteIcon,
@@ -37,13 +38,15 @@ export type NavModule =
   | 'cautelares'
   | 'levantamientos'
   | 'mapa'
-  | 'configuracion';
+  | 'configuracion'
+  | 'usuarios';
 
 interface AppLayoutProps {
   currentModule: NavModule;
   onSelectModule: (mod: NavModule) => void;
-  user: { nombres: string; dni: string; rol: string } | null;
+  user: { nombres: string; dni: string; rol: string; rolNombre?: string; permisos?: PermisosUsuario } | null;
   onLogout: () => void;
+  onChangePassword?: () => void;
   children: React.ReactNode;
   badgeCounts?: Partial<Record<NavModule, number>>;
   /** Contador secundario ámbar por módulo (ej. O5: resoluciones esperando la firma del Subgerente). */
@@ -85,46 +88,12 @@ const navItems: NavItemConDef[] = [
   { id: 'documentos', label: 'Control Documentario', icon: <FileTextIcon size={18} /> },
   { id: 'mapa', label: 'Mapa de Cobertura', icon: <MapPinIcon size={18} /> },
   { id: 'configuracion', label: 'Configuración y Parámetros', icon: <CalendarIcon size={18} /> },
+  { id: 'usuarios', label: 'Usuarios y Roles', icon: <ShieldAlertIcon size={18} /> },
 ];
 
-/**
- * `RolUsuario` (backend) hoy solo tiene FISCALIZADOR/NOTIFICADOR/ADMIN —
- * no existe todavía un rol "validador"/"instructor"/"resolutor" propio de
- * oficina. Decisión tomada acá (cosmética, sin impacto legal ni de
- * dinero): mientras no exista ese rol, el único filtro real es
- * NOTIFICADOR → solo ve lo suyo (SP3). El resto de roles ve todo el menú,
- * igual que hoy no hay ningún RolesGuard en el backend que lo impida. Si
- * agregan roles de oficina reales, este mapa se actualiza junto con los
- * guards del backend, no antes.
- */
-/**
- * Rol TEMPORAL de pruebas (usuario para que los abogados prueben el
- * sistema). Ve solo los módulos que ya están avanzados y funcionan; en
- * ellos puede hacer todo. Al terminar/mejorar otro módulo, agrégalo aquí.
- * No es el sistema de roles definitivo (fase posterior).
- */
-export const MODULOS_ROL_PRUEBA: NavModule[] = [
-  'dashboard',
-  'expedientes',
-  'notificaciones',
-  'ifi',
-  'resoluciones',
-  'consulta-campo',
-  'cautelares',
-  'pagos',
-];
-
-/** Si el rol puede entrar a ese módulo (menú y rutas usan la misma regla). */
-export function puedeVerModulo(modulo: NavModule, rol: string | undefined): boolean {
-  if (rol === 'PRUEBA') return MODULOS_ROL_PRUEBA.includes(modulo);
-  if (rol === 'NOTIFICADOR') return modulo === 'dashboard' || modulo === 'notificaciones';
-  // F5: rol temporal mínimo de Caja/plataforma — solo registra pagos por N° de NC.
-  if (rol === 'CAJA') return modulo === 'dashboard' || modulo === 'pagos';
-  return true;
-}
-
-function esVisibleParaRol(item: NavItemConDef, rol: string | undefined): boolean {
-  return puedeVerModulo(item.id, rol);
+/** Si el usuario puede entrar a ese módulo (menú y rutas usan la misma regla). */
+export function puedeVerModulo(modulo: NavModule, permisos: PermisosUsuario | undefined): boolean {
+  return modulo === 'dashboard' || puedeVerModuloPermisos(modulo, permisos);
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({
@@ -132,6 +101,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   onSelectModule,
   user,
   onLogout,
+  onChangePassword,
   children,
   badgeCounts = {},
   badgeAlertas = {},
@@ -143,7 +113,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   );
 
   const cleanName = (user?.nombres || 'Carla Vega').replace(/\s*\(admin\s*dev\)/gi, '').trim();
-  const cleanRole = user?.rol === 'ADMIN' ? 'Administrador' : user?.rol === 'FISCALIZADOR' ? 'Inspector de Campo' : user?.rol === 'PRUEBA' ? 'Usuario de Prueba' : user?.rol === 'CAJA' ? 'Caja / Plataforma' : user?.rol ?? 'Oficina';
+  const cleanRole = user?.rolNombre ?? 'Oficina';
 
   return (
     <div className="flex min-h-screen bg-bg-app">
@@ -183,7 +153,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           </div>
 
           <nav className="flex flex-col gap-[2px]">
-            {navItems.filter((item) => esVisibleParaRol(item, user?.rol)).map((item) => {
+            {navItems.filter((item) => puedeVerModulo(item.id, user?.permisos)).map((item) => {
               const active = currentModule === item.id;
               const count = badgeCounts[item.id];
               const alerta = badgeAlertas[item.id];
@@ -246,13 +216,24 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                 </div>
               </div>
             </div>
-            <button
-              onClick={onLogout}
-              title="Cerrar sesión"
-              className="bg-transparent border-0 text-[#bfdbfe] cursor-pointer p-[6px] rounded-[6px] flex items-center justify-center [transition:color_150ms] hover:text-[#f87171]"
-            >
-              <LogOutIcon size={18} />
-            </button>
+            <div className="flex items-center gap-[6px]">
+              {onChangePassword && (
+                <button
+                  onClick={onChangePassword}
+                  title="Cambiar contraseña"
+                  className="bg-transparent border-0 text-[#bfdbfe] cursor-pointer p-[6px] rounded-[6px] flex items-center justify-center [transition:color_150ms] hover:text-[#38bdf8]"
+                >
+                  <UnlockIcon size={18} />
+                </button>
+              )}
+              <button
+                onClick={onLogout}
+                title="Cerrar sesión"
+                className="bg-transparent border-0 text-[#bfdbfe] cursor-pointer p-[6px] rounded-[6px] flex items-center justify-center [transition:color_150ms] hover:text-[#f87171]"
+              >
+                <LogOutIcon size={18} />
+              </button>
+            </div>
           </div>
         </div>
       </aside>

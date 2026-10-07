@@ -25,6 +25,8 @@ import { useResumenLevantamientos } from './modules/levantamientos/useResumenLev
 import { badgesLevantamientos } from './modules/levantamientos/badgesLevantamientos';
 import { ConfiguracionView } from './modules/configuracion/ConfiguracionView';
 import { MapaIntervencionesView } from './modules/mapa/MapaIntervencionesView';
+import { UsuariosRolesView } from './modules/usuarios/UsuariosRolesView';
+import { CambiarContrasenaModal } from './modules/auth/CambiarContrasenaModal';
 import { ExpedientesApi, IfiApi, ResolucionesApi, ConfiguracionApi } from './api';
 import { Spinner } from './components/common/Common';
 import { socket } from './lib/socket';
@@ -43,6 +45,14 @@ function MainApp() {
   const [badgeAlertas, setBadgeAlertas] = useState<Partial<Record<NavModule, { count: number; title: string }>>>({});
   // F1: solicitudes de levantamiento en evaluación (rojo si alguna está por vencer).
   const badgesLev = badgesLevantamientos(useResumenLevantamientos(isAuthenticated, currentModule));
+  const [mostrarModalContrasena, setMostrarModalContrasena] = useState(false);
+
+  // Mostrar modal de cambiar contraseña si es obligatorio
+  useEffect(() => {
+    if (user?.debeCambiarContrasena) {
+      setMostrarModalContrasena(true);
+    }
+  }, [user?.debeCambiarContrasena]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -104,34 +114,50 @@ function MainApp() {
     return <LoginView />;
   }
 
-  // Rol temporal de pruebas: si entra por URL a un módulo no habilitado, vuelve al inicio.
-  if (!puedeVerModulo(currentModule, user?.rol)) {
+  // Si entra por URL a un módulo sin permiso, vuelve al inicio.
+  if (!puedeVerModulo(currentModule, user?.permisos)) {
     return <Navigate to="/" replace />;
   }
 
   return (
-    <AppLayout currentModule={currentModule} onSelectModule={irA} user={user} onLogout={logout} badgeCounts={{ ...badgeCounts, ...badgesLev.counts }} badgeAlertas={{ ...badgeAlertas, ...badgesLev.alertas }}>
-      <Routes>
-        <Route path="/" element={<DashboardView onNavigate={irA} />} />
-        <Route path="/documentos" element={<DocumentosView />} />
-        <Route path="/expedientes" element={<ExpedientesView />} />
-        <Route path="/consulta-campo" element={<ConsultaCampoView />} />
-        <Route path="/notificaciones" element={<NotificacionesView />} />
-        <Route path="/ifi" element={<IfiView />} />
-        <Route path="/resoluciones" element={<ResolucionesView />} />
-        <Route path="/caducidad" element={<CaducidadView />} />
-        <Route path="/recursos" element={<RecursosView />} />
-        <Route path="/coactiva-pagos" element={<CoactivaPagosView />} />
-        <Route path="/coactiva" element={<CoactivaView />} />
-        <Route path="/prescripcion" element={<PrescripcionView />} />
-        <Route path="/pagos" element={<PagosView />} />
-        <Route path="/cautelares" element={<CautelaresView />} />
-        <Route path="/levantamientos" element={<LevantamientosView />} />
-        <Route path="/mapa" element={<MapaIntervencionesView />} />
-        <Route path="/configuracion" element={<ConfiguracionView />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </AppLayout>
+    <>
+      <CambiarContrasenaModal
+        isOpen={mostrarModalContrasena}
+        isObligatorio={user?.debeCambiarContrasena}
+        onClose={() => setMostrarModalContrasena(false)}
+      />
+      <AppLayout
+        currentModule={currentModule}
+        onSelectModule={irA}
+        user={user}
+        onLogout={logout}
+        onChangePassword={() => setMostrarModalContrasena(true)}
+        badgeCounts={{ ...badgeCounts, ...badgesLev.counts }}
+        badgeAlertas={{ ...badgeAlertas, ...badgesLev.alertas }}
+      >
+        <Routes>
+          <Route path="/" element={<DashboardView onNavigate={irA} />} />
+          <Route path="/documentos" element={<DocumentosView />} />
+          <Route path="/expedientes" element={<ExpedientesView />} />
+          <Route path="/consulta-campo" element={<ConsultaCampoView />} />
+          <Route path="/notificaciones" element={<NotificacionesView />} />
+          <Route path="/ifi" element={<IfiView />} />
+          <Route path="/resoluciones" element={<ResolucionesView />} />
+          <Route path="/caducidad" element={<CaducidadView />} />
+          <Route path="/recursos" element={<RecursosView />} />
+          <Route path="/coactiva-pagos" element={<CoactivaPagosView />} />
+          <Route path="/coactiva" element={<CoactivaView />} />
+          <Route path="/prescripcion" element={<PrescripcionView />} />
+          <Route path="/pagos" element={<PagosView />} />
+          <Route path="/cautelares" element={<CautelaresView />} />
+          <Route path="/levantamientos" element={<LevantamientosView />} />
+          <Route path="/mapa" element={<MapaIntervencionesView />} />
+          <Route path="/configuracion" element={<ConfiguracionView />} />
+          <Route path="/usuarios" element={<UsuariosRolesView />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AppLayout>
+    </>
   );
 }
 

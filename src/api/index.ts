@@ -5,6 +5,8 @@ export * from './client';
 // ============================================================================
 // AUTH API
 // ============================================================================
+import { PermisosUsuario } from '../lib/permisos';
+
 export interface LoginResponse {
   accessToken: string;
   refreshToken: string;
@@ -13,6 +15,9 @@ export interface LoginResponse {
     dni: string;
     nombres: string;
     rol: string;
+    rolNombre?: string;
+    debeCambiarContrasena?: boolean;
+    permisos?: PermisosUsuario;
   };
 }
 
@@ -20,11 +25,34 @@ export const AuthApi = {
   login: async (dni: string, contrasena: string): Promise<LoginResponse> => {
     const data = await apiClient<LoginResponse>('/auth/login', {
       method: 'POST',
+      headers: { 'X-App': 'oficina' },
       body: JSON.stringify({ dni, contrasena }),
     });
     setToken(data.accessToken);
     setRefreshToken(data.refreshToken);
     setSavedUser(data.usuario);
+    return data;
+  },
+  me: async () => {
+    const usuario = await apiClient<{
+      id: string;
+      dni: string;
+      nombres: string;
+      rol: string;
+      rolNombre?: string;
+      debeCambiarContrasena?: boolean;
+      permisos?: PermisosUsuario;
+    }>('/auth/me');
+    setSavedUser(usuario);
+    return usuario;
+  },
+  cambiarContrasena: async (contrasenaActual: string, contrasenaNueva: string) => {
+    const data = await apiClient<{ accessToken: string; refreshToken: string }>('/auth/cambiar-contrasena', {
+      method: 'POST',
+      body: JSON.stringify({ contrasenaActual, contrasenaNueva }),
+    });
+    setToken(data.accessToken);
+    setRefreshToken(data.refreshToken);
     return data;
   },
   logout: () => {
