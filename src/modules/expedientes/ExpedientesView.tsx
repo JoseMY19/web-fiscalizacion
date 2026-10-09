@@ -268,65 +268,6 @@ export const ExpedientesView: React.FC = () => {
 
       {message && <Alert type={message.type}>{message.text}</Alert>}
 
-      {/* KPI Stats Cards */}
-      <div
-        className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-[16px] mb-[24px]"
-      >
-        <div
-          className="bg-[#ffffff] rounded-[12px] py-[16px] px-[20px] border border-[#e2e8f0] shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex items-center justify-between"
-        >
-          <div>
-            <span className="text-[12px] font-semibold text-[#64748b]">Por Calificar</span>
-            <div className="text-[26px] font-extrabold text-[#0f172a] mt-[2px]">{expedientes.length}</div>
-            <span className="text-[11px] text-[#0284c7] font-semibold">En bandeja de validación</span>
-          </div>
-          <div className="w-[42px] h-[42px] rounded-[10px] bg-[#e0f2fe] text-[#0284c7] flex items-center justify-center">
-            <ExpedienteIcon size={22} />
-          </div>
-        </div>
-
-        <div
-          className="bg-[#ffffff] rounded-[12px] py-[16px] px-[20px] border border-[#e2e8f0] shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex items-center justify-between"
-        >
-          <div>
-            <span className="text-[12px] font-semibold text-[#64748b]">Actas Observadas</span>
-            <div className="text-[26px] font-extrabold text-[#dc2626] mt-[2px]">{observadas.length}</div>
-            <span className="text-[11px] text-[#dc2626] font-semibold">Devueltas para subsanación</span>
-          </div>
-          <div className="w-[42px] h-[42px] rounded-[10px] bg-[#fee2e2] text-[#dc2626] flex items-center justify-center">
-            <AlertTriangleIcon size={22} />
-          </div>
-        </div>
-
-        <div
-          className="bg-[#ffffff] rounded-[12px] py-[16px] px-[20px] border border-[#e2e8f0] shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex items-center justify-between"
-        >
-          <div>
-            <span className="text-[12px] font-semibold text-[#64748b]">Ingreso Físico Recibido</span>
-            <div className="text-[26px] font-extrabold text-[#059669] mt-[2px]">
-              {expedientes.filter((e) => e.fechaIngresoFisico).length}
-            </div>
-            <span className="text-[11px] text-[#059669] font-semibold">Talonarios en custodia</span>
-          </div>
-          <div className="w-[42px] h-[42px] rounded-[10px] bg-[#dcfce7] text-[#059669] flex items-center justify-center">
-            <FileTextIcon size={22} />
-          </div>
-        </div>
-
-        <div
-          className="bg-[#ffffff] rounded-[12px] py-[16px] px-[20px] border border-[#e2e8f0] shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex items-center justify-between"
-        >
-          <div>
-            <span className="text-[12px] font-semibold text-[#64748b]">Conformidad Legal</span>
-            <div className="text-[26px] font-extrabold text-[#0f172a] mt-[2px]">100%</div>
-            <span className="text-[11px] text-[#64748b] font-semibold">Art. 248° TUO LPAG</span>
-          </div>
-          <div className="w-[42px] h-[42px] rounded-[10px] bg-[#f1f5f9] text-[#475569] flex items-center justify-center">
-            <CheckCircleIcon size={22} />
-          </div>
-        </div>
-      </div>
-
       {/* Main Container Card */}
       <div className="bg-[#ffffff] rounded-[12px] border border-[#e2e8f0] shadow-[0_1px_3px_rgba(0,0,0,0.05)] overflow-hidden">
         {/* Segmented Control Bar & Search Toolbar */}
