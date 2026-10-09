@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { AuthApi, PrescripcionApi, SolicitudPrescripcionItem, abrirDocumentoPrescripcion, descargarRsgPrescripcion } from '../../api';
+import { PrescripcionApi, SolicitudPrescripcionItem, abrirDocumentoPrescripcion, descargarRsgPrescripcion } from '../../api';
+import { UsuariosApi } from '../../api/usuarios';
 import { Alert, Badge, Button, Input, Modal, Spinner, Textarea } from '../../components/common/Common';
 import { claseBloqueTramite, claseFilaTramite, claseInputArchivo, claseSelectTramite, PasoTramite } from '../../components/common/PasoTramite';
 import { EyeIcon, FileTextIcon, PenToolIcon, PlusIcon } from '../../components/icons/Icons';
@@ -54,7 +55,7 @@ export const PrescripcionPanel: React.FC<Props> = ({ solicitudId, onClose, onCam
       setAnalisis(d?.analisisTexto ?? '');
       setResponsableId(d?.estadoCuenta.responsableId ?? '');
     });
-    AuthApi.getUsuariosPorRol('ADMIN')
+    UsuariosApi.opciones('prescripcion')
       .then((u) => setUsuarios(Array.isArray(u) ? u : []))
       .catch(() => undefined);
   }, [recargar]);

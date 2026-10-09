@@ -1,5 +1,6 @@
 import React from 'react';
-import { puedeVerModulo as puedeVerModuloPermisos, PermisosUsuario } from '../../lib/permisos';
+import { puedeVerModulo as puedeVerModuloPermisos, puedeEditarModulo, PermisosUsuario } from '../../lib/permisos';
+import { AvisoSoloLectura } from '../common/AvisoSoloLectura';
 import {
   DashboardIcon,
   ExpedienteIcon,
@@ -311,7 +312,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         </header>
 
         {/* Page Body */}
-        <main className="flex-1 w-full max-w-[1600px] mx-auto pt-[24px] px-[32px] pb-[48px] max-md:p-[16px]">{children}</main>
+        <main className="flex-1 w-full max-w-[1600px] mx-auto pt-[24px] px-[32px] pb-[48px] max-md:p-[16px]">
+          {currentModule !== 'dashboard' && currentModule !== 'usuarios' && !puedeEditarModulo(currentModule, user?.permisos) && (
+            <AvisoSoloLectura rolNombre={user?.rolNombre} />
+          )}
+          {children}
+        </main>
       </div>
     </div>
   );

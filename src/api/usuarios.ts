@@ -88,6 +88,9 @@ export const UsuariosApi = {
     return apiClient<UsuarioListaResponse>(`/usuarios?${params.toString()}`);
   },
 
+  opciones: (modulo: string, nivel: 'VER' | 'EDITAR' = 'EDITAR') =>
+    apiClient<{ id: string; dni: string; nombres: string }[]>(`/usuarios/opciones?modulo=${modulo}&nivel=${nivel}`),
+
   obtener: (id: string) => apiClient<Usuario>(`/usuarios/${id}`),
 
   crear: (payload: CrearUsuarioPayload) =>

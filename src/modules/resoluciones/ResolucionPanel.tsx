@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  AuthApi,
   IfiApi,
   IfiDocumentoAdjuntoItem,
   IntervencionesApi,
@@ -14,6 +13,7 @@ import {
   descargarDocumentoResolucion,
   descargarDocumentoWord,
 } from '../../api';
+import { UsuariosApi } from '../../api/usuarios';
 import { Alert, Badge, Button, Input, Modal, Spinner, Textarea } from '../../components/common/Common';
 import { useConfirm } from '../../context/ConfirmContext';
 import { DescargosLista } from '../descargos/DescargosLista';
@@ -241,7 +241,7 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
       IfiApi.getDocumentos(expedienteId)
         .then((docs) => vigente && setDocsIfi(Array.isArray(docs) ? docs : []))
         .catch(() => undefined);
-      AuthApi.getUsuariosPorRol('ADMIN')
+      UsuariosApi.opciones('resoluciones')
         .then((u) => vigente && setUsuarios(Array.isArray(u) ? u : []))
         .catch(() => undefined);
     })();
