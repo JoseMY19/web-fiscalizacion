@@ -122,31 +122,24 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       {/* SIDEBAR INSTITUCIONAL - AZUL NAVY INSTITUCIONAL                   */}
       {/* ================================================================ */}
       <aside
-        className="w-[280px] bg-[linear-gradient(180deg,#163666_0%,#10264a_100%)] text-[#ffffff] flex flex-col shrink-0 border-r border-r-[rgba(255,255,255,0.1)] shadow-[4px_0_20px_rgba(16,38,74,0.25)] z-[100]"
+        className="w-[280px] sticky top-0 h-screen overflow-hidden bg-[linear-gradient(180deg,#163666_0%,#10264a_100%)] text-[#ffffff] flex flex-col shrink-0 border-r border-r-[rgba(255,255,255,0.1)] shadow-[4px_0_20px_rgba(16,38,74,0.25)] z-[100]"
       >
         {/* Brand Header con Logo Oficial SJL */}
         <div
-          className="pt-[24px] px-[20px] pb-[20px] border-b border-b-[rgba(255,255,255,0.1)] flex flex-col items-center justify-center text-center gap-[14px] bg-[rgba(255,255,255,0.02)]"
+          className="shrink-0 pt-[20px] px-[20px] pb-[10px] border-b border-b-[rgba(255,255,255,0.1)] flex flex-col items-center justify-center text-center gap-[4px] bg-[rgba(255,255,255,0.02)]"
         >
           <div className="flex items-center justify-center w-full">
             <img
               src="/logo-sjl-white.png"
               alt="Municipalidad de San Juan de Lurigancho"
-              className="h-[66px] w-auto max-w-[220px] object-contain"
+              className="h-[60px] w-auto max-w-[200px] object-contain scale-[1.25]"
             />
           </div>
-          <div className="text-center">
-            <div className="text-[13px] font-bold text-[#ffffff] tracking-[0.2px]">
-              Fiscalización Administrativa
-            </div>
-            <div className="text-[11px] text-[#bfdbfe] mt-[3px]">
-              MDSJL • Sistema Sancionador PAS
-            </div>
-          </div>
+          <div className="text-[13.5px] font-semibold uppercase tracking-[1.4px] text-[#93c5fd]">Sistema Sancionador PAS</div>
         </div>
 
         {/* Navigation Section */}
-        <div className="py-[16px] px-[12px] flex-1 overflow-y-auto">
+        <div className="py-[12px] px-[12px] flex-1 min-h-0 overflow-y-auto [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.12)_transparent]">
           <div
             className="text-[11px] font-semibold uppercase tracking-[0.8px] text-[#93c5fd] pt-[4px] px-[12px] pb-[8px] opacity-[0.75]"
           >
@@ -162,7 +155,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                 <button
                   key={item.id}
                   onClick={() => onSelectModule(item.id)}
-                  className={`flex items-center justify-between py-[9px] px-[12px] rounded-[6px] border-0 cursor-pointer text-[13px] [transition:background-color_150ms_ease,color_150ms_ease] text-left w-full shadow-none ${active ? 'bg-[rgba(255,255,255,0.12)]' : 'bg-transparent'} ${active ? 'text-[#ffffff]' : 'text-[#cbd5e1] hover:bg-[rgba(255,255,255,0.06)] hover:text-[#ffffff]'} ${active ? 'font-semibold' : 'font-normal'}`}
+                  className={`flex items-center justify-between py-[8px] px-[12px] rounded-[6px] border-0 cursor-pointer text-[13px] [transition:background-color_150ms_ease,color_150ms_ease] text-left w-full shadow-none ${active ? 'bg-[rgba(255,255,255,0.12)]' : 'bg-transparent'} ${active ? 'text-[#ffffff]' : 'text-[#cbd5e1] hover:bg-[rgba(255,255,255,0.06)] hover:text-[#ffffff]'} ${active ? 'font-semibold' : 'font-normal'}`}
                 >
                   <div className="flex items-center gap-[10px]">
                     <span className={`flex items-center ${active ? 'text-[#38bdf8]' : 'text-[#94a3b8]'}`}>
@@ -196,10 +189,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
         {/* User Profile & Logout in Azul Navy */}
         <div
-          className="p-[16px] border-t border-t-[rgba(255,255,255,0.1)] bg-[#0c1f3c]"
+          className="shrink-0 py-[14px] px-[16px] border-t border-t-[rgba(255,255,255,0.1)] bg-[#0c1f3c]"
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-[10px] min-w-0">
+            <div className="flex items-center gap-[10px] min-w-0" title={`DNI ${user?.dni ?? ''}`}>
               <div
                 className="w-[36px] h-[36px] rounded-full bg-[#1d4ed8] text-[#ffffff] flex items-center justify-center font-bold text-[13px] shrink-0 border border-[rgba(255,255,255,0.2)]"
               >
@@ -212,9 +205,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                 >
                   {cleanName}
                 </div>
-                <div className="text-[11px] text-[#93c5fd]">
-                  {cleanRole} • DNI: {user?.dni ?? '---'}
-                </div>
+                <div className="text-[11px] text-[#93c5fd] whitespace-nowrap overflow-hidden text-ellipsis">{cleanRole}</div>
               </div>
             </div>
             <div className="flex items-center gap-[6px]">
