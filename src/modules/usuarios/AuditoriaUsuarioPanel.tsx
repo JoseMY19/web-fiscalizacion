@@ -1,128 +1,88 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Spinner, Alert } from '../../components/common/Common';
-import { UsuariosApi, AuditoriaItem } from '../../api/usuarios';
-import { formatearFechaHora } from '../../lib/fechas';
+import { Alert, Modal, Spinner } from '../../components/common/Common';
+import { AuditoriaItem, Usuario, UsuariosApi } from '../../api/usuarios';
+import { ETIQUETA_ACCION_AUDITORIA, ETIQUETA_CAMPO, fechaHora } from './usuariosUi';
 
-interface AuditoriaUsuarioPanelProps {
-  isOpen: boolean;
-  onClose: () => void;
-  usuarioId: string;
-  usuarioNombre: string;
+interface Props {
+  usuario: Usuario | null;
+  onCerrar: () => void;
 }
 
-const ACCIONES_LABELS: Record<string, string> = {
-  USUARIO_CREADO: 'Usuario creado',
-  USUARIO_ACTUALIZADO: 'Usuario actualizado',
-  USUARIO_ACTIVADO: 'Usuario activado',
-  USUARIO_DESACTIVADO: 'Usuario desactivado',
-  CONTRASENA_RESTABLECIDA: 'Contraseña restablecida',
-  SESIONES_REVOCADAS: 'Sesiones revocadas',
-  DISPOSITIVO_LIBERADO: 'Dispositivo liberado',
+const valorLegible = (v: unknown): string => {
+  if (v === null || v === undefined || v === '') return '—';
+  if (typeof v === 'boolean') return v ? 'Sí' : 'No';
+  if (typeof v === 'object') return JSON.stringify(v);
+  return String(v);
 };
 
-function obtenerLabelAccion(accion: string): string {
-  return ACCIONES_LABELS[accion] || accion;
+// El título del evento ya lo dice; estos campos solo agregarían ruido técnico.
+const CAMPOS_OCULTOS = new Set(['id', 'rolId', 'deviceIdActual', 'debeCambiarContrasena', 'contrasenaGenerada', 'activo']);
+
+/** Campos que cambiaron entre `antes` y `despues`. */
+function cambios(item: AuditoriaItem): { campo: string; antes: string; despues: string }[] {
+  const antes = item.antes ?? {};
+  const despues = item.despues ?? {};
+  return Array.from(new Set([...Object.keys(antes), ...Object.keys(despues)]))
+    .filter((k) => !CAMPOS_OCULTOS.has(k) && valorLegible(antes[k]) !== valorLegible(despues[k]))
+    .map((k) => ({ campo: ETIQUETA_CAMPO[k] ?? k, antes: valorLegible(antes[k]), despues: valorLegible(despues[k]) }));
 }
 
-export const AuditoriaUsuarioPanel: React.FC<AuditoriaUsuarioPanelProps> = ({
-  isOpen,
-  onClose,
-  usuarioId,
-  usuarioNombre,
-}) => {
-  const [auditoria, setAuditoria] = useState<AuditoriaItem[] | null>(null);
+export const AuditoriaUsuarioPanel: React.FC<Props> = ({ usuario, onCerrar }) => {
+  const [items, setItems] = useState<AuditoriaItem[]>([]);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isOpen) return;
-
-    const cargar = async () => {
-      setCargando(true);
-      setError(null);
-      try {
-        const data = await UsuariosApi.obtenerAuditoria(usuarioId);
-        setAuditoria(Array.isArray(data) ? data : []);
-      } catch (err: any) {
-        setError(err.message || 'No se pudo cargar el historial de auditoría.');
-      } finally {
-        setCargando(false);
-      }
-    };
-
-    cargar();
-  }, [isOpen, usuarioId]);
+    if (!usuario) return;
+    setCargando(true);
+    setError(null);
+    UsuariosApi.obtenerAuditoria(usuario.id)
+      .then(setItems)
+      .catch((err) => setError(err.message || 'No se pudo cargar el historial.'))
+      .finally(() => setCargando(false));
+  }, [usuario]);
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={`Historial de ${usuarioNombre}`}
-      maxWidth="640px"
-    >
-      {cargando && (
-        <div className="flex items-center justify-center gap-[12px] py-[48px]">
-          <Spinner size={20} />
-          <span className="text-[13px] text-text-muted">Cargando historial...</span>
+    <Modal isOpen={!!usuario} onClose={onCerrar} title={`Historial de ${usuario?.nombres ?? ''}`} maxWidth="600px">
+      {cargando ? (
+        <div className="py-[40px] flex justify-center">
+          <Spinner size={26} />
         </div>
-      )}
-
-      {error && <Alert type="error">{error}</Alert>}
-
-      {!cargando && auditoria && auditoria.length === 0 && (
-        <div className="py-[32px] text-center">
-          <p className="text-[13px] text-text-muted">Sin registros de auditoría.</p>
-        </div>
-      )}
-
-      {!cargando && auditoria && auditoria.length > 0 && (
-        <div className="space-y-[12px]">
-          {auditoria.map((item) => (
-            <div
-              key={item.id}
-              className="border border-border rounded-[6px] p-[12px]"
-            >
-              <div className="flex items-start justify-between mb-[8px]">
-                <div>
-                  <p className="text-[13px] font-semibold text-midnight-900">
-                    {obtenerLabelAccion(item.accion)}
-                  </p>
-                  <p className="text-[12px] text-text-muted mt-[2px]">
-                    Por: {item.actorNombres}
-                  </p>
+      ) : error ? (
+        <Alert type="error" className="mb-0!">
+          {error}
+        </Alert>
+      ) : items.length === 0 ? (
+        <p className="text-[13px] text-text-muted text-center py-[30px] m-0">Todavía no hay cambios registrados.</p>
+      ) : (
+        <ol className="list-none m-0 p-0">
+          {items.map((it, i) => {
+            const lista = cambios(it);
+            return (
+              <li key={it.id} className="relative pl-[26px] pb-[18px] last:pb-0">
+                {i < items.length - 1 && <span className="absolute left-[6px] top-[16px] bottom-0 w-[2px] bg-border" />}
+                <span className="absolute left-0 top-[4px] w-[14px] h-[14px] rounded-full bg-white border-[3px] border-primary-500" />
+                <div className="flex items-baseline justify-between gap-[12px] flex-wrap">
+                  <span className="text-[13px] font-bold text-text-main">{ETIQUETA_ACCION_AUDITORIA[it.accion] ?? it.accion}</span>
+                  <span className="text-[12px] text-text-muted">{fechaHora(it.createdAt)}</span>
                 </div>
-                <p className="text-[11px] text-text-muted text-right">
-                  {formatearFechaHora(item.createdAt)}
-                </p>
-              </div>
-
-              {(item.antes || item.despues) && (
-                <div className="mt-[8px] space-y-[4px] text-[12px]">
-                  {item.antes && Object.keys(item.antes).length > 0 && (
-                    <div className="bg-[#fff1f2] p-[8px] rounded-[4px] border border-[#fecdd3]">
-                      <p className="font-semibold text-[#be123c] mb-[4px]">Antes:</p>
-                      {Object.entries(item.antes).map(([clave, valor]) => (
-                        <div key={clave} className="text-[#991b1b]">
-                          <span className="font-semibold">{clave}:</span> {String(valor || '—')}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {item.despues && Object.keys(item.despues).length > 0 && (
-                    <div className="bg-[#ecfdf5] p-[8px] rounded-[4px] border border-[#a7f3d0]">
-                      <p className="font-semibold text-[#047857] mb-[4px]">Después:</p>
-                      {Object.entries(item.despues).map(([clave, valor]) => (
-                        <div key={clave} className="text-[#065f46]">
-                          <span className="font-semibold">{clave}:</span> {String(valor || '—')}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+                <div className="text-[12px] text-text-muted mt-[2px]">por {it.actorNombres}</div>
+                {lista.length > 0 && (
+                  <div className="mt-[8px] rounded-sm border border-border-subtle bg-bg-subtle py-[6px] px-[10px]">
+                    {lista.map((c) => (
+                      <div key={c.campo} className="text-[12px] py-[2px] grid grid-cols-[90px_1fr] gap-[8px]">
+                        <span className="font-semibold text-text-secondary">{c.campo}</span>
+                        <span className="text-text-muted break-words">
+                          <span className="line-through">{c.antes}</span> → <span className="text-text-main font-medium">{c.despues}</span>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ol>
       )}
     </Modal>
   );

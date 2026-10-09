@@ -1,70 +1,51 @@
-import React, { useState } from 'react';
-import { Modal, Button, Alert } from '../../components/common/Common';
-import { CheckCircleIcon } from '../../components/icons/Icons';
+import React, { useEffect, useState } from 'react';
+import { Alert, Button, Modal } from '../../components/common/Common';
+import { CheckIcon } from '../../components/icons/Icons';
 
-interface ContrasenaTemporalModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  contrasena: string;
-  usuario: string;
+interface Props {
+  datos: { nombres: string; contrasena: string } | null;
+  onCerrar: () => void;
 }
 
-export const ContrasenaTemporalModal: React.FC<ContrasenaTemporalModalProps> = ({
-  isOpen,
-  onClose,
-  contrasena,
-  usuario,
-}) => {
-  const [copiado, setCopiado] = useState(false);
+export const ContrasenaTemporalModal: React.FC<Props> = ({ datos, onCerrar }) => {
+  const [copiada, setCopiada] = useState(false);
+
+  useEffect(() => setCopiada(false), [datos]);
 
   const copiar = async () => {
+    if (!datos) return;
     try {
-      await navigator.clipboard.writeText(contrasena);
-      setCopiado(true);
-      setTimeout(() => setCopiado(false), 2000);
+      await navigator.clipboard.writeText(datos.contrasena);
+      setCopiada(true);
     } catch {
-      // Fallback para navegadores sin soporte
-      const textarea = document.createElement('textarea');
-      textarea.value = contrasena;
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-      setCopiado(true);
-      setTimeout(() => setCopiado(false), 2000);
+      setCopiada(false);
     }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Contraseña Temporal" maxWidth="480px">
-      <div className="space-y-[16px]">
-        <div className="flex items-start gap-[12px] p-[12px] bg-[#ecfdf5] border border-[#a7f3d0] rounded-[6px]">
-          <CheckCircleIcon size={20} className="text-[#047857] mt-[2px] flex-shrink-0" />
-          <p className="text-[13px] text-[#065f46]">
-            Usuario <span className="font-semibold">{usuario}</span> creado exitosamente. Se ha generado una contraseña temporal.
+    <Modal
+      isOpen={!!datos}
+      onClose={onCerrar}
+      title="Contraseña temporal"
+      maxWidth="460px"
+      footer={<Button onClick={onCerrar}>Listo, ya la guardé</Button>}
+    >
+      {datos && (
+        <>
+          <p className="text-[13px] text-text-secondary mt-0 mb-[14px]">
+            Entrégale esta contraseña a <strong className="text-text-main">{datos.nombres}</strong>.
           </p>
-        </div>
-
-        <div>
-          <p className="text-[12px] font-semibold text-text-secondary mb-[8px]">Contraseña temporal:</p>
-          <div className="bg-[#f8fafc] border border-border rounded-[6px] p-[16px] flex items-center justify-between">
-            <code className="font-mono text-[16px] font-semibold text-midnight-900 tracking-[0.05em]">{contrasena}</code>
-            <Button variant="secondary" size="sm" onClick={copiar}>
-              {copiado ? '✓ Copiado' : 'Copiar'}
+          <div className="flex items-center gap-[10px] p-[14px] rounded-md border border-border bg-bg-subtle mb-[16px]">
+            <code className="flex-1 text-[22px] font-bold tracking-[2px] text-midnight-900 select-all break-all">{datos.contrasena}</code>
+            <Button size="sm" variant={copiada ? 'success' : 'secondary'} icon={copiada ? <CheckIcon size={14} /> : undefined} onClick={copiar}>
+              {copiada ? 'Copiada' : 'Copiar'}
             </Button>
           </div>
-        </div>
-
-        <Alert type="warning">
-          Se muestra una sola vez. El usuario deberá cambiarla al ingresar.
-        </Alert>
-      </div>
-
-      <div className="mt-[24px] flex justify-end">
-        <Button variant="primary" onClick={onClose}>
-          Entendido
-        </Button>
-      </div>
+          <Alert type="warning" className="mb-0!">
+            Se muestra <strong>una sola vez</strong>: al cerrar esta ventana no se puede volver a ver. El usuario deberá cambiarla en su primer ingreso.
+          </Alert>
+        </>
+      )}
     </Modal>
   );
 };

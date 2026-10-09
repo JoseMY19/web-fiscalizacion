@@ -1,272 +1,210 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Button, Input, Select, Alert, Spinner } from '../../components/common/Common';
-import { UsuariosApi, Usuario, Rol } from '../../api/usuarios';
+import { Alert, Button, Input, Modal, Select } from '../../components/common/Common';
+import { cn } from '../../lib/cn';
+import { Usuario, UsuariosApi } from '../../api/usuarios';
+import { RolResumen } from '../../api/roles';
+import { CORREO_VALIDO, DNI_VALIDO, motivoContrasenaInvalida } from './usuariosUi';
 
-interface UsuarioFormModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  usuario?: Usuario | null;
-  onSuccess: (usuario: Usuario, contrasenaTemporal?: string) => void;
+interface Props {
+  abierto: boolean;
+  usuario: Usuario | null;
+  roles: RolResumen[];
+  onCerrar: () => void;
+  onGuardado: (r: { creado: boolean; nombres: string; contrasenaTemporal: string | null }) => void;
 }
 
-const validarDNI = (dni: string): boolean => {
-  const dniTrimmed = dni.trim();
-  if (dniTrimmed.length === 8) {
-    return /^\d{8}$/.test(dniTrimmed);
-  }
-  if (dniTrimmed.length >= 9 && dniTrimmed.length <= 12) {
-    return /^[a-zA-Z0-9]{9,12}$/.test(dniTrimmed);
-  }
-  return false;
-};
+type ModoContrasena = 'temporal' | 'definir';
 
-const validarContrasena = (contrasena: string): boolean => {
-  if (contrasena.length < 8) return false;
-  const tieneLetra = /[a-zA-Z]/.test(contrasena);
-  const tieneNumero = /[0-9]/.test(contrasena);
-  return tieneLetra && tieneNumero;
-};
+const Seccion: React.FC<{ titulo: string; children: React.ReactNode }> = ({ titulo, children }) => (
+  <section className="mb-[18px] last:mb-0">
+    <h4 className="text-[11px] font-bold uppercase tracking-[0.6px] text-text-muted mb-[10px] pb-[6px] border-b border-border-subtle">{titulo}</h4>
+    {children}
+  </section>
+);
 
-export const UsuarioFormModal: React.FC<UsuarioFormModalProps> = ({
-  isOpen,
-  onClose,
-  usuario,
-  onSuccess,
-}) => {
+export const UsuarioFormModal: React.FC<Props> = ({ abierto, usuario, roles, onCerrar, onGuardado }) => {
   const esEdicion = !!usuario;
-
-  // Datos del formulario
   const [dni, setDni] = useState('');
   const [nombres, setNombres] = useState('');
-  const [rolId, setRolId] = useState('');
   const [cargo, setCargo] = useState('');
   const [correo, setCorreo] = useState('');
-
-  // Contraseña (solo al crear)
-  const [generarTemporal, setGenerarTemporal] = useState(true);
+  const [rolId, setRolId] = useState('');
+  const [modo, setModo] = useState<ModoContrasena>('temporal');
   const [contrasena, setContrasena] = useState('');
-
-  // Estados
-  const [roles, setRoles] = useState<Rol[]>([]);
-  const [cargando, setCargando] = useState(false);
+  const [errores, setErrores] = useState<Record<string, string>>({});
+  const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [erroresValidacion, setErroresValidacion] = useState<Record<string, string>>({});
 
-  // Cargar roles al abrir
   useEffect(() => {
-    if (!isOpen) return;
+    if (!abierto) return;
+    setDni(usuario?.dni ?? '');
+    setNombres(usuario?.nombres ?? '');
+    setCargo(usuario?.cargo ?? '');
+    setCorreo(usuario?.correo ?? '');
+    setRolId(usuario?.rolId ?? '');
+    setModo('temporal');
+    setContrasena('');
+    setErrores({});
+    setErrorGeneral(null);
+  }, [abierto, usuario]);
 
-    const cargarRoles = async () => {
-      setCargando(true);
-      setError(null);
-      try {
-        const data = await UsuariosApi.listarRolesParaSelect();
-        const rolesActivos = (data.roles || []).filter((r) => r.activo);
-        setRoles(rolesActivos);
-      } catch (err: any) {
-        setError(err.message || 'No se pudieron cargar los roles.');
-      } finally {
-        setCargando(false);
-      }
-    };
-
-    cargarRoles();
-
-    if (esEdicion && usuario) {
-      setDni(usuario.dni);
-      setNombres(usuario.nombres);
-      setRolId(usuario.rolId);
-      setCargo(usuario.cargo || '');
-      setCorreo(usuario.correo || '');
-    } else {
-      setDni('');
-      setNombres('');
-      setRolId('');
-      setCargo('');
-      setCorreo('');
-      setGenerarTemporal(true);
-      setContrasena('');
-    }
-    setErroresValidacion({});
-  }, [isOpen, usuario, esEdicion]);
+  // Un rol inactivo no se asigna, pero si el usuario ya lo tiene se muestra para no perderlo.
+  const opcionesRol = roles.filter((r) => r.activo || r.id === usuario?.rolId);
+  const rolElegido = roles.find((r) => r.id === rolId);
 
   const validar = (): boolean => {
-    const errores: Record<string, string> = {};
-
-    if (!dni.trim()) {
-      errores.dni = 'El DNI es requerido.';
-    } else if (!validarDNI(dni)) {
-      errores.dni = 'DNI inválido (8 dígitos o 9-12 alfanuméricos).';
+    const e: Record<string, string> = {};
+    if (!esEdicion && !DNI_VALIDO.test(dni.trim())) e.dni = 'DNI de 8 dígitos o carné de extranjería de 9 a 12 caracteres.';
+    if (!nombres.trim()) e.nombres = 'Ingresa los nombres y apellidos.';
+    if (correo.trim() && !CORREO_VALIDO.test(correo.trim())) e.correo = 'El correo no tiene un formato válido.';
+    if (!rolId) e.rolId = 'Elige un rol.';
+    if (!esEdicion && modo === 'definir') {
+      const motivo = motivoContrasenaInvalida(contrasena);
+      if (motivo) e.contrasena = motivo;
     }
-
-    if (!nombres.trim()) {
-      errores.nombres = 'El nombre es requerido.';
-    }
-
-    if (!rolId) {
-      errores.rolId = 'Debe seleccionar un rol.';
-    }
-
-    if (!esEdicion && !generarTemporal && contrasena && !validarContrasena(contrasena)) {
-      errores.contrasena = 'La contraseña debe tener mínimo 8 caracteres (con letra y número).';
-    }
-
-    setErroresValidacion(errores);
-    return Object.keys(errores).length === 0;
+    setErrores(e);
+    return Object.keys(e).length === 0;
   };
 
-  const manejarGuardar = async () => {
+  const guardar = async () => {
     if (!validar()) return;
-
     setGuardando(true);
-    setError(null);
-
+    setErrorGeneral(null);
     try {
-      if (esEdicion && usuario) {
-        // Editar
-        const usuarioActualizado = await UsuariosApi.editar(usuario.id, {
-          nombres,
-          cargo: cargo || undefined,
-          correo: correo || undefined,
-          rolId,
+      if (usuario) {
+        await UsuariosApi.editar(usuario.id, {
+          nombres: nombres.trim(),
+          cargo: cargo.trim(),
+          correo: correo.trim() || undefined,
+          ...(rolId !== usuario.rolId ? { rolId } : {}),
         });
-        onSuccess(usuarioActualizado);
+        onGuardado({ creado: false, nombres: nombres.trim(), contrasenaTemporal: null });
       } else {
-        // Crear
-        const payload = {
-          dni,
-          nombres,
+        const r = await UsuariosApi.crear({
+          dni: dni.trim(),
+          nombres: nombres.trim(),
           rolId,
-          cargo: cargo || undefined,
-          correo: correo || undefined,
-          contrasena: !generarTemporal && contrasena ? contrasena : undefined,
-        };
-        const resultado = await UsuariosApi.crear(payload);
-        onSuccess(resultado.usuario, resultado.contrasenaTemporal || undefined);
+          cargo: cargo.trim() || undefined,
+          correo: correo.trim() || undefined,
+          contrasena: modo === 'definir' ? contrasena : undefined,
+        });
+        onGuardado({ creado: true, nombres: r.usuario.nombres, contrasenaTemporal: r.contrasenaTemporal });
       }
-      onClose();
     } catch (err: any) {
-      setError(err.message || 'Error al guardar el usuario.');
+      setErrorGeneral(err.message || 'No se pudo guardar el usuario.');
     } finally {
       setGuardando(false);
     }
   };
 
+  const OpcionContrasena: React.FC<{ valor: ModoContrasena; titulo: string; detalle: string }> = ({ valor, titulo, detalle }) => (
+    <button
+      type="button"
+      onClick={() => setModo(valor)}
+      className={cn(
+        'flex-1 text-left p-[12px] rounded-sm border cursor-pointer bg-white [transition:all_150ms]',
+        modo === valor ? 'border-primary-600 bg-primary-50 shadow-[0_0_0_1px_var(--color-primary-600)]' : 'border-border hover:border-border-dark',
+      )}
+    >
+      <div className="flex items-center gap-[8px]">
+        <span
+          className={cn(
+            'w-[14px] h-[14px] rounded-full border-2 shrink-0',
+            modo === valor ? 'border-primary-600 bg-primary-600 shadow-[inset_0_0_0_2px_white]' : 'border-border-dark',
+          )}
+        />
+        <span className="text-[13px] font-semibold text-text-main">{titulo}</span>
+      </div>
+      <p className="text-[12px] text-text-muted mt-[4px] ml-[22px] mb-0">{detalle}</p>
+    </button>
+  );
+
   return (
     <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={esEdicion ? 'Editar Usuario' : 'Nuevo Usuario'}
-      maxWidth="520px"
+      isOpen={abierto}
+      onClose={onCerrar}
+      title={esEdicion ? 'Editar usuario' : 'Nuevo usuario'}
+      maxWidth="640px"
       footer={
         <>
-          <Button variant="secondary" onClick={onClose}>
+          <Button variant="secondary" onClick={onCerrar} disabled={guardando}>
             Cancelar
           </Button>
-          <Button variant="primary" loading={guardando} onClick={manejarGuardar}>
-            {esEdicion ? 'Guardar Cambios' : 'Crear Usuario'}
+          <Button onClick={guardar} loading={guardando}>
+            {esEdicion ? 'Guardar cambios' : 'Crear usuario'}
           </Button>
         </>
       }
     >
-      {cargando && (
-        <div className="flex items-center justify-center gap-[12px] py-[32px]">
-          <Spinner size={20} />
-          <span className="text-[13px] text-text-muted">Cargando...</span>
-        </div>
-      )}
+      {errorGeneral && <Alert type="error">{errorGeneral}</Alert>}
 
-      {!cargando && (
-        <div className="space-y-[4px]">
-          {error && <Alert type="error">{error}</Alert>}
-
+      <Seccion titulo="Identificación">
+        <div className="grid grid-cols-[180px_1fr] gap-x-[14px] max-sm:grid-cols-1">
           <Input
-            label="DNI"
-            placeholder="8 dígitos o carné de extranjería"
+            label="DNI / CE"
             value={dni}
             onChange={(e) => setDni(e.target.value)}
             disabled={esEdicion}
-            error={erroresValidacion.dni}
+            error={errores.dni}
+            helperText={esEdicion ? 'Es el usuario de ingreso: no se edita.' : undefined}
+            className="font-mono"
+            maxLength={12}
+            autoFocus={!esEdicion}
           />
+          <Input label="Nombres y apellidos" value={nombres} onChange={(e) => setNombres(e.target.value)} error={errores.nombres} autoFocus={esEdicion} />
+        </div>
+      </Seccion>
 
-          <Input
-            label="Nombre completo"
-            placeholder="Nombre del usuario"
-            value={nombres}
-            onChange={(e) => setNombres(e.target.value)}
-            error={erroresValidacion.nombres}
-          />
+      <Seccion titulo="Cargo y contacto (opcional)">
+        <div className="grid grid-cols-2 gap-x-[14px] max-sm:grid-cols-1">
+          <Input label="Cargo" placeholder="Ej. Abogado instructor" value={cargo} onChange={(e) => setCargo(e.target.value)} />
+          <Input label="Correo" type="email" placeholder="nombre@munisjl.gob.pe" value={correo} onChange={(e) => setCorreo(e.target.value)} error={errores.correo} />
+        </div>
+      </Seccion>
 
-          <Select
-            label="Rol"
-            value={rolId}
-            onChange={(e) => setRolId(e.target.value)}
-            error={erroresValidacion.rolId}
-          >
-            <option value="">Seleccionar rol...</option>
-            {roles.map((rol) => (
-              <option key={rol.id} value={rol.id}>
-                {rol.nombre}
-              </option>
-            ))}
-          </Select>
+      <Seccion titulo="Acceso">
+        <Select
+          label="Rol"
+          value={rolId}
+          onChange={(e) => setRolId(e.target.value)}
+          error={errores.rolId}
+          helperText={
+            rolElegido?.descripcion ||
+            (esEdicion ? 'Si cambias el rol, se cerrarán las sesiones abiertas del usuario.' : 'Define a qué módulos entra y qué puede modificar.')
+          }
+        >
+          <option value="">Elige un rol…</option>
+          {opcionesRol.map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.nombre}
+              {!r.activo ? ' (inactivo)' : ''}
+            </option>
+          ))}
+        </Select>
 
-          <Input
-            label="Cargo (opcional)"
-            placeholder="P. ej.: Fiscalizador"
-            value={cargo}
-            onChange={(e) => setCargo(e.target.value)}
-          />
-
-          <Input
-            label="Correo (opcional)"
-            type="email"
-            placeholder="usuario@ejemplo.com"
-            value={correo}
-            onChange={(e) => setCorreo(e.target.value)}
-          />
-
-          {!esEdicion && (
-            <div className="mt-[20px] p-[12px] bg-[#f0f9ff] border border-[#bae6fd] rounded-[6px]">
-              <p className="text-[12px] text-[#0369a1] font-semibold mb-[12px]">Contraseña:</p>
-              <label className="flex items-center gap-[8px] mb-[10px]">
-                <input
-                  type="radio"
-                  checked={generarTemporal}
-                  onChange={() => {
-                    setGenerarTemporal(true);
-                    setContrasena('');
-                  }}
-                  className="cursor-pointer"
-                />
-                <span className="text-[12px]">Generar contraseña temporal (recomendado)</span>
-              </label>
-              <label className="flex items-center gap-[8px]">
-                <input
-                  type="radio"
-                  checked={!generarTemporal}
-                  onChange={() => setGenerarTemporal(false)}
-                  className="cursor-pointer"
-                />
-                <span className="text-[12px]">Definir contraseña ahora</span>
-              </label>
-
-              {!generarTemporal && (
+        {!esEdicion && (
+          <>
+            <label className="block text-[13px] font-semibold text-text-secondary mb-[6px]">Contraseña inicial</label>
+            <div className="flex gap-[10px] max-sm:flex-col">
+              <OpcionContrasena valor="temporal" titulo="Generar temporal" detalle="El sistema crea una y te la muestra una sola vez." />
+              <OpcionContrasena valor="definir" titulo="Definirla ahora" detalle="Tú la escribes y se la comunicas al usuario." />
+            </div>
+            {modo === 'definir' && (
+              <div className="mt-[12px]">
                 <Input
-                  label="Contraseña"
-                  type="password"
-                  placeholder="Min. 8 caracteres (letra + número)"
+                  type="text"
+                  placeholder="Mínimo 8 caracteres, con letras y números"
                   value={contrasena}
                   onChange={(e) => setContrasena(e.target.value)}
-                  error={erroresValidacion.contrasena}
-                  className="mt-[12px]"
+                  error={errores.contrasena}
+                  className="font-mono"
                 />
-              )}
-            </div>
-          )}
-        </div>
-      )}
+              </div>
+            )}
+            <p className="text-[12px] text-text-muted mt-[10px] mb-0">En ambos casos, el usuario deberá cambiarla en su primer ingreso.</p>
+          </>
+        )}
+      </Seccion>
     </Modal>
   );
 };
