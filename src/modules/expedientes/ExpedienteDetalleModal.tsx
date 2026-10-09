@@ -224,6 +224,9 @@ export const ExpedienteDetalleModal: React.FC<ExpedienteDetalleModalProps> = ({
                     <div>
                       <span className="text-text-muted">Motivo no identificado:</span>{' '}
                       <strong>{data.administrado.motivoNoIdentificado}</strong>
+                      {data.administrado.motivoNoIdentificadoDetalle && (
+                        <span className="block mt-[2px] text-text-main">{data.administrado.motivoNoIdentificadoDetalle}</span>
+                      )}
                     </div>
                   )}
                   <div>
@@ -380,7 +383,7 @@ export const ExpedienteDetalleModal: React.FC<ExpedienteDetalleModalProps> = ({
                     {data.actasMedidaProvisional.map((m, idx) => (
                       <div key={idx} className="p-[10px] border border-border rounded-[6px] flex justify-between items-center">
                         <div>
-                          <strong>{m.tipoMedida}</strong> — Acta N° {m.numeroCorrelativo}
+                          <strong>{m.tipoMedida}</strong> - Acta N° {m.numeroCorrelativo}
                           <div className="text-[12px] text-text-muted">{m.descripcion || 'Sin descripción adicional'} • {m.lugarEjecucion || 'En el predio'}</div>
                           {m.observacionesAdministrado && (
                             <div className="text-[12px] text-text-muted mt-[2px] italic">

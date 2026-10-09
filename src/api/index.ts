@@ -953,6 +953,7 @@ export interface BundleIntervencion {
   administrado?: {
     identificado: boolean;
     motivoNoIdentificado?: string;
+    motivoNoIdentificadoDetalle?: string;
     tipoDocumento?: string;
     numeroDocumento?: string;
     nombresRazonSocial?: string;
