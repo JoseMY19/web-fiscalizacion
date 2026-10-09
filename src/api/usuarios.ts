@@ -1,4 +1,4 @@
-import { apiClient } from './client';
+import { apiClient, BASE_URL, getToken } from './client';
 
 // ============================================================================
 // TIPOS
@@ -27,6 +27,7 @@ export interface Usuario {
   debeCambiarContrasena: boolean;
   ultimoAcceso: string | null;
   tieneDispositivo: boolean;
+  tieneFirmaRegistrada?: boolean;
   createdAt: string;
 }
 
@@ -133,4 +134,28 @@ export const UsuariosApi = {
   obtenerAuditoria: (id: string) => apiClient<AuditoriaItem[]>(`/usuarios/${id}/auditoria`),
 
   listarRolesParaSelect: () => apiClient<RolesResponse>('/roles'),
+
+  // Obtiene la URL de la firma del usuario (blob PNG)
+  obtenerFirmaUrl: async (id: string): Promise<string | null> => {
+    const token = getToken();
+    try {
+      const res = await fetch(`${BASE_URL}/usuarios/${id}/firma`, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+      const blob = await res.blob();
+      return URL.createObjectURL(blob);
+    } catch (err: any) {
+      throw new Error('No se pudo cargar la firma');
+    }
+  },
+
+  // Elimina la firma del usuario
+  quitarFirma: (id: string) =>
+    apiClient<void>(`/usuarios/${id}/firma`, {
+      method: 'DELETE',
+    }),
 };

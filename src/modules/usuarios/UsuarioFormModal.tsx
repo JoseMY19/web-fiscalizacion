@@ -4,6 +4,7 @@ import { cn } from '../../lib/cn';
 import { Usuario, UsuariosApi } from '../../api/usuarios';
 import { RolResumen } from '../../api/roles';
 import { CORREO_VALIDO, DNI_VALIDO, motivoContrasenaInvalida } from './usuariosUi';
+import { useConfirm } from '../../context/ConfirmContext';
 
 interface Props {
   abierto: boolean;
@@ -24,6 +25,7 @@ const Seccion: React.FC<{ titulo: string; children: React.ReactNode }> = ({ titu
 
 export const UsuarioFormModal: React.FC<Props> = ({ abierto, usuario, roles, onCerrar, onGuardado }) => {
   const esEdicion = !!usuario;
+  const confirm = useConfirm();
   const [dni, setDni] = useState('');
   const [nombres, setNombres] = useState('');
   const [cargo, setCargo] = useState('');
@@ -34,6 +36,7 @@ export const UsuarioFormModal: React.FC<Props> = ({ abierto, usuario, roles, onC
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
+  const [firmaUrl, setFirmaUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!abierto) return;
@@ -47,6 +50,27 @@ export const UsuarioFormModal: React.FC<Props> = ({ abierto, usuario, roles, onC
     setErrores({});
     setErrorGeneral(null);
   }, [abierto, usuario]);
+
+  // Firma registrada (solo edición). La URL del blob se libera al cambiar de usuario o cerrar.
+  useEffect(() => {
+    if (!abierto || !esEdicion || !usuario?.tieneFirmaRegistrada) {
+      setFirmaUrl(null);
+      return;
+    }
+    let vigente = true;
+    let url: string | null = null;
+    UsuariosApi.obtenerFirmaUrl(usuario.id)
+      .then((u) => {
+        url = u;
+        if (vigente) setFirmaUrl(u);
+        else if (u) URL.revokeObjectURL(u);
+      })
+      .catch(() => vigente && setFirmaUrl(null));
+    return () => {
+      vigente = false;
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [abierto, esEdicion, usuario?.id, usuario?.tieneFirmaRegistrada]);
 
   // Un rol inactivo no se asigna, pero si el usuario ya lo tiene se muestra para no perderlo.
   const opcionesRol = roles.filter((r) => r.activo || r.id === usuario?.rolId);
@@ -94,6 +118,24 @@ export const UsuarioFormModal: React.FC<Props> = ({ abierto, usuario, roles, onC
       setErrorGeneral(err.message || 'No se pudo guardar el usuario.');
     } finally {
       setGuardando(false);
+    }
+  };
+
+  // Maneja la eliminación de la firma del usuario
+  const handleQuitarFirma = async () => {
+    const confirmado = await confirm({
+      title: 'Quitar firma',
+      message: 'El usuario tendrá que volver a firmar en su próxima intervención.',
+      confirmLabel: 'Quitar',
+      variant: 'danger',
+    });
+    if (!confirmado || !usuario) return;
+
+    try {
+      await UsuariosApi.quitarFirma(usuario.id);
+      setFirmaUrl(null);
+    } catch (err) {
+      setErrorGeneral(err instanceof Error ? err.message : 'No se pudo quitar la firma.');
     }
   };
 
@@ -205,6 +247,22 @@ export const UsuarioFormModal: React.FC<Props> = ({ abierto, usuario, roles, onC
           </>
         )}
       </Seccion>
+
+      {/* Sección de firma registrada - solo en edición */}
+      {esEdicion && (
+        <Seccion titulo="Firma registrada">
+          {firmaUrl ? (
+            <div className="rounded-md border border-border bg-white p-[12px] flex items-center justify-between gap-[12px]">
+              <img src={firmaUrl} alt="Firma del usuario" className="max-h-[70px] w-auto object-contain" />
+              <Button variant="danger" size="sm" onClick={handleQuitarFirma}>
+                Quitar firma
+              </Button>
+            </div>
+          ) : (
+            <p className="text-[13px] text-text-muted">Sin firma registrada. Se guarda la primera vez que el usuario firma en la app de campo.</p>
+          )}
+        </Seccion>
+      )}
     </Modal>
   );
 };
