@@ -264,3 +264,26 @@ export const EmptyState: React.FC<{
     {action && <div className="mt-[16px]">{action}</div>}
   </div>
 );
+
+// ============================================================================
+// SELECT
+// ============================================================================
+interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+  label?: string;
+  error?: string;
+  helperText?: string;
+}
+
+export const Select: React.FC<SelectProps> = ({ label, error, helperText, className, children, ...props }) => (
+  <div className="mb-[14px] w-full">
+    {label && <label className={LABEL_CLASS}>{label}</label>}
+    <select
+      className={cn(FIELD_CLASS, '[transition:border-color_var(--transition-fast)]', error ? 'border-danger' : 'border-border', className)}
+      {...props}
+    >
+      {children}
+    </select>
+    {helperText && !error && <p className="text-[12px] mt-[4px] text-text-muted">{helperText}</p>}
+    {error && <p className="text-[12px] text-danger mt-[4px]">{error}</p>}
+  </div>
+);

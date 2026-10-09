@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
   ConfiguracionApi,
-  UsuariosAdminApi,
   FeriadoItem,
   ParametroUitItem,
 } from '../../api';
@@ -15,7 +14,6 @@ import {
   RefreshCwIcon,
   CheckCircleIcon,
   ShieldAlertIcon,
-  UserIcon,
 } from '../../components/icons/Icons';
 import { BasesMunicipalesConfig } from '../bases-municipales/BasesMunicipalesConfig';
 import { CatalogoCuisCrud } from '../catalogo-cuis/CatalogoCuisCrud';
@@ -38,18 +36,6 @@ export const ConfiguracionView: React.FC = () => {
 
   // Estados UIT
   const [parametrosUit, setParametrosUit] = useState<ParametroUitItem[]>([]);
-
-  // Estados Seguridad / Usuarios Admin (HU-29)
-  const [revocandoId, setRevocandoId] = useState<string | null>(null);
-  const [customUserId, setCustomUserId] = useState('');
-
-  // Lista de usuarios institucionales de desarrollo y operación
-  const usuariosSistema = [
-    { id: '10000001', dni: '10000001', nombres: 'Ana Torres', rol: 'FISCALIZADOR', dispositivo: 'Samsung Galaxy A54 (En campo)', activo: true },
-    { id: '10000002', dni: '10000002', nombres: 'Luis Ramírez', rol: 'FISCALIZADOR', dispositivo: 'Xiaomi Redmi Note 12 (En campo)', activo: true },
-    { id: '10000003', dni: '10000003', nombres: 'Carla Vega', rol: 'ADMIN', dispositivo: 'Terminal Central Web (Oficina PAS)', activo: true },
-    { id: 'notificador-01', dni: '45892144', nombres: 'Marcos Mendoza', rol: 'NOTIFICADOR', dispositivo: 'Terminal Móvil Notificaciones', activo: true },
-  ];
 
   const cargarDatos = async () => {
     setLoading(true);
@@ -94,30 +80,6 @@ export const ConfiguracionView: React.FC = () => {
     }
   };
 
-  const handleRevocarTokens = async (userId: string, nombre: string) => {
-    const ok = await confirm({
-      message: `¿Confirmas la revocación inmediata de tokens para ${nombre}? Se cerrarán todas sus sesiones activas en dispositivos móviles y web.`,
-      variant: 'danger',
-    });
-    if (!ok) {
-      return;
-    }
-    setRevocandoId(userId);
-    try {
-      await UsuariosAdminApi.revocarTokens(userId);
-      setMessage({
-        type: 'success',
-        text: `Sesiones revocadas exitosamente para ${nombre}. Token version incrementada en la base de datos (HU-29).`,
-      });
-    } catch (err: any) {
-      setMessage({
-        type: 'error',
-        text: err.message || `No se pudo revocar la sesión para ${nombre}. Verifique privilegios de Administrador.`,
-      });
-    } finally {
-      setRevocandoId(null);
-    }
-  };
 
   return (
     <div>
@@ -318,82 +280,11 @@ export const ConfiguracionView: React.FC = () => {
 
       {/* Tab 5: Seguridad & Sesiones (Admin) */}
       {activeTab === 'seguridad' && (
-        <Card title="Auditoría de Sesiones y Control de Accesos">
-          <div className="mb-[16px] py-[12px] px-[16px] bg-[#eff6ff] rounded-[8px] border border-[#bfdbfe]">
-            <div className="text-[13px] font-bold text-[#1e40af] mb-[4px] flex items-center gap-[6px]">
-              <ShieldAlertIcon size={16} />
-              <span>Revocación Inmediata de Credenciales y Sesiones</span>
-            </div>
-            <p className="text-[12px] text-[#1e3a8a] m-0">
-              Permite a los administradores invalidar instantáneamente todas las credenciales de refresh activas asociadas a un usuario en caso de pérdida o robo de terminales móviles de campo, o por desvinculación funcional del personal.
+        <Card title="Gestión de Usuarios y Sesiones">
+          <div className="py-[32px] text-center">
+            <p className="text-[14px] text-text-main mb-[8px]">
+              Los usuarios y roles se gestionan en el módulo <strong>Usuarios y Roles</strong>.
             </p>
-          </div>
-
-          <div className="overflow-x-auto mb-[24px]">
-            <table className="w-full border-collapse text-[13px] text-left">
-              <thead>
-                <tr className="bg-[#f8fafc] border-b border-b-border">
-                  <th className="py-[12px] px-[16px]">Personal / Usuario</th>
-                  <th className="py-[12px] px-[16px]">DNI</th>
-                  <th className="py-[12px] px-[16px]">Rol Asignado</th>
-                  <th className="py-[12px] px-[16px]">Dispositivo Vinculado</th>
-                  <th className="py-[12px] px-[16px]">Estado</th>
-                  <th className="py-[12px] px-[16px] text-right">Acción de Seguridad</th>
-                </tr>
-              </thead>
-              <tbody>
-                {usuariosSistema.map((u) => (
-                  <tr key={u.id} className="border-b border-b-border">
-                    <td className="py-[14px] px-[16px] font-bold text-midnight-900">
-                      <div className="flex items-center gap-[8px]">
-                        <UserIcon size={16} />
-                        {u.nombres}
-                      </div>
-                    </td>
-                    <td className="py-[14px] px-[16px] text-text-secondary">{u.dni}</td>
-                    <td className="py-[14px] px-[16px]">
-                      <Badge variant={u.rol === 'ADMIN' ? 'danger' : u.rol === 'FISCALIZADOR' ? 'info' : 'warning'}>
-                        {u.rol}
-                      </Badge>
-                    </td>
-                    <td className="py-[14px] px-[16px] text-text-secondary text-[12px]">
-                      {u.dispositivo}
-                    </td>
-                    <td className="py-[14px] px-[16px]">
-                      <Badge variant="success">Activo</Badge>
-                    </td>
-                    <td className="py-[14px] px-[16px] text-right">
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        loading={revocandoId === u.id}
-                        onClick={() => handleRevocarTokens(u.id, u.nombres)}
-                      >
-                        Revocar Sesión
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="p-[16px] border border-dashed border-border rounded-[8px]">
-            <h4 className="text-[13px] font-bold mb-[8px]">Revocar Sesión por ID Manual</h4>
-            <div className="flex gap-[12px] max-w-[500px]">
-              <Input
-                placeholder="Ingrese UUID de usuario en Prisma..."
-                value={customUserId}
-                onChange={(e) => setCustomUserId(e.target.value)}
-              />
-              <Button
-                variant="danger"
-                disabled={!customUserId.trim()}
-                onClick={() => handleRevocarTokens(customUserId.trim(), customUserId.trim())}
-              >
-                Revocar
-              </Button>
-            </div>
           </div>
         </Card>
       )}

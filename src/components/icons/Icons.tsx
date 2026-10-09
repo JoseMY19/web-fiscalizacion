@@ -250,3 +250,11 @@ export const UnlockIcon: React.FC<IconProps> = ({ size = 20, color = 'currentCol
     <path d="M7 11V7a5 5 0 0 1 9.9-1" />
   </svg>
 );
+
+export const MoreVerticalIcon: React.FC<IconProps> = ({ size = 20, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="1" />
+    <circle cx="12" cy="5" r="1" />
+    <circle cx="12" cy="19" r="1" />
+  </svg>
+);
