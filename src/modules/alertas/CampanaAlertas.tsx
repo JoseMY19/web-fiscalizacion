@@ -5,7 +5,7 @@ import { Alerta } from '../../api/alertas';
 import { formatearFecha } from '../../lib/fechas';
 import { cn } from '../../lib/cn';
 import { useAlertas } from './AlertasContext';
-import { CHIP_BASE, NIVEL_META } from './alertasUi';
+import { CHIP_BASE, NIVEL_META, chipDe } from './alertasUi';
 
 type Filtro = 'URGENTES' | 'POR_VENCER' | 'ACCION' | 'TODAS';
 
@@ -163,7 +163,7 @@ export const CampanaAlertas: React.FC<{ onIr: (modulo: NavModule) => void }> = (
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-[6px] flex-wrap mb-[2px]">
                         <span className="text-[12px] font-bold text-text-main">N° {a.numeroExpediente}</span>
-                        <span className={cn(CHIP_BASE, 'py-[1px] px-[6px] text-[10.5px]', meta.chip)}>{meta.etiqueta}</span>
+                        <span className={cn(CHIP_BASE, 'py-[1px] px-[6px] text-[10.5px]', chipDe(a).clase)}>{chipDe(a).etiqueta}</span>
                         {a.pagado && <span className={cn(CHIP_BASE, 'py-[1px] px-[6px] text-[10.5px] bg-success-bg text-success border-success-border')}>Pagado</span>}
                       </span>
                       <span className="block text-[13px] font-semibold text-text-main leading-[1.3]">{a.titulo}</span>

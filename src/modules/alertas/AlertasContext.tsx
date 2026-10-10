@@ -36,7 +36,8 @@ export const AlertasProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const recargar = useCallback(() => {
     setCargando(true);
-    AlertasApi.listar({ porPagina: CANTIDAD_DESTACADAS })
+    // La campana y el panel muestran solo lo que pide atención; los plazos sin riesgo viven en la página de alertas.
+    AlertasApi.listar({ vista: 'ATENCION', porPagina: CANTIDAD_DESTACADAS })
       .then((r) => {
         setResumen(r.resumen);
         setDestacadas(r.items);

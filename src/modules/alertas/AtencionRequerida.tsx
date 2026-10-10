@@ -5,7 +5,7 @@ import { ArrowRightIcon, CheckCircleIcon } from '../../components/icons/Icons';
 import { formatearFecha } from '../../lib/fechas';
 import { cn } from '../../lib/cn';
 import { useAlertas } from './AlertasContext';
-import { CHIP_BASE, NIVELES, NIVEL_META } from './alertasUi';
+import { CHIP_BASE, NIVELES, NIVEL_META, chipDe } from './alertasUi';
 
 const MAX_ALERTAS = 5;
 
@@ -69,7 +69,7 @@ export const AtencionRequerida: React.FC<{ onNavigate: (m: NavModule) => void }>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-[6px] flex-wrap">
                       <span className="text-[13px] font-bold text-text-main">N° {a.numeroExpediente}</span>
-                      <span className={cn(CHIP_BASE, 'py-[1px] px-[6px] text-[10.5px]', meta.chip)}>{meta.etiqueta}</span>
+                      <span className={cn(CHIP_BASE, 'py-[1px] px-[6px] text-[10.5px]', chipDe(a).clase)}>{chipDe(a).etiqueta}</span>
                       <span className="text-[12px] text-text-muted">{a.faseEtiqueta}</span>
                     </span>
                     <span className="block text-[13px] text-text-main mt-[2px]">{a.titulo}</span>
