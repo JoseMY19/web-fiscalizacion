@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   ConfiguracionApi,
   FeriadoItem,
@@ -12,7 +13,6 @@ import {
   ClockIcon,
   SearchIcon,
   RefreshCwIcon,
-  CheckCircleIcon,
   ShieldAlertIcon,
 } from '../../components/icons/Icons';
 import { BasesMunicipalesConfig } from '../bases-municipales/BasesMunicipalesConfig';
@@ -20,12 +20,10 @@ import { CatalogoCuisCrud } from '../catalogo-cuis/CatalogoCuisCrud';
 
 export const ConfiguracionView: React.FC = () => {
   const confirm = useConfirm();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'plazos' | 'feriados' | 'cuis' | 'uit' | 'seguridad' | 'bases'>('plazos');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-
-  // Estados Plazos & Riesgo
-  const [expedientesEnRiesgo, setExpedientesEnRiesgo] = useState<any[]>([]);
 
   // Estados Feriados
   const [feriados, setFeriados] = useState<FeriadoItem[]>([]);
@@ -41,13 +39,11 @@ export const ConfiguracionView: React.FC = () => {
     setLoading(true);
     setMessage(null);
     try {
-      const [riesgo, fer, uit] = await Promise.allSettled([
-        ConfiguracionApi.getExpedientesEnRiesgo(),
+      const [fer, uit] = await Promise.allSettled([
         ConfiguracionApi.getFeriados(),
         ConfiguracionApi.getParametrosUit(),
       ]);
 
-      if (riesgo.status === 'fulfilled') setExpedientesEnRiesgo(riesgo.value || []);
       if (fer.status === 'fulfilled') setFeriados(fer.value || []);
       if (uit.status === 'fulfilled') setParametrosUit(uit.value || []);
     } catch (err: any) {
@@ -106,7 +102,7 @@ export const ConfiguracionView: React.FC = () => {
           className={`py-[10px] px-[18px] text-[13px] font-bold rounded-sm cursor-pointer flex items-center gap-[8px] ${activeTab === 'plazos' ? 'border border-primary-600' : 'border border-border'} ${activeTab === 'plazos' ? 'bg-primary-50' : 'bg-[#ffffff]'} ${activeTab === 'plazos' ? 'text-primary-600' : 'text-text-secondary'}`}
         >
           <ClockIcon size={16} />
-          Expedientes en Riesgo ({expedientesEnRiesgo.length})
+          Plazos y Alertas
         </button>
 
         <button
@@ -151,39 +147,15 @@ export const ConfiguracionView: React.FC = () => {
 
       {activeTab === 'bases' && <BasesMunicipalesConfig />}
 
-      {/* Tab 1: Plazos en Riesgo */}
+      {/* Tab 1: los plazos y el riesgo viven ahora en el centro de alertas */}
       {activeTab === 'plazos' && (
-        <Card title="Expedientes con Alerta de Vencimiento o Riesgo de Caducidad">
-          {expedientesEnRiesgo.length === 0 ? (
-            <EmptyState
-              icon={<CheckCircleIcon size={40} color="var(--color-success)" />}
-              title="Sin expedientes en riesgo"
-              description="Todos los expedientes administrativos del PAS se encuentran dentro de los plazos normativos vigentes."
-            />
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-[13px] text-left">
-                <thead>
-                  <tr className="bg-[#f8fafc] border-b border-b-border">
-                    <th className="py-[12px] px-[16px]">N° Expediente</th>
-                    <th className="py-[12px] px-[16px]">Fase Actual</th>
-                    <th className="py-[12px] px-[16px]">Plazo Límite</th>
-                    <th className="py-[12px] px-[16px]">Nivel de Riesgo</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {expedientesEnRiesgo.map((item, idx) => (
-                    <tr key={idx} className="border-b border-b-border">
-                      <td className="py-[12px] px-[16px] font-bold">{item.numeroExpediente || item.expedienteId || '---'}</td>
-                      <td className="py-[12px] px-[16px]">{item.estado || 'En trámite'}</td>
-                      <td className="py-[12px] px-[16px] text-danger">{formatearFecha(item.fechaLimite, 'Por vencer')}</td>
-                      <td className="py-[12px] px-[16px]"><Badge variant="danger">ALERTA CRÍTICA</Badge></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+        <Card title="Alertas y plazos">
+          <p className="text-[13px] text-text-muted mb-[14px]">
+            El seguimiento de plazos (caducidad, descargo, recursos, levantamientos, firma y coactiva), con la fase de cada expediente y su nivel de riesgo, está en el centro de alertas.
+          </p>
+          <Button variant="primary" onClick={() => navigate('/alertas')}>
+            Ir a Alertas y Plazos
+          </Button>
         </Card>
       )}
 

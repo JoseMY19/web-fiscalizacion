@@ -3,9 +3,8 @@ import {
   ExpedientesApi,
   IfiApi,
   ResolucionesApi,
-  ConfiguracionApi,
 } from '../../api';
-import { Card, Button, Spinner, Alert } from '../../components/common/Common';
+import { Card, Button, Spinner } from '../../components/common/Common';
 import {
   ExpedienteIcon,
   FileTextIcon,
@@ -13,12 +12,11 @@ import {
   ClockIcon,
   ArrowRightIcon,
   RefreshCwIcon,
-  PenToolIcon,
 } from '../../components/icons/Icons';
 import { NavModule } from '../../components/layout/AppLayout';
 import { varianteDiasEnFirma } from '../resoluciones/resolucionUi';
-import { AlertaLevantamientosDashboard } from '../levantamientos/AlertaLevantamientosDashboard';
-import { AlertaCoactivaDashboard } from '../coactiva/AlertaCoactivaDashboard';
+import { AtencionRequerida } from '../alertas/AtencionRequerida';
+import { useAlertas } from '../alertas/AlertasContext';
 
 interface DashboardViewProps {
   onNavigate: (module: NavModule) => void;
@@ -26,11 +24,13 @@ interface DashboardViewProps {
 
 export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
   const [loading, setLoading] = useState(true);
+  // Alertas vencidas o críticas (centro de alertas, mismo origen que la campana).
+  const { resumen } = useAlertas();
+  const alertasCriticas = resumen?.criticas ?? 0;
   const [stats, setStats] = useState({
     pendientesValidacion: 0,
     pendientesIfi: 0,
     pendientesResolucion: 0,
-    enRiesgo: 0,
     // O5: resoluciones entregadas al Subgerente y la más antigua en firma.
     porFirmar: 0,
     maxDiasEnFirma: 0,
@@ -39,11 +39,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [exp, ifi, res, riesgo] = await Promise.allSettled([
+      const [exp, ifi, res] = await Promise.allSettled([
         ExpedientesApi.getPendientes(),
         IfiApi.getPendientes(),
         ResolucionesApi.getBandeja(),
-        ConfiguracionApi.getExpedientesEnRiesgo(),
       ]);
       const porFirmar = res.status === 'fulfilled' ? (res.value?.porFirmar ?? []) : [];
 
@@ -53,7 +52,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
           ifi.status === 'fulfilled' && ifi.value?.pendientes ? ifi.value.pendientes.length : 0,
         pendientesResolucion:
           res.status === 'fulfilled' && res.value ? (res.value.enRedaccion?.length ?? 0) + (res.value.porFirmar?.length ?? 0) : 0,
-        enRiesgo: riesgo.status === 'fulfilled' && Array.isArray(riesgo.value) ? riesgo.value.length : 0,
         porFirmar: porFirmar.length,
         maxDiasEnFirma: porFirmar.reduce((m, f) => Math.max(m, f.plazos?.diasEnFirma ?? 0), 0),
       });
@@ -106,26 +104,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* O5: alerta "falta firmar" — la firma del Subgerente sigue siendo obligatoria para notificar. */}
-      {!loading && stats.porFirmar > 0 && (
-        <div onClick={() => onNavigate('resoluciones')} className="cursor-pointer" title="Ir a Resoluciones → Por firmar">
-          <Alert type={varianteDiasEnFirma(stats.maxDiasEnFirma) === 'danger' ? 'error' : varianteDiasEnFirma(stats.maxDiasEnFirma) === 'warning' ? 'warning' : 'info'}>
-            <span className="inline-flex items-center gap-[8px]">
-              <PenToolIcon size={16} />
-              <span>
-                <strong>
-                  {stats.porFirmar} resoluci{stats.porFirmar === 1 ? 'ón esperando' : 'ones esperando'} firma del Subgerente
-                </strong>{' '}
-                (la más antigua hace {stats.maxDiasEnFirma} día{stats.maxDiasEnFirma === 1 ? '' : 's'}). Ver en Resoluciones → Por firmar.
-              </span>
-            </span>
-          </Alert>
-        </div>
-      )}
-
-      {/* F1: solicitudes de levantamiento de medidas provisionales en evaluación (cronómetro). */}
-      <AlertaLevantamientosDashboard onIr={() => onNavigate('levantamientos')} />
-      <AlertaCoactivaDashboard onIr={() => onNavigate('coactiva')} />
+      {/* Centro de alertas: lo más urgente de todos los expedientes (reemplaza los avisos sueltos de firma, levantamientos y coactiva). */}
+      <AtencionRequerida onNavigate={onNavigate} />
 
       {/* KPI Cards Grid */}
       <div
@@ -245,17 +225,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[13px] font-semibold text-text-muted">
-                Expedientes en Riesgo
+                Alertas Críticas
               </p>
-              <h3 className={`text-[32px] font-extrabold mt-[4px] ${stats.enRiesgo > 0 ? 'text-danger' : 'text-success'}`}>
-                {loading ? <Spinner size={24} /> : stats.enRiesgo}
+              <h3 className={`text-[32px] font-extrabold mt-[4px] ${alertasCriticas > 0 ? 'text-danger' : 'text-success'}`}>
+                {loading ? <Spinner size={24} /> : alertasCriticas}
               </h3>
               <p className="text-[12px] text-text-muted font-semibold mt-[4px]">
-                Alerta de plazos / caducidad
+                Vencidas o por vencer pronto
               </p>
             </div>
             <div
-              className={`w-[46px] h-[46px] rounded-[12px] flex items-center justify-center ${stats.enRiesgo > 0 ? 'bg-danger-bg' : 'bg-success-bg'} ${stats.enRiesgo > 0 ? 'text-danger' : 'text-success'}`}
+              className={`w-[46px] h-[46px] rounded-[12px] flex items-center justify-center ${alertasCriticas > 0 ? 'bg-danger-bg' : 'bg-success-bg'} ${alertasCriticas > 0 ? 'text-danger' : 'text-success'}`}
             >
               <ClockIcon size={24} />
             </div>
@@ -264,10 +244,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onNavigate('configuracion')}
+              onClick={() => onNavigate('alertas')}
               className="p-0! text-danger! text-[12px]!"
             >
-              Ver monitor de plazos <ArrowRightIcon size={14} />
+              Ver alertas y plazos <ArrowRightIcon size={14} />
             </Button>
           </div>
         </Card>

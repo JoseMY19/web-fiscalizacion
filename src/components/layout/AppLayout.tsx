@@ -1,6 +1,7 @@
 import React from 'react';
 import { puedeVerModulo as puedeVerModuloPermisos, puedeEditarModulo, PermisosUsuario } from '../../lib/permisos';
 import { AvisoSoloLectura } from '../common/AvisoSoloLectura';
+import { CampanaAlertas } from '../../modules/alertas/CampanaAlertas';
 import {
   DashboardIcon,
   ExpedienteIcon,
@@ -24,6 +25,7 @@ import {
 
 export type NavModule =
   | 'dashboard'
+  | 'alertas'
   | 'documentos'
   | 'expedientes'
   | 'consulta-campo'
@@ -70,6 +72,8 @@ interface NavItemConDef extends NavItem {
 // lo transversal (cautelares, consultas, documentos, mapa, configuración).
 const navItems: NavItemConDef[] = [
   { id: 'dashboard', label: 'Panel Principal', icon: <DashboardIcon size={18} /> },
+  // Centro de alertas: qué vence, en qué fase está cada expediente y el riesgo. Visible para todos (se filtra por permisos).
+  { id: 'alertas', label: 'Alertas y Plazos', icon: <BellIcon size={18} /> },
   { id: 'expedientes', label: 'Validación de Expedientes', icon: <ExpedienteIcon size={18} /> },
   { id: 'notificaciones', label: 'Notificación de Cédulas', icon: <MailIcon size={18} /> },
   { id: 'ifi', label: 'Instrucción e IFI', icon: <FileTextIcon size={18} /> },
@@ -94,7 +98,7 @@ const navItems: NavItemConDef[] = [
 
 /** Si el usuario puede entrar a ese módulo (menú y rutas usan la misma regla). */
 export function puedeVerModulo(modulo: NavModule, permisos: PermisosUsuario | undefined): boolean {
-  return modulo === 'dashboard' || puedeVerModuloPermisos(modulo, permisos);
+  return modulo === 'dashboard' || modulo === 'alertas' || puedeVerModuloPermisos(modulo, permisos);
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({
@@ -108,10 +112,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   badgeAlertas = {},
 }) => {
   const currentNav = navItems.find((n) => n.id === currentModule);
-  const totalPendientes = Object.values(badgeCounts).reduce<number>(
-    (acc, val) => (typeof val === 'number' ? acc + val : acc),
-    0
-  );
 
   const cleanName = (user?.nombres || 'Carla Vega').replace(/\s*\(admin\s*dev\)/gi, '').trim();
   const cleanRole = user?.rolNombre ?? 'Oficina';
@@ -276,35 +276,14 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               </span>
             </div>
 
-            {/* Botón de Notificaciones con contador */}
-            <div
-              className="border-l border-l-[#e2e8f0] pl-[16px] flex items-center"
-            >
-              <button
-                onClick={() => onSelectModule('expedientes')}
-                title={
-                  totalPendientes > 0
-                    ? `${totalPendientes} expedientes pendientes de validación`
-                    : 'Sin notificaciones pendientes'
-                }
-                className="relative bg-[#f8fafc] border border-[#e2e8f0] rounded-[8px] w-[36px] h-[36px] flex items-center justify-center cursor-pointer text-[#64748b] [transition:all_150ms_ease] hover:bg-[#f1f5f9] hover:text-[#0f172a]"
-              >
-                <BellIcon size={17} />
-                {totalPendientes > 0 && (
-                  <span
-                    className="absolute -top-[4px] -right-[4px] min-w-[18px] h-[18px] py-0 px-[4px] rounded-[9px] bg-[#ef4444] text-[#ffffff] text-[10px] font-bold flex items-center justify-center border-2 border-[#ffffff]"
-                  >
-                    {totalPendientes}
-                  </span>
-                )}
-              </button>
-            </div>
+            {/* Campana: alertas vencidas, críticas y por vencer, con la fase y el plazo de cada expediente */}
+            <CampanaAlertas onIr={onSelectModule} />
           </div>
         </header>
 
         {/* Page Body */}
         <main className="flex-1 w-full max-w-[1600px] mx-auto pt-[24px] px-[32px] pb-[48px] max-md:p-[16px]">
-          {currentModule !== 'dashboard' && currentModule !== 'usuarios' && !puedeEditarModulo(currentModule, user?.permisos) && (
+          {currentModule !== 'dashboard' && currentModule !== 'alertas' && currentModule !== 'usuarios' && !puedeEditarModulo(currentModule, user?.permisos) && (
             <AvisoSoloLectura rolNombre={user?.rolNombre} />
           )}
           {children}
