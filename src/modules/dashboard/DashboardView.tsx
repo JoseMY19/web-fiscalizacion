@@ -3,7 +3,6 @@ import {
   ExpedientesApi,
   IfiApi,
   ResolucionesApi,
-  ConfiguracionApi,
 } from '../../api';
 import { Card, Button, Spinner } from '../../components/common/Common';
 import {
@@ -15,6 +14,9 @@ import {
   RefreshCwIcon,
 } from '../../components/icons/Icons';
 import { NavModule } from '../../components/layout/AppLayout';
+import { varianteDiasEnFirma } from '../resoluciones/resolucionUi';
+import { AtencionRequerida } from '../alertas/AtencionRequerida';
+import { useAlertas } from '../alertas/AlertasContext';
 
 interface DashboardViewProps {
   onNavigate: (module: NavModule) => void;
@@ -22,29 +24,36 @@ interface DashboardViewProps {
 
 export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
   const [loading, setLoading] = useState(true);
+  // Alertas vencidas o críticas (centro de alertas, mismo origen que la campana).
+  const { resumen } = useAlertas();
+  const alertasCriticas = resumen?.criticas ?? 0;
   const [stats, setStats] = useState({
     pendientesValidacion: 0,
     pendientesIfi: 0,
     pendientesResolucion: 0,
-    enRiesgo: 0,
+    // O5: resoluciones entregadas al Subgerente y la más antigua en firma.
+    porFirmar: 0,
+    maxDiasEnFirma: 0,
   });
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [exp, ifi, res, riesgo] = await Promise.allSettled([
+      const [exp, ifi, res] = await Promise.allSettled([
         ExpedientesApi.getPendientes(),
         IfiApi.getPendientes(),
-        ResolucionesApi.getPendientes(),
-        ConfiguracionApi.getExpedientesEnRiesgo(),
+        ResolucionesApi.getBandeja(),
       ]);
+      const porFirmar = res.status === 'fulfilled' ? (res.value?.porFirmar ?? []) : [];
 
       setStats({
         pendientesValidacion: exp.status === 'fulfilled' && Array.isArray(exp.value) ? exp.value.length : 0,
         pendientesIfi:
           ifi.status === 'fulfilled' && ifi.value?.pendientes ? ifi.value.pendientes.length : 0,
-        pendientesResolucion: res.status === 'fulfilled' && Array.isArray(res.value) ? res.value.length : 0,
-        enRiesgo: riesgo.status === 'fulfilled' && Array.isArray(riesgo.value) ? riesgo.value.length : 0,
+        pendientesResolucion:
+          res.status === 'fulfilled' && res.value ? (res.value.enRedaccion?.length ?? 0) + (res.value.porFirmar?.length ?? 0) : 0,
+        porFirmar: porFirmar.length,
+        maxDiasEnFirma: porFirmar.reduce((m, f) => Math.max(m, f.plazos?.diasEnFirma ?? 0), 0),
       });
     } finally {
       setLoading(false);
@@ -94,6 +103,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
           </Button>
         </div>
       </div>
+
+      {/* Centro de alertas: lo más urgente de todos los expedientes (reemplaza los avisos sueltos de firma, levantamientos y coactiva). */}
+      <AtencionRequerida onNavigate={onNavigate} />
 
       {/* KPI Cards Grid */}
       <div
@@ -176,6 +188,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
               <p className="text-[12px] text-purple font-semibold mt-[4px]">
                 Emisión de RSG / RSGSA
               </p>
+              {!loading && stats.porFirmar > 0 && (
+                <p
+                  className={`text-[12px] font-semibold mt-[2px] ${
+                    varianteDiasEnFirma(stats.maxDiasEnFirma) === 'danger'
+                      ? 'text-[#be123c]'
+                      : varianteDiasEnFirma(stats.maxDiasEnFirma) === 'warning'
+                        ? 'text-[#b45309]'
+                        : 'text-text-muted'
+                  }`}
+                >
+                  {stats.porFirmar} por firmar (la más antigua hace {stats.maxDiasEnFirma} día{stats.maxDiasEnFirma === 1 ? '' : 's'})
+                </p>
+              )}
             </div>
             <div
               className="w-[46px] h-[46px] rounded-[12px] bg-purple-bg text-purple flex items-center justify-center"
@@ -200,17 +225,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[13px] font-semibold text-text-muted">
-                Expedientes en Riesgo
+                Alertas Críticas
               </p>
-              <h3 className={`text-[32px] font-extrabold mt-[4px] ${stats.enRiesgo > 0 ? 'text-danger' : 'text-success'}`}>
-                {loading ? <Spinner size={24} /> : stats.enRiesgo}
+              <h3 className={`text-[32px] font-extrabold mt-[4px] ${alertasCriticas > 0 ? 'text-danger' : 'text-success'}`}>
+                {loading ? <Spinner size={24} /> : alertasCriticas}
               </h3>
               <p className="text-[12px] text-text-muted font-semibold mt-[4px]">
-                Alerta de plazos / caducidad
+                Vencidas o por vencer pronto
               </p>
             </div>
             <div
-              className={`w-[46px] h-[46px] rounded-[12px] flex items-center justify-center ${stats.enRiesgo > 0 ? 'bg-danger-bg' : 'bg-success-bg'} ${stats.enRiesgo > 0 ? 'text-danger' : 'text-success'}`}
+              className={`w-[46px] h-[46px] rounded-[12px] flex items-center justify-center ${alertasCriticas > 0 ? 'bg-danger-bg' : 'bg-success-bg'} ${alertasCriticas > 0 ? 'text-danger' : 'text-success'}`}
             >
               <ClockIcon size={24} />
             </div>
@@ -219,10 +244,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onNavigate('configuracion')}
+              onClick={() => onNavigate('alertas')}
               className="p-0! text-danger! text-[12px]!"
             >
-              Ver monitor de plazos <ArrowRightIcon size={14} />
+              Ver alertas y plazos <ArrowRightIcon size={14} />
             </Button>
           </div>
         </Card>

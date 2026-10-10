@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ConfirmProvider } from './context/ConfirmContext';
@@ -13,12 +13,26 @@ import { IfiView } from './modules/ifi/IfiView';
 import { ResolucionesView } from './modules/resoluciones/ResolucionesView';
 import { RecursosView } from './modules/recursos/RecursosView';
 import { CoactivaPagosView } from './modules/coactiva-pagos/CoactivaPagosView';
+import { PagosView } from './modules/pagos/PagosView';
 import { CautelaresView } from './modules/cautelares/CautelaresView';
+import { LevantamientosView } from './modules/levantamientos/LevantamientosView';
+// F2 / F3: caducidad del PAS y prescripción de multas.
+import { CaducidadView } from './modules/caducidad/CaducidadView';
+import { PrescripcionView } from './modules/prescripcion/PrescripcionView';
+// F4: ejecución coactiva.
+import { CoactivaView } from './modules/coactiva/CoactivaView';
+import { useResumenLevantamientos } from './modules/levantamientos/useResumenLevantamientos';
+import { badgesLevantamientos } from './modules/levantamientos/badgesLevantamientos';
 import { ConfiguracionView } from './modules/configuracion/ConfiguracionView';
 import { MapaIntervencionesView } from './modules/mapa/MapaIntervencionesView';
-import { ExpedientesApi, IfiApi, ResolucionesApi, ConfiguracionApi } from './api';
+import { UsuariosRolesView } from './modules/usuarios/UsuariosRolesView';
+import { CambiarContrasenaModal } from './modules/auth/CambiarContrasenaModal';
+import { ExpedientesApi, IfiApi, ResolucionesApi } from './api';
 import { Spinner } from './components/common/Common';
 import { socket } from './lib/socket';
+import { BellIcon } from './components/icons/Icons';
+import { AlertasProvider, useAlertas } from './modules/alertas/AlertasContext';
+import { AlertasView } from './modules/alertas/AlertasView';
 
 function MainApp() {
   const { user, isAuthenticated, isLoading, logout } = useAuth();
@@ -31,24 +45,55 @@ function MainApp() {
   const irA = (mod: NavModule) => navigate(mod === 'dashboard' ? '/' : `/${mod}`);
 
   const [badgeCounts, setBadgeCounts] = useState<Partial<Record<NavModule, number>>>({});
+  const [badgeAlertas, setBadgeAlertas] = useState<Partial<Record<NavModule, { count: number; title: string }>>>({});
+  // Centro de alertas: insignia por módulo con lo vencido o crítico.
+  const { resumen: resumenAlertas } = useAlertas();
+  const badgesCentro: Partial<Record<NavModule, { count: number; title: string; icon?: ReactNode }>> = {};
+  Object.entries(resumenAlertas?.porModulo ?? {}).forEach(([modulo, v]) => {
+    if (v.criticas > 0) {
+      badgesCentro[modulo as NavModule] = {
+        count: v.criticas,
+        title: `${v.criticas} alerta${v.criticas === 1 ? '' : 's'} vencida${v.criticas === 1 ? '' : 's'} o crítica${v.criticas === 1 ? '' : 's'}`,
+        icon: <BellIcon size={10} />,
+      };
+    }
+  });
+  // F1: solicitudes de levantamiento en evaluación (rojo si alguna está por vencer).
+  const badgesLev = badgesLevantamientos(useResumenLevantamientos(isAuthenticated, currentModule));
+  const [mostrarModalContrasena, setMostrarModalContrasena] = useState(false);
+
+  // Mostrar modal de cambiar contraseña si es obligatorio
+  useEffect(() => {
+    if (user?.debeCambiarContrasena) {
+      setMostrarModalContrasena(true);
+    }
+  }, [user?.debeCambiarContrasena]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
 
     const fetchCounts = async () => {
       try {
-        const [exp, ifi, res, riesgo] = await Promise.allSettled([
+        const [exp, ifi, res] = await Promise.allSettled([
           ExpedientesApi.getPendientes(),
           IfiApi.getPendientes(),
-          ResolucionesApi.getPendientes(),
-          ConfiguracionApi.getExpedientesEnRiesgo(),
+          ResolucionesApi.getBandeja(),
         ]);
 
         setBadgeCounts({
           expedientes: exp.status === 'fulfilled' && Array.isArray(exp.value) ? exp.value.length : 0,
           ifi: ifi.status === 'fulfilled' && ifi.value?.pendientes ? ifi.value.pendientes.length : 0,
-          resoluciones: res.status === 'fulfilled' && Array.isArray(res.value) ? res.value.length : 0,
-          configuracion: riesgo.status === 'fulfilled' && Array.isArray(riesgo.value) ? riesgo.value.length : 0,
+          // Pendientes = en redacción + por firmar (misma cuenta que antes, ahora desde la bandeja).
+          resoluciones: res.status === 'fulfilled' && res.value ? (res.value.enRedaccion?.length ?? 0) + (res.value.porFirmar?.length ?? 0) : 0,
+        });
+        // O5: "falta firmar" — resoluciones entregadas al Subgerente, con la más antigua en el tooltip.
+        const porFirmar = res.status === 'fulfilled' ? (res.value?.porFirmar ?? []) : [];
+        const masAntigua = porFirmar.reduce((m, f) => Math.max(m, f.plazos?.diasEnFirma ?? 0), 0);
+        setBadgeAlertas({
+          resoluciones: {
+            count: porFirmar.length,
+            title: `${porFirmar.length} por firmar del Subgerente (la más antigua hace ${masAntigua} día${masAntigua === 1 ? '' : 's'})`,
+          },
         });
       } catch {
         // Silencioso
@@ -82,29 +127,51 @@ function MainApp() {
     return <LoginView />;
   }
 
-  // Rol temporal de pruebas: si entra por URL a un módulo no habilitado, vuelve al inicio.
-  if (!puedeVerModulo(currentModule, user?.rol)) {
+  // Si entra por URL a un módulo sin permiso, vuelve al inicio.
+  if (!puedeVerModulo(currentModule, user?.permisos)) {
     return <Navigate to="/" replace />;
   }
 
   return (
-    <AppLayout currentModule={currentModule} onSelectModule={irA} user={user} onLogout={logout} badgeCounts={badgeCounts}>
-      <Routes>
-        <Route path="/" element={<DashboardView onNavigate={irA} />} />
-        <Route path="/documentos" element={<DocumentosView />} />
-        <Route path="/expedientes" element={<ExpedientesView />} />
-        <Route path="/consulta-campo" element={<ConsultaCampoView />} />
-        <Route path="/notificaciones" element={<NotificacionesView />} />
-        <Route path="/ifi" element={<IfiView />} />
-        <Route path="/resoluciones" element={<ResolucionesView />} />
-        <Route path="/recursos" element={<RecursosView />} />
-        <Route path="/coactiva-pagos" element={<CoactivaPagosView />} />
-        <Route path="/cautelares" element={<CautelaresView />} />
-        <Route path="/mapa" element={<MapaIntervencionesView />} />
-        <Route path="/configuracion" element={<ConfiguracionView />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </AppLayout>
+    <>
+      <CambiarContrasenaModal
+        isOpen={mostrarModalContrasena}
+        isObligatorio={user?.debeCambiarContrasena}
+        onClose={() => setMostrarModalContrasena(false)}
+      />
+      <AppLayout
+        currentModule={currentModule}
+        onSelectModule={irA}
+        user={user}
+        onLogout={logout}
+        onChangePassword={() => setMostrarModalContrasena(true)}
+        badgeCounts={{ ...badgeCounts, ...badgesLev.counts }}
+        badgeAlertas={{ ...badgesCentro, ...badgeAlertas, ...badgesLev.alertas }}
+      >
+        <Routes>
+          <Route path="/" element={<DashboardView onNavigate={irA} />} />
+          <Route path="/alertas" element={<AlertasView />} />
+          <Route path="/documentos" element={<DocumentosView />} />
+          <Route path="/expedientes" element={<ExpedientesView />} />
+          <Route path="/consulta-campo" element={<ConsultaCampoView />} />
+          <Route path="/notificaciones" element={<NotificacionesView />} />
+          <Route path="/ifi" element={<IfiView />} />
+          <Route path="/resoluciones" element={<ResolucionesView />} />
+          <Route path="/caducidad" element={<CaducidadView />} />
+          <Route path="/recursos" element={<RecursosView />} />
+          <Route path="/coactiva-pagos" element={<CoactivaPagosView />} />
+          <Route path="/coactiva" element={<CoactivaView />} />
+          <Route path="/prescripcion" element={<PrescripcionView />} />
+          <Route path="/pagos" element={<PagosView />} />
+          <Route path="/cautelares" element={<CautelaresView />} />
+          <Route path="/levantamientos" element={<LevantamientosView />} />
+          <Route path="/mapa" element={<MapaIntervencionesView />} />
+          <Route path="/configuracion" element={<ConfiguracionView />} />
+          <Route path="/usuarios" element={<UsuariosRolesView />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AppLayout>
+    </>
   );
 }
 
@@ -113,7 +180,9 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <ConfirmProvider>
-          <MainApp />
+          <AlertasProvider>
+            <MainApp />
+          </AlertasProvider>
         </ConfirmProvider>
       </AuthProvider>
     </BrowserRouter>

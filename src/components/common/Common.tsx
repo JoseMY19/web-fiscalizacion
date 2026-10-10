@@ -159,7 +159,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
     >
       <div
         // maxWidth es una prop libre (cualquier valor CSS): se aplica en línea.
-        className="bg-[#ffffff] rounded-lg shadow-xl w-full max-h-[90vh] flex flex-col overflow-hidden"
+        className="bg-[#ffffff] rounded-lg shadow-xl w-full max-h-[90vh] flex flex-col overflow-hidden text-left"
         style={{ maxWidth }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -193,19 +193,20 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   helperText?: string;
+  helperTextClassName?: string;
 }
 
 const LABEL_CLASS = 'block text-[13px] font-semibold text-text-secondary mb-[6px]';
 const FIELD_CLASS = 'w-full py-[10px] px-[14px] text-[14px] rounded-sm border bg-[#ffffff] text-text-main outline-none';
 
-export const Input: React.FC<InputProps> = ({ label, error, helperText, className, ...props }) => (
+export const Input: React.FC<InputProps> = ({ label, error, helperText, helperTextClassName, className, ...props }) => (
   <div className="mb-[14px] w-full">
     {label && <label className={LABEL_CLASS}>{label}</label>}
     <input
       className={cn(FIELD_CLASS, '[transition:border-color_var(--transition-fast)]', error ? 'border-danger' : 'border-border', className)}
       {...props}
     />
-    {helperText && !error && <p className="text-[12px] text-text-muted mt-[4px]">{helperText}</p>}
+    {helperText && !error && <p className={cn('text-[12px] mt-[4px]', helperTextClassName ?? 'text-text-muted')}>{helperText}</p>}
     {error && <p className="text-[12px] text-danger mt-[4px]">{error}</p>}
   </div>
 );
@@ -261,5 +262,28 @@ export const EmptyState: React.FC<{
     <h4 className="text-[16px] font-semibold text-text-main mb-[4px]">{title}</h4>
     {description && <p className="text-[13px] text-text-muted max-w-[400px] mx-auto mb-[16px]">{description}</p>}
     {action && <div className="mt-[16px]">{action}</div>}
+  </div>
+);
+
+// ============================================================================
+// SELECT
+// ============================================================================
+interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+  label?: string;
+  error?: string;
+  helperText?: string;
+}
+
+export const Select: React.FC<SelectProps> = ({ label, error, helperText, className, children, ...props }) => (
+  <div className="mb-[14px] w-full">
+    {label && <label className={LABEL_CLASS}>{label}</label>}
+    <select
+      className={cn(FIELD_CLASS, '[transition:border-color_var(--transition-fast)]', error ? 'border-danger' : 'border-border', className)}
+      {...props}
+    >
+      {children}
+    </select>
+    {helperText && !error && <p className="text-[12px] mt-[4px] text-text-muted">{helperText}</p>}
+    {error && <p className="text-[12px] text-danger mt-[4px]">{error}</p>}
   </div>
 );

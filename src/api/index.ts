@@ -5,6 +5,8 @@ export * from './client';
 // ============================================================================
 // AUTH API
 // ============================================================================
+import { PermisosUsuario } from '../lib/permisos';
+
 export interface LoginResponse {
   accessToken: string;
   refreshToken: string;
@@ -13,6 +15,9 @@ export interface LoginResponse {
     dni: string;
     nombres: string;
     rol: string;
+    rolNombre?: string;
+    debeCambiarContrasena?: boolean;
+    permisos?: PermisosUsuario;
   };
 }
 
@@ -20,11 +25,34 @@ export const AuthApi = {
   login: async (dni: string, contrasena: string): Promise<LoginResponse> => {
     const data = await apiClient<LoginResponse>('/auth/login', {
       method: 'POST',
+      headers: { 'X-App': 'oficina' },
       body: JSON.stringify({ dni, contrasena }),
     });
     setToken(data.accessToken);
     setRefreshToken(data.refreshToken);
     setSavedUser(data.usuario);
+    return data;
+  },
+  me: async () => {
+    const usuario = await apiClient<{
+      id: string;
+      dni: string;
+      nombres: string;
+      rol: string;
+      rolNombre?: string;
+      debeCambiarContrasena?: boolean;
+      permisos?: PermisosUsuario;
+    }>('/auth/me');
+    setSavedUser(usuario);
+    return usuario;
+  },
+  cambiarContrasena: async (contrasenaActual: string, contrasenaNueva: string) => {
+    const data = await apiClient<{ accessToken: string; refreshToken: string }>('/auth/cambiar-contrasena', {
+      method: 'POST',
+      body: JSON.stringify({ contrasenaActual, contrasenaNueva }),
+    });
+    setToken(data.accessToken);
+    setRefreshToken(data.refreshToken);
     return data;
   },
   logout: () => {
@@ -137,6 +165,17 @@ export interface ExpedienteIfiItem {
   tieneAnalisis: boolean;
   recomendacion: 'SANCIONAR' | 'ARCHIVAR' | null;
   numeroInforme: string | null;
+  /** O9/F5: hay un pago registrado contra la NC del expediente. */
+  tienePago: boolean;
+  fechaPago: string | null;
+  montoPagado: number | null;
+  /** O6: RSG de ampliación (null = no se inició). */
+  ampliacionEstado: EstadoResolucion | null;
+  /** 9 meses desde la NC (12 con ampliación firmada); null si la NC no tiene fecha. */
+  fechaCaducidad: string | null;
+  diasParaCaducidad: number | null;
+  /** ≤30 días para caducar sin ampliación firmada: "emitir RSG de ampliación". */
+  alertaAmpliacion: boolean;
 }
 
 /** Forma real de GET /ifi/:expedienteId (ver IfiDetalleResponseDto en el backend) — el Ifi completo, para prellenar el panel de detalle. */
@@ -144,9 +183,6 @@ export interface IfiDetalle {
   id: string;
   expedienteId: string;
   estado: 'EN_ELABORACION' | 'EMITIDO' | 'NOTIFICADO';
-  recibioDescargo: boolean;
-  fechaRecepcionDescargo: string | null;
-  descargoTexto: string | null;
   imputacionCorrecta: boolean | null;
   motivoVicioTrascendente: string | null;
   recomendacion: 'SANCIONAR' | 'ARCHIVAR' | null;
@@ -203,15 +239,6 @@ export const IfiApi = {
       esperandoNotificacion: ExpedienteIfiItem[];
     }>('/ifi/pendientes'),
   getDetalle: (expedienteId: string) => apiClient<IfiDetalle>(`/ifi/${expedienteId}`),
-  registrarDescargo: (expedienteId: string, descargoTexto: string, fechaRecepcionDescargo?: string) =>
-    apiClient<{ ok: true }>(`/ifi/${expedienteId}/descargo`, {
-      method: 'PATCH',
-      body: JSON.stringify({
-        recibioDescargo: true,
-        fechaRecepcionDescargo: fechaRecepcionDescargo || new Date().toISOString(),
-        descargoTexto,
-      }),
-    }),
   sanearImputacion: (expedienteId: string, imputacionCorrecta: boolean, motivoVicioTrascendente?: string) =>
     apiClient<{ ok: true }>(`/ifi/${expedienteId}/imputacion`, {
       method: 'PATCH',
@@ -222,6 +249,9 @@ export const IfiApi = {
     }),
   generarPlanchazo: (expedienteId: string) =>
     apiClient<PlanchazoData>(`/ifi/${expedienteId}/generar-planchazo`, { method: 'POST' }),
+  /** Texto modelo (formato real del área legal) para cargar en el editor del análisis. */
+  textoModelo: (expedienteId: string) =>
+    apiClient<{ analisis: string; conclusion: string }>(`/ifi/${expedienteId}/texto-modelo`),
   registrarAnalisis: (expedienteId: string, analisisTexto: string) =>
     apiClient<{ ok: true }>(`/ifi/${expedienteId}/analisis`, {
       method: 'PATCH',
@@ -298,6 +328,8 @@ export interface EvidenciaImputacion {
   codigosCuis: Array<{
     codigoNormativo: string;
     descripcion: string | null;
+    /** Texto del CUIS tal como sale de la ordenanza (mientras la descripción depurada no esté cargada). */
+    textoCuis: string | null;
     fuenteNormativa: string | null;
     escala: string | null;
     condicionEscala: string | null;
@@ -420,6 +452,14 @@ export interface ExpedienteResolucionItem {
   fechaNotificacion: string | null;
   ifiFechaNotificacion: string | null;
   plazos: PlazosResolucion;
+  /** O9/F5: hay un pago registrado contra la NC del expediente. */
+  tienePago: boolean;
+  fechaPago: string | null;
+  montoPagado: number | null;
+  /** RSGSA por pago (fijado al enviar a firma): concluye y archiva el PAS. */
+  concluidaPorPago: boolean;
+  /** O5: fecha de envío a firma de la RSG de ampliación. */
+  ampliacionFechaEnvioFirma: string | null;
 }
 
 export interface BandejaResoluciones {
@@ -443,7 +483,8 @@ export interface ResolucionDetalle {
   infracciones: Array<{ codigoNormativo: string; descripcion: string | null }>;
   tieneActaFiscalizacion: boolean;
   tieneNotificacionCargo: boolean;
-  medidasProvisionales: Array<{ numeroCorrelativo: string; tipoMedida: string }>;
+  /** `vigente`: sin levantar (módulo Levantamientos). */
+  medidasProvisionales: Array<{ numeroCorrelativo: string; tipoMedida: string; vigente: boolean }>;
   ifi: {
     estado: 'EN_ELABORACION' | 'EMITIDO' | 'NOTIFICADO';
     recomendacion: 'SANCIONAR' | 'ARCHIVAR' | null;
@@ -451,10 +492,9 @@ export interface ResolucionDetalle {
     motivoVicioTrascendente: string | null;
     numeroInforme: string | null;
     fechaNotificacion: string | null;
-    recibioDescargo: boolean;
-    fechaRecepcionDescargo: string | null;
-    descargoTexto: string | null;
   } | null;
+  /** O3: cantidad de descargos del expediente (lista completa en DescargosApi). */
+  cantidadDescargos: number;
   tipoCorrespondiente: TipoResolucion | null;
   tipoNoCoincideConIfi: boolean;
   etapa: EtapaResolucion;
@@ -472,8 +512,6 @@ export interface ResolucionDetalle {
     porcentajeUit: number | null;
     enParte: boolean;
     motivoDiscrepanciaIfi: string | null;
-    descargoPosteriorTexto: string | null;
-    descargoPosteriorFecha: string | null;
     medidaComplementaria: string | null;
     /** JSON: { heredadoDelIfi: PlanchazoData | null, resolucion: { tipo } }. */
     seccionAutomatica: string | null;
@@ -489,6 +527,11 @@ export interface ResolucionDetalle {
     /** Fecha real de firma del Subgerente. */
     fechaEmision: string | null;
     fechaNotificacion: string | null;
+    /** RSGSA por pago (fijado al enviar a firma): concluye y archiva, sin recurso. */
+    concluidaPorPago: boolean;
+    pagoImponerMedidaComplementaria: boolean;
+    /** null = sugerencia del sistema (hay medida provisional sin levantar). */
+    pagoExtinguirMedidaProvisional: boolean | null;
   } | null;
   /** RSG de ampliación de plazo (null = no se inició). */
   ampliacion: {
@@ -498,7 +541,12 @@ export interface ResolucionDetalle {
     fechaEnvioFirma: string | null;
     fechaFirma: string | null;
     fechaNotificacion: string | null;
+    /** Opcional: notificar en el domicilio señalado en un documento del SGD. */
+    notificarDocumentoSgd: string | null;
+    notificarDomicilio: string | null;
   } | null;
+  /** O9/F5: pago registrado contra la NC del expediente (null = no pagó). */
+  pago: { montoPagado: number; fechaPago: string } | null;
 }
 
 /** Descarga un Word generado al vuelo; relanza el mensaje del backend si lo rechaza. */
@@ -553,12 +601,6 @@ export const ResolucionesApi = {
         ...(datos.montoSinDescuento != null ? { montoSinDescuento: datos.montoSinDescuento } : {}),
       }),
     }),
-  /** Descargo presentado después del IFI. Texto vacío = quitarlo. */
-  registrarDescargoPosterior: (expedienteId: string, texto: string, fecha: string | null) =>
-    apiClient<{ ok: true }>(`/resoluciones/${expedienteId}/descargo-posterior`, {
-      method: 'PATCH',
-      body: JSON.stringify({ texto, ...(fecha ? { fecha } : {}) }),
-    }),
   emitirAmpliacion: (expedienteId: string) =>
     apiClient<{ ok: true }>(`/resoluciones/${expedienteId}/ampliacion`, { method: 'POST' }),
   enviarAmpliacionAFirma: (expedienteId: string, fechaEnvio: string) =>
@@ -583,6 +625,14 @@ export const ResolucionesApi = {
     }),
   generarSeccionAutomatica: (expedienteId: string) =>
     apiClient<any>(`/resoluciones/${expedienteId}/generar-seccion-automatica`, { method: 'POST' }),
+  /** RSGSA por pago: texto modelo del análisis (monto y sistema del pago registrado). */
+  textoModeloPago: (expedienteId: string) => apiClient<{ analisis: string }>(`/resoluciones/${expedienteId}/texto-modelo-pago`),
+  /** RSGSA por pago: medidas que decide el abogado. */
+  decisionPago: (expedienteId: string, imponerMedidaComplementaria: boolean, extinguirMedidaProvisional: boolean | null) =>
+    apiClient<{ ok: true }>(`/resoluciones/${expedienteId}/decision-pago`, {
+      method: 'PATCH',
+      body: JSON.stringify({ imponerMedidaComplementaria, extinguirMedidaProvisional }),
+    }),
   registrarAnalisis: (expedienteId: string, analisisTexto: string) =>
     apiClient<{ ok: true }>(`/resoluciones/${expedienteId}/analisis`, {
       method: 'PATCH',
@@ -616,78 +666,162 @@ export const ResolucionesApi = {
 // ============================================================================
 // RECURSOS (SP6 RECONSIDERACIÓN & SP7 APELACIÓN)
 // ============================================================================
-export interface ReconsideracionPendienteItem {
-  id: string;
-  resolucionId: string;
+export type SituacionRecursos =
+  | 'SIN_ACTO_RECURRIBLE'
+  | 'PLAZO_ABIERTO'
+  | 'PLAZO_VENCIDO'
+  | 'RECONSIDERACION_EN_TRAMITE'
+  | 'EN_APELACION'
+  | 'CONCLUIDO_A_FAVOR'
+  | 'APELACION_INFUNDADA'
+  | 'NULIDAD_PENDIENTE';
+
+export type ResultadoReconsideracion = 'FUNDADA' | 'IMPROCEDENTE' | 'INFUNDADA';
+export type DecisionGop = 'FUNDADA' | 'INFUNDADA' | 'NULIDAD';
+
+/** Recursos de un expediente (GET /recursos/:expedienteId, bandeja y buscador). Estado derivado en el backend. */
+export interface ExpedienteRecursos {
   expedienteId: string;
   numeroExpediente: string;
-  fechaPresentacion: string;
-  nuevaPrueba: boolean;
-  resultado: 'FUNDADA' | 'IMPROCEDENTE' | 'INFUNDADA' | null;
-  faltaVincularResolucion: boolean;
-}
-
-export interface ApelacionPendienteItem {
-  id: string;
-  expedienteId: string;
-  resolucionId: string;
-  numeroExpediente: string;
-  informeGopGenerado: boolean;
-  informeFirmado: boolean;
-}
-
-export const RecursosApi = {
-  // Bandejas — sin esto había que copiar ids a mano de otra pantalla.
-  getPendientesReconsideracion: () => apiClient<ReconsideracionPendienteItem[]>('/reconsideraciones/pendientes'),
-  getPendientesApelacion: () => apiClient<ApelacionPendienteItem[]>('/apelaciones/pendientes'),
-
-  // Reconsideración (SP6)
-  presentarReconsideracion: (resolucionId: string, data: {
+  administrado: string | null;
+  ncFechaNotificacion: string | null;
+  situacion: SituacionRecursos;
+  /** Último acto recurrible: RSG que resolvió la reconsideración (si está notificada) o la resolución original. */
+  ultimoActo: { resolucionId: string; numeroResolucion: string | null; esRsgDeReconsideracion: boolean; fechaNotificacion: string } | null;
+  fechaLimiteRecurso: string | null;
+  diasHabilesRestantes: number | null;
+  tienePago: boolean;
+  pago: { montoPagado: number; fechaPago: string } | null;
+  resolucion: {
+    id: string;
+    tipo: TipoResolucion;
+    estado: string;
+    numeroResolucion: string | null;
+    fechaEmision: string | null;
+    fechaNotificacion: string | null;
+    montoSinDescuento: number | null;
+    medidaComplementaria: string | null;
+  };
+  reconsideracion: {
+    id: string;
     fechaPresentacion: string;
     nuevaPrueba: boolean;
-    nuevaPruebaTexto?: string;
-  }) =>
-    apiClient<{ id: string }>(`/reconsideraciones/${resolucionId}`, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
-  subsanarReconsideracion: (id: string, fechaSubsanacion: string) =>
-    apiClient<{ ok: true }>(`/reconsideraciones/${id}/subsanacion`, {
-      method: 'PATCH',
-      body: JSON.stringify({ fechaSubsanacion }),
-    }),
+    nuevaPruebaTexto: string | null;
+    fechaSubsanacion: string | null;
+    resultado: ResultadoReconsideracion | null;
+    analisisTexto: string | null;
+    rsg: {
+      id: string;
+      estado: 'EN_ELABORACION' | 'EMITIDA' | 'NOTIFICADA';
+      analisisTexto: string | null;
+      fechaEnvioFirma: string | null;
+      numeroResolucion: string | null;
+      fechaEmision: string | null;
+      fechaNotificacion: string | null;
+    } | null;
+  } | null;
+  apelacion: {
+    id: string;
+    resolucionId: string;
+    resolucionApeladaNumero: string | null;
+    resolucionApeladaEsRsgReconsideracion: boolean;
+    fechaPresentacion: string | null;
+    informeGenerado: boolean;
+    fechaFirmaInforme: string | null;
+    firmadoPor: string | null;
+    fechaElevacionGop: string | null;
+    decisionGop: DecisionGop | null;
+    motivoNulidad: string | null;
+    fechaDecisionGop: string | null;
+  } | null;
+  actoFirme: { motivo: string; fechaFirmeza: string } | null;
+}
+
+export interface BandejaRecursos {
+  plazoAbierto: ExpedienteRecursos[];
+  reconsideraciones: ExpedienteRecursos[];
+  apelaciones: ExpedienteRecursos[];
+  resueltos: ExpedienteRecursos[];
+}
+
+export interface InformeGop {
+  antecedentes: string;
+  resumenExpediente: unknown;
+}
+
+export const descargarDocumentoRsgReconsideracion = (reconsideracionId: string, numeroExpediente: string) =>
+  descargarWord(`/reconsideraciones/${reconsideracionId}/rsg/documento`, `rsg-reconsideracion-${numeroExpediente}.docx`);
+
+export const descargarDocumentoInformeGop = (apelacionId: string, numeroExpediente: string) =>
+  descargarWord(`/apelaciones/${apelacionId}/informe-gop/documento`, `informe-gop-${numeroExpediente}.docx`);
+
+const patch = (ruta: string, body?: unknown) =>
+  apiClient<{ ok: true }>(ruta, { method: 'PATCH', ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
+
+export const RecursosApi = {
+  getBandeja: () => apiClient<BandejaRecursos>('/recursos/bandeja'),
+  buscar: (q: string) => apiClient<ExpedienteRecursos[]>(`/recursos/buscar?q=${encodeURIComponent(q)}`),
+  getDetalle: (expedienteId: string) => apiClient<ExpedienteRecursos>(`/recursos/${expedienteId}`),
+
+  // Reconsideración (SP6)
+  presentarReconsideracion: (resolucionId: string, data: { fechaPresentacion: string; nuevaPrueba: boolean; nuevaPruebaTexto?: string }) =>
+    apiClient<{ id: string }>(`/reconsideraciones/${resolucionId}`, { method: 'POST', body: JSON.stringify(data) }),
+  subsanarReconsideracion: (id: string, fechaSubsanacion: string) => patch(`/reconsideraciones/${id}/subsanacion`, { fechaSubsanacion }),
   evaluarReconsideracion: (id: string, resultado: 'FUNDADA' | 'INFUNDADA', analisisTexto: string) =>
-    apiClient<{ ok: true }>(`/reconsideraciones/${id}/evaluar`, {
-      method: 'PATCH',
-      body: JSON.stringify({ resultado, analisisTexto }),
-    }),
-  vincularResolucionResuelve: (id: string, resolucionQueResuelveId: string) =>
-    apiClient<{ ok: true }>(`/reconsideraciones/${id}/resolucion-que-resuelve`, {
-      method: 'PATCH',
-      body: JSON.stringify({ resolucionQueResuelveId }),
-    }),
-  /** Camino recomendado: crea la RSG nueva y la vincula en un solo paso — nunca reutiliza la resolución recurrida. */
+    patch(`/reconsideraciones/${id}/evaluar`, { resultado, analisisTexto }),
+  /** Crea la RSG que resuelve (nueva, nunca reutiliza la recurrida). */
   emitirRsgQueResuelve: (id: string) => apiClient<{ resolucionId: string }>(`/reconsideraciones/${id}/emitir-rsg`, { method: 'POST' }),
+  rsgAnalisis: (id: string, analisisTexto: string) => patch(`/reconsideraciones/${id}/rsg/analisis`, { analisisTexto }),
+  rsgEnviarAFirma: (id: string, fechaEnvio: string) => patch(`/reconsideraciones/${id}/rsg/enviar-a-firma`, { fechaEnvio }),
+  rsgRetirarDeFirma: (id: string) => patch(`/reconsideraciones/${id}/rsg/retirar-de-firma`),
+  rsgFirmar: (id: string, fechaFirma: string, numeroResolucion?: string) =>
+    patch(`/reconsideraciones/${id}/rsg/firmar`, { fechaFirma, ...(numeroResolucion ? { numeroResolucion } : {}) }),
+  rsgNotificar: (id: string, fechaNotificacion: string) => patch(`/reconsideraciones/${id}/rsg/notificar`, { fechaNotificacion }),
 
   // Apelación (SP7)
-  presentarApelacion: (resolucionId: string) =>
-    apiClient<{ id: string }>(`/apelaciones/${resolucionId}`, { method: 'POST' }),
-  generarInformeGop: (id: string) =>
-    apiClient<any>(`/apelaciones/${id}/informe-gop`, { method: 'POST' }),
-  firmarInformeGop: (id: string) =>
-    apiClient<{ ok: true }>(`/apelaciones/${id}/firmar-informe`, { method: 'PATCH' }),
-  registrarDecisionGop: (id: string, decisionGop: 'FUNDADA' | 'INFUNDADA' | 'NULIDAD', motivoNulidad?: string) =>
-    apiClient<{ ok: true }>(`/apelaciones/${id}/decision`, {
-      method: 'PATCH',
-      body: JSON.stringify({ decisionGop, motivoNulidad }),
-    }),
+  presentarApelacion: (resolucionId: string, fechaPresentacion: string) =>
+    apiClient<{ id: string }>(`/apelaciones/${resolucionId}`, { method: 'POST', body: JSON.stringify({ fechaPresentacion }) }),
+  generarInformeGop: (id: string) => apiClient<InformeGop>(`/apelaciones/${id}/informe-gop`, { method: 'POST' }),
+  verInformeGop: (id: string) => apiClient<{ informe: InformeGop | null }>(`/apelaciones/${id}/informe-gop`),
+  firmarInformeGop: (id: string) => patch(`/apelaciones/${id}/firmar-informe`),
+  elevarAGop: (id: string, fechaElevacion: string) => patch(`/apelaciones/${id}/elevar`, { fechaElevacion }),
+  registrarDecisionGop: (id: string, decisionGop: DecisionGop, fechaDecision: string, motivoNulidad?: string) =>
+    patch(`/apelaciones/${id}/decision`, { decisionGop, fechaDecision, ...(motivoNulidad ? { motivoNulidad } : {}) }),
 };
 
 // ============================================================================
 // ACTO FIRME & PAGOS (SP8 & ES1)
 // ============================================================================
+export interface CandidatoActoFirme {
+  expedienteId: string;
+  numeroExpediente: string;
+  motivo: 'VENCIMIENTO_PLAZO_RECURSOS' | 'APELACION_INFUNDADA';
+  fechaVencimientoPlazo: string | null;
+  tienePago: boolean;
+  fechaPago: string | null;
+  montoPagado: number | null;
+}
+
+export interface ActoFirmePendienteDerivacion {
+  expedienteId: string;
+  numeroExpediente: string;
+  motivo: 'VENCIMIENTO_PLAZO_RECURSOS' | 'APELACION_INFUNDADA';
+  fechaFirmeza: string;
+  constanciaMultaEmitida: boolean;
+  constanciaMedidaComplementariaEmitida: boolean;
+  tienePago: boolean;
+  fechaPago: string | null;
+  montoPagado: number | null;
+}
+
 export const CoactivaPagosApi = {
-  declararActoFirme: (expedienteId: string, motivo: 'VENCIMIENTO_PLAZO_RECURSOS' | 'APELACION_INFUNDADA', fechaFirmeza: string) =>
+  listarCandidatosActoFirme: () => apiClient<CandidatoActoFirme[]>('/actos-firmes/candidatos'),
+  listarPendientesDerivacion: () => apiClient<ActoFirmePendienteDerivacion[]>('/actos-firmes/pendientes-derivacion'),
+  declararActoFirme: (
+    expedienteId: string,
+    motivo: 'VENCIMIENTO_PLAZO_RECURSOS' | 'APELACION_INFUNDADA',
+    fechaFirmeza: string,
+  ) =>
     apiClient<any>(`/actos-firmes/${expedienteId}`, {
       method: 'POST',
       body: JSON.stringify({ motivo, fechaFirmeza }),
@@ -700,11 +834,6 @@ export const CoactivaPagosApi = {
     apiClient<{ ok: true }>(`/actos-firmes/${expedienteId}/derivacion-coactiva`, {
       method: 'PATCH',
       body: JSON.stringify({ fechaDerivacionCoactiva, requiereMedidaComplementaria }),
-    }),
-  registrarPago: (resolucionId: string, montoPagado: number, fechaPago: string) =>
-    apiClient<any>(`/pagos/${resolucionId}`, {
-      method: 'POST',
-      body: JSON.stringify({ montoPagado, fechaPago }),
     }),
 };
 
@@ -824,6 +953,7 @@ export interface BundleIntervencion {
   administrado?: {
     identificado: boolean;
     motivoNoIdentificado?: string;
+    motivoNoIdentificadoDetalle?: string;
     tipoDocumento?: string;
     numeroDocumento?: string;
     nombresRazonSocial?: string;
@@ -1066,3 +1196,20 @@ export async function descargarDocumentoWord(
   enlace.click();
   URL.revokeObjectURL(url);
 }
+// F1 — Levantamiento de medidas provisionales (archivo propio para no mezclarlo con el resto).
+export * from './levantamientos';
+// F2 / F3 — Caducidad del PAS y prescripción de la exigibilidad (archivos propios).
+export * from './caducidad';
+export * from './prescripcion';
+// F4 — Ejecución coactiva (archivo propio).
+export * from './coactiva';
+// Nulidad de GOP → retroacción del expediente.
+export * from './retroaccion';
+// RSG de ampliación: domicilio de un documento del SGD.
+export * from './ampliacion';
+// Visitas del notificador (bajo puerta).
+export * from './visitasNotificacion';
+// Validación: checklist de completitud.
+export * from './checklistValidacion';
+// Bases municipales: licencias e ITSE.
+export * from './basesMunicipales';

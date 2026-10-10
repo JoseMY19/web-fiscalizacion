@@ -3,12 +3,13 @@ import {
   ExpedientesApi,
   ExpedienteItem,
   IntervencionesApi,
-  IntervencionObservadaItem,
   ActasApi,
 } from '../../api';
+import { ExpedientesObservadosApi, ExpedienteObservadoItem } from '../../api/expedientesObservados';
 import { Button, Badge, Modal, Input, Textarea, Alert, EmptyState, Spinner } from '../../components/common/Common';
 import { formatearFecha, formatearHora, hoyLocal } from '../../lib/fechas';
 import { useConfirm } from '../../context/ConfirmContext';
+import { ChecklistValidacionApi } from '../../api';
 import { generarUuid } from '../../lib/uuid';
 import {
   ExpedienteIcon,
@@ -22,6 +23,7 @@ import {
 } from '../../components/icons/Icons';
 import { ExpedienteDetalleModal } from './ExpedienteDetalleModal';
 import { socket } from '../../lib/socket';
+import { BotonCorregirDato } from '../correcciones/CorreccionMaterial';
 
 function formatEstado(estado: string): string {
   const map: Record<string, string> = {
@@ -39,7 +41,7 @@ export const ExpedientesView: React.FC = () => {
   const confirm = useConfirm();
   const [activeTab, setActiveTab] = useState<'validar' | 'observadas' | 'digitalizar'>('validar');
   const [expedientes, setExpedientes] = useState<ExpedienteItem[]>([]);
-  const [observadas, setObservadas] = useState<IntervencionObservadaItem[]>([]);
+  const [observadas, setObservadas] = useState<ExpedienteObservadoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
@@ -50,6 +52,8 @@ export const ExpedientesView: React.FC = () => {
     isOpen: boolean;
     intervencionId: string | null;
     numeroExpediente?: string;
+    /** O2: para mostrar el historial de correcciones de error material. */
+    expedienteId?: string;
   }>({
     isOpen: false,
     intervencionId: null,
@@ -63,27 +67,6 @@ export const ExpedientesView: React.FC = () => {
   });
   const [observacionesTexto, setObservacionesTexto] = useState('');
 
-  // Modal de Subsanación / Corrección (V-02)
-  const [corregirModal, setCorregirModal] = useState<{
-    isOpen: boolean;
-    intervencionId: string;
-    numeroExpediente: string;
-    motivo: string;
-  }>({
-    isOpen: false,
-    intervencionId: '',
-    numeroExpediente: '',
-    motivo: '',
-  });
-
-  const [correccionForm, setCorreccionForm] = useState({
-    direccionAproximada: '',
-    nombresRazonSocial: '',
-    numeroDocumento: '',
-    giroUso: '',
-    hechosVerificados: '',
-    comentarioCorreccion: '',
-  });
 
   // Formulario de Digitalización Manual (POST /intervenciones)
   const [digitalizarForm, setDigitalizarForm] = useState({
@@ -107,7 +90,7 @@ export const ExpedientesView: React.FC = () => {
     try {
       const [pendientesData, observadasData] = await Promise.allSettled([
         ExpedientesApi.getPendientes(),
-        IntervencionesApi.getObservadas(),
+        ExpedientesObservadosApi.listar(),
       ]);
 
       if (pendientesData.status === 'fulfilled') {
@@ -132,7 +115,19 @@ export const ExpedientesView: React.FC = () => {
   }, []);
 
   const handleAprobar = async (id: string, numero: string) => {
-    const ok = await confirm({ message: `¿Confirmas la aprobación del expediente ${numero}? Pasará a la fase de Instrucción (SP4).` });
+    // Validación = revisar que esté completo: avisar qué falta antes de aprobar.
+    const checklist = await ChecklistValidacionApi.obtener(id).catch(() => null);
+    const faltan = checklist?.items.filter((x) => !x.ok && x.obligatorio) ?? [];
+    const ok = await confirm(
+      faltan.length > 0
+        ? {
+            title: 'Expediente incompleto',
+            message: `Al expediente ${numero} le falta: ${faltan.map((x) => x.etiqueta).join('; ')}. Puedes completarlo aquí con "Corregir" o en el checklist del detalle. ¿Aprobar igual?`,
+            confirmLabel: 'Aprobar igual',
+            variant: 'danger',
+          }
+        : { message: `¿Confirmas la aprobación del expediente ${numero}? Pasará a la fase de Instrucción (SP4).` },
+    );
     if (!ok) return;
     setActionLoading(true);
     try {
@@ -178,83 +173,6 @@ export const ExpedientesView: React.FC = () => {
     }
   };
 
-  const handleAbrirCorregir = async (obs: IntervencionObservadaItem) => {
-    setCorregirModal({
-      isOpen: true,
-      intervencionId: obs.id,
-      numeroExpediente: obs.numeroExpediente,
-      motivo: obs.motivo,
-    });
-    setCorreccionForm({
-      direccionAproximada: '',
-      nombresRazonSocial: '',
-      numeroDocumento: '',
-      giroUso: '',
-      hechosVerificados: '',
-      comentarioCorreccion: '',
-    });
-
-    // Cargar datos previos si es posible
-    try {
-      const bundle = await IntervencionesApi.getDetalle(obs.id);
-      if (bundle) {
-        setCorreccionForm({
-          direccionAproximada: bundle.direccionAproximada || '',
-          nombresRazonSocial: bundle.administrado?.nombresRazonSocial || '',
-          numeroDocumento: bundle.administrado?.numeroDocumento || '',
-          giroUso: bundle.administrado?.giroUso || '',
-          hechosVerificados: bundle.actaFiscalizacion?.hechosVerificados || '',
-          comentarioCorreccion: '',
-        });
-      }
-    } catch {
-      // Usar formulario en blanco
-    }
-  };
-
-  const handleEnviarCorreccion = async () => {
-    if (!correccionForm.comentarioCorreccion.trim()) {
-      setMessage({ type: 'error', text: 'El comentario de corrección es obligatorio (V-02). Debe detallar qué subsanó.' });
-      return;
-    }
-    setActionLoading(true);
-    try {
-      await IntervencionesApi.corregir(corregirModal.intervencionId, {
-        fechaHoraInicio: new Date().toISOString(),
-        origenUbicacion: 'DIRECCION_MANUAL',
-        origen: 'DOC_EXTERNO',
-        tipoActuacion: 'INICIA_PAS',
-        versionLocal: 2,
-        direccionAproximada: correccionForm.direccionAproximada,
-        administrado: {
-          identificado: true,
-          nombresRazonSocial: correccionForm.nombresRazonSocial,
-          numeroDocumento: correccionForm.numeroDocumento,
-          giroUso: correccionForm.giroUso,
-        },
-        cuis: [],
-        actaFiscalizacion: {
-          numeroCorrelativo: `CORR-${Date.now().toString().slice(-4)}`,
-          hechosVerificados: correccionForm.hechosVerificados,
-        },
-        testigos: [],
-        actasMedidaProvisional: [],
-        actasValorizacionObra: [],
-        actasAdicionales: [],
-        comentarioCorreccion: correccionForm.comentarioCorreccion.trim(),
-      });
-      setMessage({
-        type: 'success',
-        text: `Intervención del expediente ${corregirModal.numeroExpediente} subsanada con éxito. Vuelve a Pendientes de Validación.`,
-      });
-      setCorregirModal({ isOpen: false, intervencionId: '', numeroExpediente: '', motivo: '' });
-      cargar();
-    } catch (err: any) {
-      setMessage({ type: 'error', text: err.message || 'Error al enviar corrección de la intervención.' });
-    } finally {
-      setActionLoading(false);
-    }
-  };
 
   const handleValidarCorrelativo = async (tipo: string, numero: string) => {
     if (!numero.trim()) return;
@@ -349,65 +267,6 @@ export const ExpedientesView: React.FC = () => {
       </div>
 
       {message && <Alert type={message.type}>{message.text}</Alert>}
-
-      {/* KPI Stats Cards */}
-      <div
-        className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-[16px] mb-[24px]"
-      >
-        <div
-          className="bg-[#ffffff] rounded-[12px] py-[16px] px-[20px] border border-[#e2e8f0] shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex items-center justify-between"
-        >
-          <div>
-            <span className="text-[12px] font-semibold text-[#64748b]">Por Calificar</span>
-            <div className="text-[26px] font-extrabold text-[#0f172a] mt-[2px]">{expedientes.length}</div>
-            <span className="text-[11px] text-[#0284c7] font-semibold">En bandeja de validación</span>
-          </div>
-          <div className="w-[42px] h-[42px] rounded-[10px] bg-[#e0f2fe] text-[#0284c7] flex items-center justify-center">
-            <ExpedienteIcon size={22} />
-          </div>
-        </div>
-
-        <div
-          className="bg-[#ffffff] rounded-[12px] py-[16px] px-[20px] border border-[#e2e8f0] shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex items-center justify-between"
-        >
-          <div>
-            <span className="text-[12px] font-semibold text-[#64748b]">Actas Observadas</span>
-            <div className="text-[26px] font-extrabold text-[#dc2626] mt-[2px]">{observadas.length}</div>
-            <span className="text-[11px] text-[#dc2626] font-semibold">Devueltas para subsanación</span>
-          </div>
-          <div className="w-[42px] h-[42px] rounded-[10px] bg-[#fee2e2] text-[#dc2626] flex items-center justify-center">
-            <AlertTriangleIcon size={22} />
-          </div>
-        </div>
-
-        <div
-          className="bg-[#ffffff] rounded-[12px] py-[16px] px-[20px] border border-[#e2e8f0] shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex items-center justify-between"
-        >
-          <div>
-            <span className="text-[12px] font-semibold text-[#64748b]">Ingreso Físico Recibido</span>
-            <div className="text-[26px] font-extrabold text-[#059669] mt-[2px]">
-              {expedientes.filter((e) => e.fechaIngresoFisico).length}
-            </div>
-            <span className="text-[11px] text-[#059669] font-semibold">Talonarios en custodia</span>
-          </div>
-          <div className="w-[42px] h-[42px] rounded-[10px] bg-[#dcfce7] text-[#059669] flex items-center justify-center">
-            <FileTextIcon size={22} />
-          </div>
-        </div>
-
-        <div
-          className="bg-[#ffffff] rounded-[12px] py-[16px] px-[20px] border border-[#e2e8f0] shadow-[0_1px_3px_rgba(0,0,0,0.04)] flex items-center justify-between"
-        >
-          <div>
-            <span className="text-[12px] font-semibold text-[#64748b]">Conformidad Legal</span>
-            <div className="text-[26px] font-extrabold text-[#0f172a] mt-[2px]">100%</div>
-            <span className="text-[11px] text-[#64748b] font-semibold">Art. 248° TUO LPAG</span>
-          </div>
-          <div className="w-[42px] h-[42px] rounded-[10px] bg-[#f1f5f9] text-[#475569] flex items-center justify-center">
-            <CheckCircleIcon size={22} />
-          </div>
-        </div>
-      </div>
 
       {/* Main Container Card */}
       <div className="bg-[#ffffff] rounded-[12px] border border-[#e2e8f0] shadow-[0_1px_3px_rgba(0,0,0,0.05)] overflow-hidden">
@@ -521,6 +380,7 @@ export const ExpedientesView: React.FC = () => {
                                     isOpen: true,
                                     intervencionId: exp.intervencionId,
                                     numeroExpediente: exp.numeroExpediente,
+                                    expedienteId: exp.id,
                                   })
                                 }
                               >
@@ -578,6 +438,7 @@ export const ExpedientesView: React.FC = () => {
                                     isOpen: true,
                                     intervencionId: exp.intervencionId,
                                     numeroExpediente: exp.numeroExpediente,
+                                    expedienteId: exp.id,
                                   })
                                 }
                               >
@@ -596,11 +457,8 @@ export const ExpedientesView: React.FC = () => {
                                 variant="outline"
                                 size="sm"
                                 disabled={actionLoading}
-                                onClick={() => {
-                                  setObservarModal({ isOpen: true, id: exp.id, numero: exp.numeroExpediente });
-                                  setObservacionesTexto('');
-                                }}
-                                className="border-[#fca5a5]! text-[#b91c1c]! bg-[#fef2f2]!"
+                                onClick={() => setObservarModal({ isOpen: true, id: exp.id, numero: exp.numeroExpediente })}
+                                className="border-[#fca5a5]! text-[#b91c1c]! bg-[#fff1f2]!"
                               >
                                 Observar
                               </Button>
@@ -626,23 +484,23 @@ export const ExpedientesView: React.FC = () => {
           </div>
         )}
 
-      {/* TAB 2: ACTAS OBSERVADAS & SUBSANACIÓN */}
+      {/* TAB 2: ACTAS OBSERVADAS & CORRECCIÓN */}
       {activeTab === 'observadas' && (
         <div className="p-[20px]">
           <div className="mb-[16px]">
             <h3 className="text-[15px] font-bold text-midnight-900">
-              Actas con Defectos Subsanables (V-01)
+              Expedientes observados
             </h3>
             <p className="text-[13px] text-text-muted">
-              Listado de intervenciones devueltas por la mesa de partes para que el fiscalizador subsane omisiones formales.
+              Expedientes observados en la validación. Corrige los datos aquí (queda registrado el antes y después) y luego envíalos de nuevo a validación.
             </p>
           </div>
 
           {observadas.length === 0 ? (
             <EmptyState
               icon={<CheckCircleIcon size={40} color="var(--color-success)" />}
-              title="Sin actas observadas"
-              description="No tienes actas observadas pendientes de subsanación."
+              title="Sin expedientes observados"
+              description="No hay expedientes observados pendientes de corrección."
             />
           ) : (
             <div className="overflow-x-auto">
@@ -651,8 +509,8 @@ export const ExpedientesView: React.FC = () => {
                   <tr className="bg-[#f8fafc] border-b border-b-border">
                     <th className="py-[12px] px-[16px] font-bold">N° Expediente</th>
                     <th className="py-[12px] px-[16px] font-bold">Fecha Observación</th>
-                    <th className="py-[12px] px-[16px] font-bold">Motivo de la Observación (Vicio Detectado)</th>
-                    <th className="py-[12px] px-[16px] font-bold text-right">Acción</th>
+                    <th className="py-[12px] px-[16px] font-bold">Motivo de la Observación</th>
+                    <th className="py-[12px] px-[16px] font-bold text-right">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -679,19 +537,37 @@ export const ExpedientesView: React.FC = () => {
                             onClick={() =>
                               setDetalleModal({
                                 isOpen: true,
-                                intervencionId: obs.id,
+                                intervencionId: obs.intervencionId,
                                 numeroExpediente: obs.numeroExpediente,
+                                expedienteId: obs.id,
                               })
                             }
                           >
                             Revisar
                           </Button>
+                          <BotonCorregirDato expedienteId={obs.id} etiqueta="Corregir" variante="primary" onCorregido={cargar} />
                           <Button
-                            variant="primary"
+                            variant="outline"
                             size="sm"
-                            onClick={() => handleAbrirCorregir(obs)}
+                            disabled={actionLoading}
+                            onClick={async () => {
+                              const ok = await confirm({
+                                message: `¿Confirmas el envío del expediente ${obs.numeroExpediente} a validación? Los cambios registrados quedarán trazables.`,
+                              });
+                              if (!ok) return;
+                              setActionLoading(true);
+                              try {
+                                await ExpedientesObservadosApi.reenviarValidacion(obs.id);
+                                setMessage({ type: 'success', text: `Expediente ${obs.numeroExpediente} reenviado a validación.` });
+                                cargar();
+                              } catch (err: any) {
+                                setMessage({ type: 'error', text: err.message || 'No se pudo reenviar el expediente.' });
+                              } finally {
+                                setActionLoading(false);
+                              }
+                            }}
                           >
-                            Subsanar y Corregir
+                            Enviar a validación
                           </Button>
                         </div>
                       </td>
@@ -856,70 +732,6 @@ export const ExpedientesView: React.FC = () => {
         />
       </Modal>
 
-      {/* Modal para Subsanar y Corregir (V-02) */}
-      <Modal
-        isOpen={corregirModal.isOpen}
-        onClose={() => setCorregirModal({ isOpen: false, intervencionId: '', numeroExpediente: '', motivo: '' })}
-        title={`Subsanar Acta Observada: ${corregirModal.numeroExpediente}`}
-        maxWidth="680px"
-        footer={
-          <>
-            <Button
-              variant="secondary"
-              onClick={() => setCorregirModal({ isOpen: false, intervencionId: '', numeroExpediente: '', motivo: '' })}
-            >
-              Cancelar
-            </Button>
-            <Button variant="primary" loading={actionLoading} onClick={handleEnviarCorreccion}>
-              Enviar Corrección a Mesa de Control
-            </Button>
-          </>
-        }
-      >
-        <div className="mb-[16px] py-[10px] px-[14px] bg-[#fef2f2] border border-[#fecaca] rounded-[6px]">
-          <div className="text-[12px] font-bold text-[#991b1b]">Motivo de la Observación:</div>
-          <div className="text-[13px] text-[#b91c1c] mt-[2px]">{corregirModal.motivo}</div>
-        </div>
-
-        <div className="flex flex-col gap-[14px]">
-          <Input
-            label="Dirección Subsanada"
-            value={correccionForm.direccionAproximada}
-            onChange={(e) => setCorreccionForm({ ...correccionForm, direccionAproximada: e.target.value })}
-          />
-          <div className="grid grid-cols-[1fr_1fr] gap-[12px]">
-            <Input
-              label="Nombre / Razón Social"
-              value={correccionForm.nombresRazonSocial}
-              onChange={(e) => setCorreccionForm({ ...correccionForm, nombresRazonSocial: e.target.value })}
-            />
-            <Input
-              label="DNI / RUC"
-              value={correccionForm.numeroDocumento}
-              onChange={(e) => setCorreccionForm({ ...correccionForm, numeroDocumento: e.target.value })}
-            />
-          </div>
-          <Input
-            label="Giro o Actividad"
-            value={correccionForm.giroUso}
-            onChange={(e) => setCorreccionForm({ ...correccionForm, giroUso: e.target.value })}
-          />
-          <Textarea
-            label="Hechos Constatados Rectificados"
-            value={correccionForm.hechosVerificados}
-            onChange={(e) => setCorreccionForm({ ...correccionForm, hechosVerificados: e.target.value })}
-            rows={3}
-          />
-          <Textarea
-            label="Comentario Obligatorio de Corrección (V-02) *"
-            placeholder="Explique qué vicio formal fue subsanado conforme a la observación..."
-            value={correccionForm.comentarioCorreccion}
-            onChange={(e) => setCorreccionForm({ ...correccionForm, comentarioCorreccion: e.target.value })}
-            rows={3}
-            required
-          />
-        </div>
-      </Modal>
 
       {/* Visor Modal 360° */}
       <ExpedienteDetalleModal
@@ -927,6 +739,7 @@ export const ExpedientesView: React.FC = () => {
         onClose={() => setDetalleModal({ isOpen: false, intervencionId: null })}
         intervencionId={detalleModal.intervencionId}
         numeroExpediente={detalleModal.numeroExpediente}
+        expedienteId={detalleModal.expedienteId}
       />
     </div>
   );
