@@ -56,6 +56,8 @@ export const CoactivaPagosView: React.FC = () => {
   const [fechaFirmeza, setFechaFirmeza] = useState(hoyLocal());
   const [fechaDerivacion, setFechaDerivacion] = useState(hoyLocal());
   const [requiereMedida, setRequiereMedida] = useState(false);
+  // Avisos de la Etapa 2: salen dentro de la tarjeta, junto a los botones (no arriba de la página).
+  const [mensajeEtapa2, setMensajeEtapa2] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const elegirCandidato = (c: CandidatoActoFirme | null) => {
     setCandidato(c);
@@ -82,7 +84,7 @@ export const CoactivaPagosView: React.FC = () => {
   };
 
   const exigirActoFirme = (): ActoFirmePendienteDerivacion | null => {
-    if (!actoFirme) setMessage({ type: 'error', text: 'Seleccione el expediente con acto firme.' });
+    if (!actoFirme) setMensajeEtapa2({ type: 'error', text: 'Seleccione el expediente con acto firme.' });
     return actoFirme;
   };
 
@@ -92,11 +94,11 @@ export const CoactivaPagosView: React.FC = () => {
     setActionLoading(true);
     try {
       await CoactivaPagosApi.emitirConstanciaMulta(af.expedienteId);
-      setMessage({ type: 'success', text: 'Constancia de Exigibilidad de Multa emitida con éxito.' });
+      setMensajeEtapa2({ type: 'success', text: 'Constancia de Exigibilidad de Multa emitida con éxito.' });
       setActoFirme({ ...af, constanciaMultaEmitida: true });
       pendientesDerivacion.recargar();
     } catch (err: any) {
-      setMessage({ type: 'error', text: err.message || 'Error al emitir constancia de multa.' });
+      setMensajeEtapa2({ type: 'error', text: err.message || 'Error al emitir constancia de multa.' });
     } finally {
       setActionLoading(false);
     }
@@ -108,11 +110,11 @@ export const CoactivaPagosView: React.FC = () => {
     setActionLoading(true);
     try {
       await CoactivaPagosApi.emitirConstanciaMedida(af.expedienteId);
-      setMessage({ type: 'success', text: 'Constancia de Exigibilidad de Medida Complementaria emitida con éxito.' });
+      setMensajeEtapa2({ type: 'success', text: 'Constancia de Exigibilidad de Medida Complementaria emitida con éxito.' });
       setActoFirme({ ...af, constanciaMedidaComplementariaEmitida: true });
       pendientesDerivacion.recargar();
     } catch (err: any) {
-      setMessage({ type: 'error', text: err.message || 'Error al emitir constancia de medida complementaria.' });
+      setMensajeEtapa2({ type: 'error', text: err.message || 'Error al emitir constancia de medida complementaria.' });
     } finally {
       setActionLoading(false);
     }
@@ -124,15 +126,32 @@ export const CoactivaPagosView: React.FC = () => {
     setActionLoading(true);
     try {
       await CoactivaPagosApi.registrarDerivacionCoactiva(af.expedienteId, fechaDerivacion, requiereMedida);
-      setMessage({ type: 'success', text: `Derivación del expediente ${af.numeroExpediente} a la Oficina de Ejecución Coactiva registrada.` });
+      setMensajeEtapa2({ type: 'success', text: `Derivación del expediente ${af.numeroExpediente} a la Oficina de Ejecución Coactiva registrada.` });
       setActoFirme(null);
       pendientesDerivacion.recargar();
     } catch (err: any) {
-      setMessage({ type: 'error', text: err.message || 'Error al registrar derivación coactiva.' });
+      setMensajeEtapa2({ type: 'error', text: err.message || 'Error al registrar derivación coactiva.' });
     } finally {
       setActionLoading(false);
     }
   };
+
+  const elegirActoFirme = (a: ActoFirmePendienteDerivacion | null) => {
+    setActoFirme(a);
+    setMensajeEtapa2(null);
+  };
+
+  // Qué falta antes de derivar (el backend exige las constancias; aquí se ve antes de intentarlo).
+  const multaEmitida = !!actoFirme?.constanciaMultaEmitida;
+  const medidaEmitida = !!actoFirme?.constanciaMedidaComplementariaEmitida;
+  const puedeDerivar = !!actoFirme && multaEmitida && (!requiereMedida || medidaEmitida);
+  const pasoSiguiente = !actoFirme
+    ? 'Elige un expediente de la lista para empezar.'
+    : !multaEmitida
+      ? 'Siguiente paso: emite la constancia de multa exigible.'
+      : requiereMedida && !medidaEmitida
+        ? 'Siguiente paso: emite la constancia de la medida complementaria.'
+        : 'Todo listo: registra la derivación a coactiva.';
 
   return (
     <div>
@@ -235,7 +254,7 @@ export const CoactivaPagosView: React.FC = () => {
               cargando={pendientesDerivacion.cargando}
               error={pendientesDerivacion.error}
               seleccionada={actoFirme}
-              onSeleccionar={setActoFirme}
+              onSeleccionar={elegirActoFirme}
               obtenerClave={(a) => a.expedienteId}
               obtenerNumeroExpediente={(a) => a.numeroExpediente}
               renderDetalle={(a) => (
@@ -259,11 +278,41 @@ export const CoactivaPagosView: React.FC = () => {
               </Alert>
             )}
 
+            {actoFirme ? (
+              <div className="rounded-sm border border-border bg-bg-subtle p-[14px] mb-[16px]">
+                <div className="flex items-center justify-between gap-[8px] flex-wrap mb-[10px]">
+                  <span className="text-[13px] font-bold text-text-main">Expediente {actoFirme.numeroExpediente}</span>
+                  <span className="text-[12px] text-text-muted">
+                    Acto firme desde {formatearFecha(actoFirme.fechaFirmeza)} · {MOTIVO_CORTO[actoFirme.motivo]}
+                  </span>
+                </div>
+                <ul className="m-0 p-0 list-none flex flex-col gap-[6px] text-[13px]">
+                  <li className="flex items-center gap-[8px]">
+                    <Badge variant={multaEmitida ? 'success' : 'warning'}>{multaEmitida ? 'Emitida' : 'Pendiente'}</Badge>
+                    Constancia de multa exigible (obligatoria)
+                  </li>
+                  <li className="flex items-center gap-[8px]">
+                    <Badge variant={medidaEmitida ? 'success' : requiereMedida ? 'warning' : 'neutral'}>
+                      {medidaEmitida ? 'Emitida' : requiereMedida ? 'Pendiente' : 'No requerida'}
+                    </Badge>
+                    Constancia de medida complementaria (solo si hay una medida que ejecutar)
+                  </li>
+                </ul>
+                <p className="mt-[10px] mb-0 text-[13px] font-semibold text-primary-700">{pasoSiguiente}</p>
+              </div>
+            ) : (
+              <p className="text-[13px] text-text-muted mb-[16px]">
+                Elige un expediente de la lista: aquí verás qué constancias faltan antes de derivarlo.
+              </p>
+            )}
+
+            {mensajeEtapa2 && <Alert type={mensajeEtapa2.type}>{mensajeEtapa2.text}</Alert>}
+
             <div className="flex gap-[12px] mb-[20px]">
-              <Button variant="secondary" icon={<FileTextIcon size={16} />} loading={actionLoading} onClick={handleConstanciaMulta}>
+              <Button variant="secondary" icon={<FileTextIcon size={16} />} loading={actionLoading} disabled={!actoFirme || multaEmitida} onClick={handleConstanciaMulta}>
                 Emitir Constancia de Multa Exigible
               </Button>
-              <Button variant="secondary" icon={<FileTextIcon size={16} />} loading={actionLoading} onClick={handleConstanciaMedida}>
+              <Button variant="secondary" icon={<FileTextIcon size={16} />} loading={actionLoading} disabled={!actoFirme || medidaEmitida} onClick={handleConstanciaMedida}>
                 Emitir Constancia de Medida Complementaria
               </Button>
             </div>
@@ -289,9 +338,10 @@ export const CoactivaPagosView: React.FC = () => {
                 </label>
               </div>
 
-              <Button variant="primary" loading={actionLoading} onClick={handleDerivacion}>
+              <Button variant="primary" loading={actionLoading} disabled={!puedeDerivar} onClick={handleDerivacion}>
                 Registrar Derivación a Coactiva
               </Button>
+              {!puedeDerivar && <p className="mt-[8px] mb-0 text-[12px] text-text-muted">{pasoSiguiente}</p>}
             </div>
           </Card>
         </div>
