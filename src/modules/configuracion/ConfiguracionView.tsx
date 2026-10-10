@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   ConfiguracionApi,
   FeriadoItem,
@@ -10,7 +9,6 @@ import { formatearFecha } from '../../lib/fechas';
 import { useConfirm } from '../../context/ConfirmContext';
 import {
   CalendarIcon,
-  ClockIcon,
   SearchIcon,
   RefreshCwIcon,
   ShieldAlertIcon,
@@ -20,8 +18,7 @@ import { CatalogoCuisCrud } from '../catalogo-cuis/CatalogoCuisCrud';
 
 export const ConfiguracionView: React.FC = () => {
   const confirm = useConfirm();
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'plazos' | 'feriados' | 'cuis' | 'uit' | 'seguridad' | 'bases'>('plazos');
+  const [activeTab, setActiveTab] = useState<'feriados' | 'cuis' | 'uit' | 'seguridad' | 'bases'>('feriados');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -98,14 +95,6 @@ export const ConfiguracionView: React.FC = () => {
       {/* Tabs */}
       <div className="flex gap-[8px] mb-[16px] flex-wrap">
         <button
-          onClick={() => setActiveTab('plazos')}
-          className={`py-[10px] px-[18px] text-[13px] font-bold rounded-sm cursor-pointer flex items-center gap-[8px] ${activeTab === 'plazos' ? 'border border-primary-600' : 'border border-border'} ${activeTab === 'plazos' ? 'bg-primary-50' : 'bg-[#ffffff]'} ${activeTab === 'plazos' ? 'text-primary-600' : 'text-text-secondary'}`}
-        >
-          <ClockIcon size={16} />
-          Plazos y Alertas
-        </button>
-
-        <button
           onClick={() => setActiveTab('feriados')}
           className={`py-[10px] px-[18px] text-[13px] font-bold rounded-sm cursor-pointer flex items-center gap-[8px] ${activeTab === 'feriados' ? 'border border-primary-600' : 'border border-border'} ${activeTab === 'feriados' ? 'bg-primary-50' : 'bg-[#ffffff]'} ${activeTab === 'feriados' ? 'text-primary-600' : 'text-text-secondary'}`}
         >
@@ -146,18 +135,6 @@ export const ConfiguracionView: React.FC = () => {
       </div>
 
       {activeTab === 'bases' && <BasesMunicipalesConfig />}
-
-      {/* Tab 1: los plazos y el riesgo viven ahora en el centro de alertas */}
-      {activeTab === 'plazos' && (
-        <Card title="Alertas y plazos">
-          <p className="text-[13px] text-text-muted mb-[14px]">
-            El seguimiento de plazos (caducidad, descargo, recursos, levantamientos, firma y coactiva), con la fase de cada expediente y su nivel de riesgo, está en el centro de alertas.
-          </p>
-          <Button variant="primary" onClick={() => navigate('/alertas')}>
-            Ir a Alertas y Plazos
-          </Button>
-        </Card>
-      )}
 
       {/* Tab 2: Feriados */}
       {activeTab === 'feriados' && (
