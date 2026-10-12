@@ -1,22 +1,30 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Alert, Badge, Button, EmptyState, Spinner } from '../../components/common/Common';
-import { ArrowRightIcon, CheckCircleIcon, CheckIcon, RefreshCwIcon, SearchIcon } from '../../components/icons/Icons';
+import { Alert, Badge, Button, Card, EmptyState, Spinner } from '../../components/common/Common';
+import { ArrowRightIcon, CheckCircleIcon, RefreshCwIcon, SearchIcon } from '../../components/icons/Icons';
 import { Alerta, AlertasApi, ExpedienteConAlertas, FaseExpediente, GrupoAlerta, ResultadoExpedientes } from '../../api/alertas';
 import { formatearFecha } from '../../lib/fechas';
 import { cn } from '../../lib/cn';
-import { CHIP_BASE, ETIQUETA_MODULO, FASES, GRUPOS, GRUPO_META, NIVEL_META, PASOS_FASE, haceDias } from './alertasUi';
+import { ETIQUETA_MODULO, FASES, GRUPOS, GRUPO_META, NIVEL_META, PASOS_FASE, haceDias } from './alertasUi';
 
 const POR_PAGINA = 10;
 const CONTROL = 'h-[38px] px-[12px] text-[13px] rounded-sm border border-border bg-white text-text-main outline-none focus:border-primary-500';
 
 type Vista = GrupoAlerta | 'ATENCION';
 
+const VARIANTE_GRUPO: Record<GrupoAlerta, 'danger' | 'warning' | 'info' | 'neutral'> = {
+  URGENTE: 'danger',
+  POR_VENCER: 'warning',
+  ACTUAR: 'info',
+  SEGUIMIENTO: 'neutral',
+};
+
 /**
- * Alertas y plazos, una tarjeta por expediente: en qué fase está (línea de
- * fases), qué toca hacer ahora, desde cuándo espera y qué plazos corren.
- * Por defecto muestra lo que pide atención; "En seguimiento" guarda los plazos
- * largos sin riesgo para que no hagan ruido.
+ * Alertas y plazos, con la misma estructura que los demás módulos: título,
+ * pestañas con contadores y una tabla con una fila por expediente (en qué fase
+ * está, qué toca hacer, desde cuándo espera y qué plazos corren). Por defecto
+ * muestra lo que pide atención; "En seguimiento" guarda los plazos largos sin
+ * riesgo para que no hagan ruido.
  */
 export const AlertasView: React.FC = () => {
   const [vista, setVista] = useState<Vista>('ATENCION');
@@ -50,167 +58,138 @@ export const AlertasView: React.FC = () => {
     cargar();
   }, [cargar]);
 
-  // Pulsar un grupo lo filtra; pulsarlo otra vez vuelve a "requieren atención".
-  const elegirGrupo = (g: GrupoAlerta) => {
-    setVista(vista === g ? 'ATENCION' : g);
+  const elegirVista = (v: Vista) => {
+    setVista(v);
     setPagina(1);
   };
 
   const grupos = datos?.grupos;
   const atencion = grupos ? grupos.URGENTE + grupos.POR_VENCER + grupos.ACTUAR : undefined;
   const totalPaginas = datos ? Math.max(1, Math.ceil(datos.total / datos.porPagina)) : 1;
-  const titulo = vista === 'ATENCION' ? 'Expedientes que requieren atención' : GRUPO_META[vista].etiqueta;
+  const ayuda = vista === 'ATENCION' ? 'Expedientes con un plazo en riesgo o listos para dar el siguiente paso.' : `${GRUPO_META[vista].descripcion}.`;
+
+  const pestanas: { clave: Vista; titulo: string; cantidad: number | undefined }[] = [
+    { clave: 'ATENCION', titulo: 'Requieren atención', cantidad: atencion },
+    ...GRUPOS.map((g) => ({ clave: g as Vista, titulo: GRUPO_META[g].etiqueta, cantidad: grupos?.[g] })),
+  ];
 
   return (
     <div>
-      <div className="flex items-start justify-between gap-[16px] flex-wrap mb-[20px]">
+      <div className="flex items-center justify-between mb-[20px] gap-[12px] flex-wrap">
         <div>
-          <h2 className="text-[22px] font-extrabold text-text-main tracking-[-0.3px] m-0">Alertas y Plazos</h2>
-          <p className="text-[13px] text-text-muted mt-[4px] m-0">
+          <h2 className="text-[18px] font-extrabold text-midnight-900">Alertas y Plazos</h2>
+          <p className="text-[13px] text-text-muted mt-[2px] max-w-[760px]">
             En qué fase está cada expediente, qué toca hacer y qué plazos corren. Solo ves lo de los módulos a los que tienes acceso.
           </p>
         </div>
-        <Button variant="secondary" icon={<RefreshCwIcon size={14} />} loading={cargando} onClick={cargar}>
+        <Button variant="secondary" icon={<RefreshCwIcon size={16} />} loading={cargando} onClick={cargar}>
           Actualizar
         </Button>
       </div>
 
-      {/* Cuatro grupos de expedientes: cada tarjeta es también un filtro. */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-[12px] mb-[18px]">
-        {GRUPOS.map((g) => {
-          const meta = GRUPO_META[g];
-          const activo = vista === g;
+      {error && <Alert type="error">{error}</Alert>}
+
+      <div className="flex gap-[4px] border-b border-b-border mb-0 overflow-x-auto">
+        {pestanas.map((p) => {
+          const activa = p.clave === vista;
+          const cantidad = p.cantidad ?? 0;
           return (
             <button
-              key={g}
-              type="button"
-              onClick={() => elegirGrupo(g)}
+              key={p.clave}
+              onClick={() => elegirVista(p.clave)}
               className={cn(
-                'relative overflow-hidden text-left rounded-[12px] border bg-white py-[12px] pl-[18px] pr-[14px] cursor-pointer shadow-xs hover:bg-bg-subtle',
-                activo ? 'border-primary-600 shadow-[0_0_0_2px_rgba(37,99,235,0.15)]' : 'border-border',
+                'py-[10px] px-[16px] text-[13px] font-bold border-0 bg-transparent cursor-pointer flex items-center gap-[8px] border-b-2 whitespace-nowrap',
+                activa ? 'border-b-primary-600 text-primary-600' : 'border-b-transparent text-text-muted',
               )}
             >
-              <span className={cn('absolute left-0 top-0 bottom-0 w-[5px]', meta.barra)} />
-              <span className="flex items-baseline justify-between gap-[8px]">
-                <span className={cn('text-[13px] font-bold', meta.texto)}>{meta.etiqueta}</span>
-                <span className="text-[26px] font-extrabold text-text-main tabular-nums leading-none">{grupos ? grupos[g] : '–'}</span>
-              </span>
-              <span className="block text-[12px] text-text-muted mt-[4px]">{meta.descripcion}</span>
+              {p.titulo}
+              <Badge variant={p.clave !== 'ATENCION' && cantidad > 0 ? VARIANTE_GRUPO[p.clave] : activa ? 'info' : 'neutral'}>{p.cantidad ?? '–'}</Badge>
             </button>
           );
         })}
       </div>
 
-      <div className="flex items-center gap-[10px] flex-wrap mb-[12px]">
-        <h3 className="text-[15px] font-bold text-text-main m-0">
-          {titulo}
-          {datos && <span className="ml-[8px] text-[13px] font-medium text-text-muted">({datos.total})</span>}
-        </h3>
-        {vista !== 'ATENCION' && (
-          <button
-            type="button"
-            onClick={() => elegirGrupo(vista)}
-            className="bg-transparent border-0 p-0 text-[12px] font-semibold text-primary-600 cursor-pointer hover:underline"
+      <Card className="rounded-tl-none! rounded-tr-none! border-t-0!">
+        <div className="flex items-center gap-[10px] flex-wrap mb-[12px]">
+          <p className="text-[12px] text-text-muted m-0 flex-1 min-w-[240px]">{ayuda}</p>
+          <div className="relative min-w-[200px] max-w-[260px] flex-1">
+            <span className="absolute left-[10px] top-1/2 -translate-y-1/2 text-text-light flex">
+              <SearchIcon size={15} />
+            </span>
+            <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar N° de expediente" className={cn(CONTROL, 'w-full pl-[32px]')} />
+          </div>
+          <select
+            value={fase}
+            onChange={(e) => {
+              setFase(e.target.value as FaseExpediente | '');
+              setPagina(1);
+            }}
+            className={CONTROL}
           >
-            Ver los que requieren atención{atencion !== undefined ? ` (${atencion})` : ''}
-          </button>
-        )}
-        <span className="flex-1" />
-        <div className="relative min-w-[200px] max-w-[260px] flex-1">
-          <span className="absolute left-[10px] top-1/2 -translate-y-1/2 text-text-light flex">
-            <SearchIcon size={15} />
-          </span>
-          <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar N° de expediente" className={cn(CONTROL, 'w-full pl-[32px]')} />
+            <option value="">Todas las fases</option>
+            {FASES.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.etiqueta}
+              </option>
+            ))}
+          </select>
         </div>
-        <select
-          value={fase}
-          onChange={(e) => {
-            setFase(e.target.value as FaseExpediente | '');
-            setPagina(1);
-          }}
-          className={CONTROL}
-        >
-          <option value="">Todas las fases</option>
-          {FASES.map((f) => (
-            <option key={f.id} value={f.id}>
-              {f.etiqueta}
-            </option>
-          ))}
-        </select>
-      </div>
 
-      {error && <Alert type="error">{error}</Alert>}
-
-      {cargando && !datos ? (
-        <div className="py-[48px] flex justify-center">
-          <Spinner size={28} />
-        </div>
-      ) : datos && datos.items.length === 0 ? (
-        <div className="bg-white rounded-[12px] border border-border shadow-xs">
+        {cargando && !datos ? (
+          <div className="p-[40px] text-center">
+            <Spinner size={32} />
+          </div>
+        ) : datos && datos.items.length === 0 ? (
           <EmptyState
             icon={<CheckCircleIcon size={40} color="var(--color-success)" />}
-            title={vista === 'ATENCION' ? 'Nada requiere atención ahora' : 'No hay expedientes en este grupo'}
+            title={vista === 'ATENCION' ? 'Nada requiere atención ahora' : 'No hay expedientes en esta pestaña'}
             description={
               vista === 'ATENCION'
                 ? 'No hay plazos con riesgo ni expedientes listos para actuar. Los plazos sin riesgo están en "En seguimiento".'
-                : 'Prueba con otro grupo, otra fase o limpia la búsqueda.'
+                : 'Prueba con otra pestaña, otra fase o limpia la búsqueda.'
             }
           />
-        </div>
-      ) : (
-        <div className="flex flex-col gap-[12px]">
-          {datos?.items.map((e) => (
-            <TarjetaExpediente key={e.clave} e={e} />
-          ))}
-        </div>
-      )}
+        ) : (
+          <TablaExpedientes items={datos?.items ?? []} />
+        )}
 
-      {datos && datos.total > POR_PAGINA && (
-        <div className="mt-[14px] flex items-center justify-between text-[12px] text-text-muted">
-          <span>
-            Página {pagina} de {totalPaginas}
-          </span>
-          <span className="flex gap-[8px]">
-            <Button variant="secondary" size="sm" disabled={pagina <= 1 || cargando} onClick={() => setPagina(pagina - 1)}>
-              Anterior
-            </Button>
-            <Button variant="secondary" size="sm" disabled={pagina >= totalPaginas || cargando} onClick={() => setPagina(pagina + 1)}>
-              Siguiente
-            </Button>
-          </span>
-        </div>
-      )}
+        {datos && datos.total > POR_PAGINA && (
+          <div className="mt-[14px] flex items-center justify-between text-[12px] text-text-muted">
+            <span>
+              Página {pagina} de {totalPaginas} · {datos.total} expedientes
+            </span>
+            <span className="flex gap-[8px]">
+              <Button variant="secondary" size="sm" disabled={pagina <= 1 || cargando} onClick={() => setPagina(pagina - 1)}>
+                Anterior
+              </Button>
+              <Button variant="secondary" size="sm" disabled={pagina >= totalPaginas || cargando} onClick={() => setPagina(pagina + 1)}>
+                Siguiente
+              </Button>
+            </span>
+          </div>
+        )}
+      </Card>
     </div>
   );
 };
 
-/** Línea de fases: lo ya recorrido, la fase actual y lo que falta. */
-const LineaFases: React.FC<{ fase: FaseExpediente }> = ({ fase }) => {
+/** Avance del expediente en 7 tramos: lo recorrido, la fase actual y lo que falta. */
+const BarraFases: React.FC<{ fase: FaseExpediente }> = ({ fase }) => {
   const concluido = fase === 'CONCLUIDO';
   const actual = PASOS_FASE.findIndex((p) => p.id === fase);
   return (
-    <ol className="flex items-center gap-[4px] flex-wrap list-none m-0 p-0" aria-label="Fases del expediente">
+    <div className="flex items-center gap-[3px] mt-[5px]" aria-hidden="true">
       {PASOS_FASE.map((p, i) => {
         const estado = concluido || i < actual ? 'hecho' : i === actual ? 'actual' : 'pendiente';
         return (
-          <li key={p.id} className="flex items-center gap-[4px]">
-            <span
-              className={cn(
-                'inline-flex items-center gap-[4px] rounded-[999px] py-[2px] px-[9px] text-[11px]',
-                estado === 'actual' && 'bg-primary-600 text-white font-bold',
-                estado === 'hecho' && 'bg-success-bg text-success font-medium',
-                estado === 'pendiente' && 'bg-bg-hover text-text-light',
-              )}
-            >
-              {estado === 'hecho' && <CheckIcon size={10} />}
-              {p.etiqueta}
-            </span>
-            {i < PASOS_FASE.length - 1 && <span className="w-[10px] h-px bg-border-dark" />}
-          </li>
+          <span
+            key={p.id}
+            title={p.etiqueta}
+            className={cn('h-[4px] w-[18px] rounded-full', estado === 'hecho' && 'bg-success', estado === 'actual' && 'bg-primary-600', estado === 'pendiente' && 'bg-border')}
+          />
         );
       })}
-      {concluido && <li className="ml-[6px] text-[11px] font-bold text-success">Concluido</li>}
-    </ol>
+    </div>
   );
 };
 
@@ -229,55 +208,74 @@ const LineaPlazo: React.FC<{ a: Alerta }> = ({ a }) => {
   );
 };
 
-const TarjetaExpediente: React.FC<{ e: ExpedienteConAlertas }> = ({ e }) => {
+const TablaExpedientes: React.FC<{ items: ExpedienteConAlertas[] }> = ({ items }) => {
   const navigate = useNavigate();
-  const meta = GRUPO_META[e.grupo];
-  const p = e.principal;
-  const conPlazo = e.alertas.filter((a) => a.plazoLimite || a.restanteTexto);
-
   return (
-    <article className="relative bg-white rounded-[12px] border border-border shadow-xs overflow-hidden">
-      <span className={cn('absolute left-0 top-0 bottom-0 w-[5px]', meta.barra)} />
-      <div className="py-[16px] pl-[24px] pr-[18px] flex flex-col gap-[12px]">
-        <div className="flex items-center gap-[8px] flex-wrap">
-          <h3 className="text-[15px] font-extrabold text-text-main tabular-nums m-0">{e.numeroExpediente}</h3>
-          <span className={cn(CHIP_BASE, 'py-[1px] px-[8px] text-[11px]', meta.chip)}>{meta.etiqueta}</span>
-          {e.pagado && <Badge variant="success">Pagado</Badge>}
-          <span className="flex-1" />
-          <Button variant="outline" size="sm" onClick={() => navigate(`/${p.modulo}`)}>
-            Ir a {ETIQUETA_MODULO[p.modulo] ?? 'el módulo'} <ArrowRightIcon size={14} />
-          </Button>
-        </div>
-
-        <div>
-          <LineaFases fase={e.fase} />
-          <p className="text-[12px] text-text-muted mt-[6px] mb-0">{e.faseDetalle}</p>
-        </div>
-
-        <div className="grid grid-cols-[1.1fr_1fr] gap-[20px] max-md:grid-cols-1 pt-[12px] border-t border-border-subtle">
-          <div>
-            <div className="text-[10.5px] font-bold uppercase tracking-[0.6px] text-text-light mb-[4px]">{p.categoria === 'ESPERA' ? 'Qué sigue' : 'Qué toca'}</div>
-            <div className="text-[15px] font-bold text-text-main leading-[1.3]">{p.accion}</div>
-            {p.desdeDias !== null ? (
-              <div className={cn('text-[12.5px] font-medium mt-[3px]', meta.texto)}>Esperando acción desde {haceDias(p.desdeDias)}</div>
-            ) : (
-              <div className="text-[12.5px] text-text-muted mt-[3px] leading-[1.35]">{p.detalle}</div>
-            )}
-          </div>
-          <div>
-            <div className="text-[10.5px] font-bold uppercase tracking-[0.6px] text-text-light mb-[4px]">Plazos</div>
-            {conPlazo.length > 0 ? (
-              <ul className="list-none m-0 p-0 flex flex-col gap-[6px]">
-                {conPlazo.map((a) => (
-                  <LineaPlazo key={a.clave} a={a} />
-                ))}
-              </ul>
-            ) : (
-              <div className="text-[12.5px] text-text-muted">Sin plazo corriendo: está pendiente de tu acción.</div>
-            )}
-          </div>
-        </div>
-      </div>
-    </article>
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse text-[13px] text-left">
+        <thead>
+          <tr className="bg-[#f8fafc] border-b border-b-border">
+            <th className="py-[10px] px-[14px] font-bold">Expediente</th>
+            <th className="py-[10px] px-[14px] font-bold">Fase</th>
+            <th className="py-[10px] px-[14px] font-bold">Qué toca</th>
+            <th className="py-[10px] px-[14px] font-bold">Plazos</th>
+            <th className="py-[10px] px-[14px] font-bold">Estado</th>
+            <th className="py-[10px] px-[14px]"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((e) => {
+            const meta = GRUPO_META[e.grupo];
+            const p = e.principal;
+            const conPlazo = e.alertas.filter((a) => a.plazoLimite || a.restanteTexto);
+            return (
+              <tr key={e.clave} className="border-b border-b-border align-top hover:bg-bg-subtle">
+                <td className="py-[12px] px-[14px] whitespace-nowrap">
+                  <div className="font-bold text-midnight-900 tabular-nums">{e.numeroExpediente}</div>
+                  {e.pagado && (
+                    <div className="mt-[4px]">
+                      <Badge variant="success">Pagado</Badge>
+                    </div>
+                  )}
+                </td>
+                <td className="py-[12px] px-[14px] min-w-[170px]">
+                  <div className="font-semibold text-text-secondary">{FASES.find((f) => f.id === e.fase)?.etiqueta ?? e.fase}</div>
+                  <BarraFases fase={e.fase} />
+                  <div className="text-[11px] text-text-muted mt-[4px]">{e.faseDetalle}</div>
+                </td>
+                <td className="py-[12px] px-[14px] min-w-[200px]">
+                  {p.categoria === 'ESPERA' && <div className="text-[10.5px] font-bold uppercase tracking-[0.6px] text-text-light">En espera</div>}
+                  <div className="font-bold text-midnight-900">{p.accion}</div>
+                  {p.desdeDias !== null ? (
+                    <div className={cn('text-[11.5px] font-medium mt-[2px]', meta.texto)}>Esperando acción desde {haceDias(p.desdeDias)}</div>
+                  ) : (
+                    <div className="text-[11.5px] text-text-muted mt-[2px] leading-[1.35]">{p.detalle}</div>
+                  )}
+                </td>
+                <td className="py-[12px] px-[14px] min-w-[240px]">
+                  {conPlazo.length > 0 ? (
+                    <ul className="list-none m-0 p-0 flex flex-col gap-[6px]">
+                      {conPlazo.map((a) => (
+                        <LineaPlazo key={a.clave} a={a} />
+                      ))}
+                    </ul>
+                  ) : (
+                    <span className="text-[12px] text-text-muted">Sin plazo corriendo</span>
+                  )}
+                </td>
+                <td className="py-[12px] px-[14px] whitespace-nowrap">
+                  <Badge variant={VARIANTE_GRUPO[e.grupo]}>{meta.etiqueta}</Badge>
+                </td>
+                <td className="py-[12px] px-[14px] text-right whitespace-nowrap">
+                  <Button size="sm" onClick={() => navigate(`/${p.modulo}`)}>
+                    Ir a {ETIQUETA_MODULO[p.modulo] ?? 'el módulo'} <ArrowRightIcon size={14} />
+                  </Button>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 };
