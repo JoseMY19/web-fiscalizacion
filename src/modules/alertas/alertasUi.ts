@@ -56,7 +56,7 @@ export const FASES: { id: FaseExpediente; etiqueta: string }[] = [
  * están "en plazo": se dice "Para actuar" o "En espera", y el riesgo solo se muestra cuando lo hay.
  */
 export function chipDe(a: Pick<Alerta, 'nivel' | 'categoria'>): { etiqueta: string; clase: string } {
-  if (a.nivel === 'EN_PLAZO' && a.categoria === 'ACCION') return { etiqueta: 'Para actuar', clase: 'bg-primary-50 text-primary-700 border-primary-200' };
+  if (a.nivel === 'EN_PLAZO' && a.categoria === 'ACCION') return { etiqueta: 'Para actuar', clase: 'bg-primary-50 text-primary-700 border-primary-100' };
   if (a.nivel === 'EN_PLAZO' && a.categoria === 'ESPERA') return { etiqueta: 'En espera', clase: 'bg-bg-subtle text-text-muted border-border' };
   return { etiqueta: NIVEL_META[a.nivel].etiqueta, clase: NIVEL_META[a.nivel].chip };
 }
@@ -84,7 +84,7 @@ export const GRUPO_META: Record<GrupoAlerta, { etiqueta: string; descripcion: st
     descripcion: 'Ya puedes dar el siguiente paso',
     barra: 'bg-primary-600',
     texto: 'text-primary-700',
-    chip: 'bg-primary-50 text-primary-700 border-primary-200',
+    chip: 'bg-primary-50 text-primary-700 border-primary-100',
   },
   SEGUIMIENTO: {
     etiqueta: 'En seguimiento',

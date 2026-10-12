@@ -85,7 +85,7 @@ export const CampanaAlertas: React.FC<{ onIr: (modulo: NavModule) => void }> = (
         aria-expanded={abierta}
         className={cn(
           'relative border rounded-[8px] w-[36px] h-[36px] flex items-center justify-center cursor-pointer [transition:all_150ms_ease]',
-          abierta ? 'bg-primary-50 border-primary-200 text-primary-600' : 'bg-[#f8fafc] border-[#e2e8f0] text-[#64748b] hover:bg-[#f1f5f9] hover:text-[#0f172a]',
+          abierta ? 'bg-primary-50 border-primary-100 text-primary-600' : 'bg-[#f8fafc] border-[#e2e8f0] text-[#64748b] hover:bg-[#f1f5f9] hover:text-[#0f172a]',
         )}
       >
         <BellIcon size={17} />
