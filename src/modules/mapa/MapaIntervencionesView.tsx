@@ -173,9 +173,8 @@ export const MapaIntervencionesView: React.FC = () => {
             className="h-full! w-full!"
           >
             <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
-              url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-              subdomains="abcd"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             <Encuadre zona={zonaActiva} />
 
@@ -189,7 +188,7 @@ export const MapaIntervencionesView: React.FC = () => {
                 <React.Fragment key={z.id}>
                   <Polygon
                     positions={z.poligono}
-                    pathOptions={{ color: z.color, weight: activa ? 3 : 1.5, fillColor: z.color, fillOpacity: activa ? 0.22 : 0.09 }}
+                    pathOptions={{ color: z.color, weight: activa ? 3 : 1.5, fillColor: z.color, fillOpacity: activa ? 0.22 : 0.09, className: 'outline-none focus:outline-none' }}
                     eventHandlers={{ click: () => setZonaActivaId(activa ? null : z.id) }}
                   >
                     <Tooltip sticky>
