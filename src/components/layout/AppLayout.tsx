@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { puedeVerModulo as puedeVerModuloPermisos, puedeEditarModulo, PermisosUsuario } from '../../lib/permisos';
 import { AvisoSoloLectura } from '../common/AvisoSoloLectura';
 import { CampanaAlertas } from '../../modules/alertas/CampanaAlertas';
@@ -21,6 +21,7 @@ import {
   ClockIcon,
   XCircleIcon,
   BuildingIcon,
+  ChevronRightIcon,
 } from '../icons/Icons';
 
 export type NavModule =
@@ -96,6 +97,31 @@ const navItems: NavItemConDef[] = [
   { id: 'usuarios', label: 'Usuarios y Roles', icon: <ShieldAlertIcon size={18} /> },
 ];
 
+/**
+ * Grupos del menú, en el orden del recorrido del expediente. Cada módulo
+ * pertenece a un solo grupo; un grupo sin módulos visibles para el usuario
+ * no se muestra. El primero ("Inicio") va sin título.
+ */
+const GRUPOS_NAV: { id: string; titulo: string | null; modulos: NavModule[] }[] = [
+  { id: 'inicio', titulo: null, modulos: ['dashboard', 'alertas'] },
+  { id: 'procedimiento', titulo: 'Procedimiento sancionador', modulos: ['expedientes', 'notificaciones', 'ifi', 'resoluciones', 'recursos'] },
+  { id: 'cobranza', titulo: 'Cobranza', modulos: ['coactiva-pagos', 'coactiva', 'pagos'] },
+  { id: 'incidentes', titulo: 'Incidentes y plazos', modulos: ['levantamientos', 'cautelares', 'caducidad', 'prescripcion'] },
+  { id: 'consulta', titulo: 'Consulta', modulos: ['consulta-campo', 'documentos', 'mapa'] },
+  { id: 'administracion', titulo: 'Administración', modulos: ['configuracion', 'usuarios'] },
+];
+
+const CLAVE_GRUPOS_CERRADOS = 'pas.menu.gruposCerrados';
+
+function leerGruposCerrados(): string[] {
+  try {
+    const guardado = JSON.parse(localStorage.getItem(CLAVE_GRUPOS_CERRADOS) ?? '[]');
+    return Array.isArray(guardado) ? guardado.filter((x): x is string => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
 /** Si el usuario puede entrar a ese módulo (menú y rutas usan la misma regla). */
 export function puedeVerModulo(modulo: NavModule, permisos: PermisosUsuario | undefined): boolean {
   return modulo === 'dashboard' || modulo === 'alertas' || puedeVerModuloPermisos(modulo, permisos);
@@ -112,6 +138,18 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   badgeAlertas = {},
 }) => {
   const currentNav = navItems.find((n) => n.id === currentModule);
+  const grupoActual = GRUPOS_NAV.find((g) => g.modulos.includes(currentModule));
+  // Grupos plegados por el usuario (se recuerdan en el navegador). El grupo del módulo abierto siempre se ve.
+  const [gruposCerrados, setGruposCerrados] = useState<string[]>(leerGruposCerrados);
+  const alternarGrupo = (id: string) => {
+    const nuevos = gruposCerrados.includes(id) ? gruposCerrados.filter((g) => g !== id) : [...gruposCerrados, id];
+    setGruposCerrados(nuevos);
+    try {
+      localStorage.setItem(CLAVE_GRUPOS_CERRADOS, JSON.stringify(nuevos));
+    } catch {
+      // sin almacenamiento disponible: el menú funciona igual, solo no recuerda la preferencia
+    }
+  };
 
   const cleanName = (user?.nombres || 'Carla Vega').replace(/\s*\(admin\s*dev\)/gi, '').trim();
   const cleanRole = user?.rolNombre ?? 'Oficina';
@@ -138,50 +176,74 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           <div className="text-[13.5px] font-semibold uppercase tracking-[1.4px] text-[#93c5fd]">Sistema Sancionador PAS</div>
         </div>
 
-        {/* Navigation Section */}
+        {/* Navegación por grupos */}
         <div className="py-[12px] px-[12px] flex-1 min-h-0 overflow-y-auto [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.12)_transparent]">
-          <div
-            className="text-[11px] font-semibold uppercase tracking-[0.8px] text-[#93c5fd] pt-[4px] px-[12px] pb-[8px] opacity-[0.75]"
-          >
-            Módulos del Sistema
-          </div>
+          <nav className="flex flex-col gap-[14px]">
+            {GRUPOS_NAV.map((grupo) => {
+              const items = grupo.modulos
+                .map((id) => navItems.find((n) => n.id === id))
+                .filter((item): item is NavItemConDef => !!item && puedeVerModulo(item.id, user?.permisos));
+              if (items.length === 0) return null;
 
-          <nav className="flex flex-col gap-[2px]">
-            {navItems.filter((item) => puedeVerModulo(item.id, user?.permisos)).map((item) => {
-              const active = currentModule === item.id;
-              const count = badgeCounts[item.id];
-              const alerta = badgeAlertas[item.id];
+              const contieneActivo = grupo.modulos.includes(currentModule);
+              const abierto = !grupo.titulo || contieneActivo || !gruposCerrados.includes(grupo.id);
+              // Plegado, el grupo avisa igual si adentro hay algo pendiente.
+              const pendiente = items.some((i) => (badgeCounts[i.id] ?? 0) > 0 || (badgeAlertas[i.id]?.count ?? 0) > 0);
+
               return (
-                <button
-                  key={item.id}
-                  onClick={() => onSelectModule(item.id)}
-                  className={`flex items-center justify-between py-[8px] px-[12px] rounded-[6px] border-0 cursor-pointer text-[13px] [transition:background-color_150ms_ease,color_150ms_ease] text-left w-full shadow-none ${active ? 'bg-[rgba(255,255,255,0.12)]' : 'bg-transparent'} ${active ? 'text-[#ffffff]' : 'text-[#cbd5e1] hover:bg-[rgba(255,255,255,0.06)] hover:text-[#ffffff]'} ${active ? 'font-semibold' : 'font-normal'}`}
-                >
-                  <div className="flex items-center gap-[10px]">
-                    <span className={`flex items-center ${active ? 'text-[#38bdf8]' : 'text-[#94a3b8]'}`}>
-                      {item.icon}
-                    </span>
-                    <span>{item.label}</span>
-                  </div>
-                  <span className="inline-flex items-center gap-[4px]">
-                    {alerta && alerta.count > 0 && (
-                      <span
-                        title={alerta.title}
-                        className="text-[11px] font-bold h-[19px] py-0 px-[6px] rounded-[10px] bg-[#f59e0b] text-[#ffffff] inline-flex items-center justify-center gap-[3px]"
-                      >
-                        {alerta.icon ?? <PenToolIcon size={10} />}
-                        {alerta.count}
+                <div key={grupo.id}>
+                  {grupo.titulo && (
+                    <button
+                      type="button"
+                      onClick={() => alternarGrupo(grupo.id)}
+                      aria-expanded={abierto}
+                      className="w-full flex items-center gap-[6px] py-[4px] px-[12px] mb-[4px] bg-transparent border-0 cursor-pointer text-left text-[10.5px] font-semibold uppercase tracking-[1px] text-[#93c5fd] opacity-[0.8] [transition:opacity_150ms_ease] hover:opacity-100"
+                    >
+                      <span className={`inline-flex [transition:transform_150ms_ease] ${abierto ? 'rotate-90' : ''}`}>
+                        <ChevronRightIcon size={12} />
                       </span>
-                    )}
-                    {typeof count === 'number' && count > 0 && (
-                      <span
-                        className="text-[11px] font-bold min-w-[19px] h-[19px] py-0 px-[6px] rounded-[10px] bg-[#ef4444] text-[#ffffff] inline-flex items-center justify-center"
-                      >
-                        {count}
-                      </span>
-                    )}
-                  </span>
-                </button>
+                      <span className="flex-1">{grupo.titulo}</span>
+                      {!abierto && pendiente && <span className="w-[6px] h-[6px] rounded-full bg-[#ef4444]" title="Hay pendientes en este grupo" />}
+                    </button>
+                  )}
+                  {abierto && (
+                    <div className="flex flex-col gap-[2px]">
+                      {items.map((item) => {
+                        const active = currentModule === item.id;
+                        const count = badgeCounts[item.id];
+                        const alerta = badgeAlertas[item.id];
+                        return (
+                          <button
+                            key={item.id}
+                            onClick={() => onSelectModule(item.id)}
+                            className={`flex items-center justify-between py-[8px] px-[12px] rounded-[6px] border-0 cursor-pointer text-[13px] [transition:background-color_150ms_ease,color_150ms_ease] text-left w-full shadow-none ${active ? 'bg-[rgba(255,255,255,0.12)]' : 'bg-transparent'} ${active ? 'text-[#ffffff]' : 'text-[#cbd5e1] hover:bg-[rgba(255,255,255,0.06)] hover:text-[#ffffff]'} ${active ? 'font-semibold' : 'font-normal'}`}
+                          >
+                            <div className="flex items-center gap-[10px]">
+                              <span className={`flex items-center ${active ? 'text-[#38bdf8]' : 'text-[#94a3b8]'}`}>{item.icon}</span>
+                              <span>{item.label}</span>
+                            </div>
+                            <span className="inline-flex items-center gap-[4px]">
+                              {alerta && alerta.count > 0 && (
+                                <span
+                                  title={alerta.title}
+                                  className="text-[11px] font-bold h-[19px] py-0 px-[6px] rounded-[10px] bg-[#f59e0b] text-[#ffffff] inline-flex items-center justify-center gap-[3px]"
+                                >
+                                  {alerta.icon ?? <PenToolIcon size={10} />}
+                                  {alerta.count}
+                                </span>
+                              )}
+                              {typeof count === 'number' && count > 0 && (
+                                <span className="text-[11px] font-bold min-w-[19px] h-[19px] py-0 px-[6px] rounded-[10px] bg-[#ef4444] text-[#ffffff] inline-flex items-center justify-center">
+                                  {count}
+                                </span>
+                              )}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               );
             })}
           </nav>
@@ -234,47 +296,26 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       {/* MAIN CONTENT AREA                                                */}
       {/* ================================================================ */}
       <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
-        {/* Topbar Header */}
+        {/* Barra superior */}
         <header className="h-[64px] bg-[#ffffff] border-b border-b-[#e2e8f0] flex items-center justify-between px-[32px] relative z-[20] max-md:px-[16px]">
           <div className="flex items-center gap-[12px]">
             <div className="flex items-center gap-[8px] text-[13px] text-[#64748b]">
-              <span className="font-medium">Fiscalización</span>
-              <span className="text-[#cbd5e1]">/</span>
+              {grupoActual?.titulo && (
+                <>
+                  <span className="font-medium">{grupoActual.titulo}</span>
+                  <span className="text-[#cbd5e1]">/</span>
+                </>
+              )}
               <span className="text-[#0f172a] font-bold">{currentNav?.label}</span>
             </div>
-            <span
-              className="text-[11px] font-semibold text-[#0369a1] bg-[#e0f2fe] py-[2px] px-[8px] rounded-[6px]"
-            >
-              MDSJL
-            </span>
           </div>
 
-          <div className="flex items-center gap-[20px]">
-            {/* Estado de conexión */}
-            <div
-              className="flex items-center gap-[7px] text-[12px] font-medium text-[#059669]"
-              title="Conexión en vivo con el servidor"
-            >
-              <span
-                className="w-[7px] h-[7px] rounded-full bg-[#10b981] shadow-[0_0_0_2px_rgba(16,185,129,0.2)]"
-              />
-              <span>Sistema en línea</span>
-            </div>
-
-            {/* Fecha oficial */}
-            <div
-              className="flex items-center gap-[7px] text-[13px] text-[#64748b] border-l border-l-[#e2e8f0] pl-[16px]"
-            >
-              <CalendarIcon size={15} color="#94a3b8" />
-              <span className="capitalize">
-                {new Date().toLocaleDateString('es-PE', {
-                  weekday: 'long',
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                })}
-              </span>
-            </div>
+          <div className="flex items-center gap-[16px]">
+            {/* Estado de conexión: solo el punto, el detalle va en el tooltip */}
+            <span
+              className="w-[8px] h-[8px] rounded-full bg-[#10b981] shadow-[0_0_0_3px_rgba(16,185,129,0.18)]"
+              title="Sistema en línea: conexión en vivo con el servidor"
+            />
 
             {/* Campana: alertas vencidas, críticas y por vencer, con la fase y el plazo de cada expediente */}
             <CampanaAlertas onIr={onSelectModule} />
