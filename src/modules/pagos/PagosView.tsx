@@ -51,14 +51,14 @@ export const PagosView: React.FC = () => {
 
       {error && <Alert type="error">{error}</Alert>}
 
-      <div className="flex flex-col gap-[24px]">
+      <div className="grid grid-cols-[380px_minmax(0,1fr)] gap-[24px] items-start max-xl:grid-cols-1">
         <RegistroPagoCard onRegistrado={() => cargar(busqueda)} />
 
         <PanelTabla
           barra={
             <>
               <h3 className="text-[15px] font-bold text-midnight-900 m-0">Pagos registrados</h3>
-              <Buscador value={busqueda} onChange={setBusqueda} placeholder="Buscar por N° de NC, expediente o recibo" />
+              <Buscador value={busqueda} onChange={setBusqueda} placeholder="Buscar por NC, expediente o recibo" />
             </>
           }
         >
@@ -74,7 +74,6 @@ export const PagosView: React.FC = () => {
                 <thead>
                   <tr className={TABLA.encabezado}>
                     <th className={TABLA.th}>NC / Expediente</th>
-                    <th className={TABLA.th}>Administrado</th>
                     <th className={TABLA.th}>Monto y fecha de pago</th>
                     <th className={TABLA.th}>Recibo / sistema</th>
                     <th className={TABLA.th}>Registrado</th>
@@ -86,8 +85,8 @@ export const PagosView: React.FC = () => {
                       <td className={TABLA.td}>
                         <div className="text-[14px] font-bold text-midnight-900">NC N° {p.notificacion.numeroNc}</div>
                         <div className="text-[12px] text-text-muted mt-[3px]">Exp. {p.notificacion.numeroExpediente ?? '—'}</div>
+                        <div className="text-[13px] text-text-secondary mt-[6px]">{p.notificacion.administrado ?? 'Administrado no identificado'}</div>
                       </td>
-                      <td className={`${TABLA.td} text-[13.5px] text-text-main`}>{p.notificacion.administrado ?? '—'}</td>
                       <td className={TABLA.td}>
                         <div className="text-[14px] font-bold text-text-main tabular-nums">{montoSoles(p.montoPagado)}</div>
                         <div className="text-[12px] text-text-muted mt-[3px]">{formatearFecha(p.fechaPago)}</div>

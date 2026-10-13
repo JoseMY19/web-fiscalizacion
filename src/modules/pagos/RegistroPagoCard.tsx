@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { LABEL_SISTEMA_ORIGEN, NotificacionCargoPagoItem, PagosApi, SistemaOrigenPago } from '../../api/pagos';
-import { Alert, Badge, Button, Card, Input, Textarea } from '../../components/common/Common';
+import { Alert, Badge, Button, Input, Select, Textarea } from '../../components/common/Common';
 import { ComboboxExpediente } from '../../components/common/ComboboxExpediente';
 import { montoSoles } from '../../components/common/PagadoBadge';
 import { formatearFecha, hoyLocal } from '../../lib/fechas';
@@ -17,10 +17,10 @@ const LABEL_ESTADO_RES: Record<string, string> = {
 
 /** Regla legal visible donde se registra el pago. */
 export const AvisoPagoNoExtingueMedida: React.FC = () => (
-  <div className="bg-[#eff6ff] py-[12px] px-[16px] rounded-[8px] border border-[#bfdbfe] text-[#1e3a8a] text-[13px] mb-[16px]">
+  <div className="bg-info-bg py-[12px] px-[14px] rounded-sm border border-info-border text-[#0369a1] text-[12.5px] leading-[1.45] mb-[20px]">
     <div className="flex items-start gap-[8px]">
       <span className="mt-[2px] shrink-0">
-        <ScaleIcon size={16} />
+        <ScaleIcon size={15} />
       </span>
       <span>
         El pago <strong>extingue la multa</strong>, pero <strong>NO</strong> la medida complementaria (clausura, paralización, demolición…):
@@ -111,12 +111,17 @@ export const RegistroPagoCard: React.FC<Props> = ({ onRegistrado }) => {
   };
 
   return (
-    <Card title="Registrar pago de multa (por N° de NC)" className="overflow-visible! relative! z-[20]!">
+    <section className="relative z-[20] bg-bg-card rounded-md border border-border shadow-xs">
+      <header className="py-[18px] px-[24px] border-b border-border">
+        <h3 className="text-[15px] font-bold text-midnight-900 m-0">Registrar pago</h3>
+        <p className="text-[12.5px] text-text-muted mt-[3px] mb-0">Por N° de Notificación de Cargo, tal como figura en el comprobante.</p>
+      </header>
+      <div className="p-[24px]">
       <AvisoPagoNoExtingueMedida />
       {mensaje && <Alert type={mensaje.type}>{mensaje.text}</Alert>}
 
       <ComboboxExpediente<NotificacionCargoPagoItem>
-        label="Notificación de Cargo (N° de NC o N° de expediente)"
+        label="Notificación de Cargo (N° de expediente)"
         placeholder="Haz clic para ver las NC sin pago, o escribe el N° de NC / expediente"
         opciones={opciones}
         cargando={cargando}
@@ -136,9 +141,9 @@ export const RegistroPagoCard: React.FC<Props> = ({ onRegistrado }) => {
       />
 
       {nc && (
-        <div className="bg-[#f8fafc] py-[12px] px-[14px] rounded-[8px] border border-border text-[13px] mb-[14px]">
+        <div className="bg-bg-subtle py-[12px] px-[14px] rounded-sm border border-border text-[12.5px] mb-[14px]">
           <div className="font-bold text-midnight-900 mb-[4px]">
-            NC N° {nc.numeroNc} — Expediente {nc.numeroExpediente ?? '(sin expediente todavía)'}
+            NC N° {nc.numeroNc} - Expediente {nc.numeroExpediente ?? '(sin expediente todavía)'}
           </div>
           <div className="text-text-secondary">Administrado: {nc.administrado ?? 'no identificado'}</div>
           <div className="text-text-secondary">
@@ -161,31 +166,25 @@ export const RegistroPagoCard: React.FC<Props> = ({ onRegistrado }) => {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-x-[16px] max-md:grid-cols-1">
+      <div className="grid grid-cols-2 gap-x-[12px]">
         <Input label="Monto pagado (S/)" placeholder="Ej. 1375.00" type="number" step="0.01" min="0" value={monto} onChange={(e) => setMonto(e.target.value)} />
-        <Input type="date" label="Fecha de pago (del comprobante)" value={fechaPago} max={hoyLocal()} onChange={(e) => setFechaPago(e.target.value)} />
-        <Input label="N° de recibo / operación (opcional)" value={numeroRecibo} onChange={(e) => setNumeroRecibo(e.target.value)} />
-        <div className="mb-[14px] w-full">
-          <label className="block text-[13px] font-semibold text-text-secondary mb-[6px]">Sistema donde se registró</label>
-          <select
-            value={sistema}
-            onChange={(e) => setSistema(e.target.value as SistemaOrigenPago | '')}
-            className="w-full py-[10px] px-[14px] text-[14px] rounded-sm border border-border bg-[#ffffff] text-text-main outline-none"
-          >
-            <option value="">— Elegir —</option>
-            {(Object.keys(LABEL_SISTEMA_ORIGEN) as SistemaOrigenPago[]).map((s) => (
-              <option key={s} value={s}>
-                {LABEL_SISTEMA_ORIGEN[s]}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Input type="date" label="Fecha de pago" value={fechaPago} max={hoyLocal()} onChange={(e) => setFechaPago(e.target.value)} />
       </div>
+      <Input label="N° de recibo / operación (opcional)" value={numeroRecibo} onChange={(e) => setNumeroRecibo(e.target.value)} />
+      <Select label="Sistema donde se registró" value={sistema} onChange={(e) => setSistema(e.target.value as SistemaOrigenPago | '')}>
+        <option value="">— Elegir —</option>
+        {(Object.keys(LABEL_SISTEMA_ORIGEN) as SistemaOrigenPago[]).map((s) => (
+          <option key={s} value={s}>
+            {LABEL_SISTEMA_ORIGEN[s]}
+          </option>
+        ))}
+      </Select>
       <Textarea label="Observación (opcional)" value={observacion} onChange={(e) => setObservacion(e.target.value)} rows={2} />
 
-      <Button variant="success" loading={guardando} onClick={registrar}>
+      <Button variant="success" loading={guardando} onClick={registrar} className="w-full">
         Registrar pago
       </Button>
-    </Card>
+      </div>
+    </section>
   );
 };
