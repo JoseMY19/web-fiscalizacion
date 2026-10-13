@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { LABEL_SISTEMA_ORIGEN, PagoRegistradoItem, PagosApi } from '../../api/pagos';
-import { Alert, Button, Card, EmptyState, Input, Spinner } from '../../components/common/Common';
+import { Alert, Button, EmptyState, Spinner } from '../../components/common/Common';
+import { Buscador, PageHeader, PanelTabla, TABLA } from '../../components/common/PageKit';
 import { montoSoles } from '../../components/common/PagadoBadge';
 import { formatearFecha, formatearFechaHora } from '../../lib/fechas';
 import { CreditCardIcon, RefreshCwIcon } from '../../components/icons/Icons';
@@ -38,64 +39,65 @@ export const PagosView: React.FC = () => {
 
   return (
     <div>
-      <div className="mb-[20px]">
-        <h2 className="text-[18px] font-extrabold text-midnight-900">Registro de Pagos</h2>
-        <p className="text-[13px] text-text-muted mt-[2px]">
-          Pagos de multas por N° de Notificación de Cargo (registrados en SIFAT o el sistema de internet). Se aceptan en cualquier momento del
-          procedimiento.
-        </p>
-      </div>
+      <PageHeader
+        titulo="Registro de Pagos"
+        descripcion="Pagos de multas por N° de Notificación de Cargo (registrados en SIFAT o el sistema de internet). Se aceptan en cualquier momento del procedimiento."
+        acciones={
+          <Button variant="secondary" icon={<RefreshCwIcon size={14} />} onClick={() => cargar(busqueda)}>
+            Actualizar
+          </Button>
+        }
+      />
 
-      <div className="flex flex-col gap-[20px]">
+      {error && <Alert type="error">{error}</Alert>}
+
+      <div className="flex flex-col gap-[24px]">
         <RegistroPagoCard onRegistrado={() => cargar(busqueda)} />
 
-        <Card
-          title="Pagos registrados"
-          action={
-            <Button variant="secondary" size="sm" icon={<RefreshCwIcon size={14} />} onClick={() => cargar(busqueda)}>
-              Actualizar
-            </Button>
+        <PanelTabla
+          barra={
+            <>
+              <h3 className="text-[15px] font-bold text-midnight-900 m-0">Pagos registrados</h3>
+              <Buscador value={busqueda} onChange={setBusqueda} placeholder="Buscar por N° de NC, expediente o recibo" />
+            </>
           }
         >
-          <div className="max-w-[420px]">
-            <Input placeholder="Buscar por N° de NC, expediente o recibo" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
-          </div>
-          {error && <Alert type="error">{error}</Alert>}
           {cargando && pagos === null ? (
-            <div className="flex items-center gap-[8px] text-[13px] text-text-muted">
+            <div className="py-[32px] px-[24px] flex items-center justify-center gap-[8px] text-[13px] text-text-muted">
               <Spinner size={16} /> Cargando…
             </div>
           ) : !pagos || pagos.length === 0 ? (
             <EmptyState icon={<CreditCardIcon size={32} />} title={busqueda.trim() ? 'Sin resultados' : 'Todavía no hay pagos registrados'} />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-[13px] border-collapse">
+              <table className={TABLA.tabla}>
                 <thead>
-                  <tr className="text-left text-text-muted text-[12px] border-b border-b-border">
-                    <th className="py-[8px] pr-[12px]">NC / Expediente</th>
-                    <th className="py-[8px] pr-[12px]">Administrado</th>
-                    <th className="py-[8px] pr-[12px]">Monto</th>
-                    <th className="py-[8px] pr-[12px]">Fecha de pago</th>
-                    <th className="py-[8px] pr-[12px]">Recibo / sistema</th>
-                    <th className="py-[8px]">Registrado</th>
+                  <tr className={TABLA.encabezado}>
+                    <th className={TABLA.th}>NC / Expediente</th>
+                    <th className={TABLA.th}>Administrado</th>
+                    <th className={TABLA.th}>Monto y fecha de pago</th>
+                    <th className={TABLA.th}>Recibo / sistema</th>
+                    <th className={TABLA.th}>Registrado</th>
                   </tr>
                 </thead>
                 <tbody>
                   {pagos.map((p) => (
-                    <tr key={p.id} className="border-b border-b-border align-top">
-                      <td className="py-[8px] pr-[12px]">
-                        <div className="font-bold text-midnight-900">NC N° {p.notificacion.numeroNc}</div>
-                        <div className="text-text-muted text-[12px]">Exp. {p.notificacion.numeroExpediente ?? '—'}</div>
+                    <tr key={p.id} className={TABLA.fila}>
+                      <td className={TABLA.td}>
+                        <div className="text-[14px] font-bold text-midnight-900">NC N° {p.notificacion.numeroNc}</div>
+                        <div className="text-[12px] text-text-muted mt-[3px]">Exp. {p.notificacion.numeroExpediente ?? '—'}</div>
                       </td>
-                      <td className="py-[8px] pr-[12px]">{p.notificacion.administrado ?? '—'}</td>
-                      <td className="py-[8px] pr-[12px] font-semibold">{montoSoles(p.montoPagado)}</td>
-                      <td className="py-[8px] pr-[12px]">{formatearFecha(p.fechaPago)}</td>
-                      <td className="py-[8px] pr-[12px]">
-                        <div>{p.numeroRecibo ?? '—'}</div>
-                        <div className="text-text-muted text-[12px]">{p.sistemaOrigen ? LABEL_SISTEMA_ORIGEN[p.sistemaOrigen] : 'Sistema no registrado'}</div>
-                        {p.observacion && <div className="text-text-muted text-[12px] italic">{p.observacion}</div>}
+                      <td className={`${TABLA.td} text-[13.5px] text-text-main`}>{p.notificacion.administrado ?? '—'}</td>
+                      <td className={TABLA.td}>
+                        <div className="text-[14px] font-bold text-text-main tabular-nums">{montoSoles(p.montoPagado)}</div>
+                        <div className="text-[12px] text-text-muted mt-[3px]">{formatearFecha(p.fechaPago)}</div>
                       </td>
-                      <td className="py-[8px] text-[12px] text-text-muted">
+                      <td className={TABLA.td}>
+                        <div className="text-[13.5px] text-text-main">{p.numeroRecibo ?? '—'}</div>
+                        <div className="text-[12px] text-text-muted mt-[3px]">{p.sistemaOrigen ? LABEL_SISTEMA_ORIGEN[p.sistemaOrigen] : 'Sistema no registrado'}</div>
+                        {p.observacion && <div className="text-[12px] text-text-muted italic mt-[3px]">{p.observacion}</div>}
+                      </td>
+                      <td className={`${TABLA.td} text-[12px] text-text-muted`}>
                         {p.registradoPor}
                         <br />
                         {formatearFechaHora(p.createdAt)}
@@ -106,7 +108,7 @@ export const PagosView: React.FC = () => {
               </table>
             </div>
           )}
-        </Card>
+        </PanelTabla>
       </div>
     </div>
   );

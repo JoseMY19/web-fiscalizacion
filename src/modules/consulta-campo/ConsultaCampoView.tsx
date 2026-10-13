@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ConsultasApi, CierreCampoItem, abrirDocumento, descargarDocumentoWord } from '../../api';
-import { Card, Button, Badge, Alert, EmptyState, Spinner } from '../../components/common/Common';
+import { Button, Alert, EmptyState, Spinner } from '../../components/common/Common';
+import { EstadoPunto, PageHeader, PanelTabla, TABLA } from '../../components/common/PageKit';
 import { formatearFechaHora } from '../../lib/fechas';
 import { EyeIcon, RefreshCwIcon, FileTextIcon } from '../../components/icons/Icons';
 
@@ -34,23 +35,21 @@ export const ConsultaCampoView: React.FC = () => {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-[1.5rem]">
-        <div>
-          <h1 className="m-0 text-[1.5rem] font-bold">Exhortación / Constatación</h1>
-          <p className="mt-[0.25rem] mx-0 mb-0 text-text-muted">
-            Solo consulta — estos caminos cierran en campo y no generan expediente ni pasan por validación.
-          </p>
-        </div>
-        <Button variant="outline" icon={<RefreshCwIcon size={16} />} onClick={cargar} disabled={loading}>
-          Actualizar
-        </Button>
-      </div>
+      <PageHeader
+        titulo="Exhortación y Consulta"
+        descripcion="Solo consulta - estos caminos cierran en campo y no generan expediente ni pasan por validación."
+        acciones={
+          <Button variant="secondary" icon={<RefreshCwIcon size={14} />} onClick={cargar} disabled={loading}>
+            Actualizar
+          </Button>
+        }
+      />
 
       {message && <Alert type={message.type}>{message.text}</Alert>}
 
-      <Card>
+      <PanelTabla>
         {loading ? (
-          <div className="flex justify-center p-[2rem]">
+          <div className="flex justify-center py-[56px]">
             <Spinner />
           </div>
         ) : items.length === 0 ? (
@@ -60,56 +59,61 @@ export const ConsultaCampoView: React.FC = () => {
             description="No hay intervenciones de Exhortación o Constatación sincronizadas."
           />
         ) : (
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="text-left border-b border-b-border">
-                <th className="p-[0.5rem]">Fecha</th>
-                <th className="p-[0.5rem]">Fiscalizador</th>
-                <th className="p-[0.5rem]">Camino</th>
-                <th className="p-[0.5rem]">Correlativo</th>
-                <th className="p-[0.5rem]">Resumen</th>
-                <th className="p-[0.5rem]"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => (
-                <tr key={item.id} className="border-b border-b-border">
-                  <td className="p-[0.5rem]">{formatearFechaHora(item.fechaHoraInicio)}</td>
-                  <td className="p-[0.5rem]">{item.fiscalizadorNombre}</td>
-                  <td className="p-[0.5rem]">
-                    <Badge variant={item.tipoActuacion === 'EXHORTACION' ? 'info' : 'neutral'}>
-                      {item.tipoActuacion === 'EXHORTACION' ? 'Exhortación' : 'Constatación'}
-                    </Badge>
-                  </td>
-                  <td className="p-[0.5rem]">{item.numeroCorrelativo ?? '—'}</td>
-                  <td className="p-[0.5rem] max-w-[320px]">{item.resumen ?? '—'}</td>
-                  <td className="p-[0.5rem] flex gap-[0.5rem]">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={!item.fotoActaId}
-                      onClick={() => item.fotoActaId && abrirDocumento(item.fotoActaId)}
-                    >
-                      Ver foto
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      icon={<FileTextIcon size={14} />}
-                      disabled={!item.numeroCorrelativo}
-                      onClick={() =>
-                        descargarDocumentoWord(item.id, item.tipoActuacion === 'EXHORTACION' ? 'EXHORTACION' : 'FISCALIZACION')
-                      }
-                    >
-                      Descargar Word
-                    </Button>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className={TABLA.tabla}>
+              <thead>
+                <tr className={TABLA.encabezado}>
+                  <th className={TABLA.th}>Fecha</th>
+                  <th className={TABLA.th}>Fiscalizador</th>
+                  <th className={TABLA.th}>Camino</th>
+                  <th className={TABLA.th}>Resumen</th>
+                  <th className={`${TABLA.th} text-right`}></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {items.map((item) => (
+                  <tr key={item.id} className={TABLA.fila}>
+                    <td className={TABLA.td}>
+                      <div className="text-[14px] font-bold text-midnight-900">{formatearFechaHora(item.fechaHoraInicio)}</div>
+                      <div className="text-[12px] text-text-muted mt-[3px]">Correlativo {item.numeroCorrelativo ?? '—'}</div>
+                    </td>
+                    <td className={`${TABLA.td} text-[13.5px] text-text-main`}>{item.fiscalizadorNombre}</td>
+                    <td className={TABLA.td}>
+                      <EstadoPunto tono={item.tipoActuacion === 'EXHORTACION' ? 'info' : 'neutro'}>
+                        {item.tipoActuacion === 'EXHORTACION' ? 'Exhortación' : 'Constatación'}
+                      </EstadoPunto>
+                    </td>
+                    <td className={`${TABLA.td} max-w-[320px] text-[13px] text-text-secondary`}>{item.resumen ?? '—'}</td>
+                    <td className={`${TABLA.td} text-right`}>
+                      <div className="inline-flex items-center gap-[8px]">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          disabled={!item.fotoActaId}
+                          onClick={() => item.fotoActaId && abrirDocumento(item.fotoActaId)}
+                        >
+                          Ver foto
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          icon={<FileTextIcon size={14} />}
+                          disabled={!item.numeroCorrelativo}
+                          onClick={() =>
+                            descargarDocumentoWord(item.id, item.tipoActuacion === 'EXHORTACION' ? 'EXHORTACION' : 'FISCALIZACION')
+                          }
+                        >
+                          Descargar Word
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
-      </Card>
+      </PanelTabla>
     </div>
   );
 };

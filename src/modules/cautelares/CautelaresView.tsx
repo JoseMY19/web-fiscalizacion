@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ConsultasApi, IntervencionSelectorItem, descargarDocumentoMedidaCautelar } from '../../api';
 import { ContenidoMedidaCautelar, MedidaCautelarItem, MedidasCautelaresApi } from '../../api/medidasCautelares';
 import { Alert, Badge, Button, Input, Modal, Spinner, Textarea } from '../../components/common/Common';
+import { EstadoPunto, PageHeader, PanelTabla, SegmentedTabs, TABLA } from '../../components/common/PageKit';
 import { PasoTramite, claseSelectTramite } from '../../components/common/PasoTramite';
 import { FileTextIcon, PlusIcon } from '../../components/icons/Icons';
 import { formatearFecha, hoyLocal } from '../../lib/fechas';
@@ -18,17 +19,10 @@ import { cn } from '../../lib/cn';
 
 type Pestana = 'EMITIDA' | 'EJECUTADA' | 'ANEXADA' | 'TODAS';
 
-const PESTANAS: Array<{ clave: Pestana; etiqueta: string }> = [
-  { clave: 'EMITIDA', etiqueta: 'Por ejecutar' },
-  { clave: 'EJECUTADA', etiqueta: 'Por anexar' },
-  { clave: 'ANEXADA', etiqueta: 'Anexadas' },
-  { clave: 'TODAS', etiqueta: 'Todas' },
-];
-
-const ESTADO: Record<MedidaCautelarItem['estado'], { texto: string; variante: 'warning' | 'info' | 'success' }> = {
-  EMITIDA: { texto: 'Por ejecutar', variante: 'warning' },
-  EJECUTADA: { texto: 'Ejecutada · por anexar', variante: 'info' },
-  ANEXADA: { texto: 'Anexada al expediente', variante: 'success' },
+const ESTADO: Record<MedidaCautelarItem['estado'], { texto: string; variante: 'warning' | 'info' | 'success'; tono: 'aviso' | 'info' | 'ok' }> = {
+  EMITIDA: { texto: 'Por ejecutar', variante: 'warning', tono: 'aviso' },
+  EJECUTADA: { texto: 'Ejecutada · por anexar', variante: 'info', tono: 'info' },
+  ANEXADA: { texto: 'Anexada al expediente', variante: 'success', tono: 'ok' },
 };
 
 const ACTUACION: Record<string, string> = { EXHORTACION: 'Exhortación', CONSTATACION: 'Constatación', INICIA_PAS: 'Inicia PAS' };
@@ -80,20 +74,20 @@ export const CautelaresView: React.FC = () => {
 
   return (
     <div>
-      <div className="flex items-start gap-[12px] flex-wrap mb-[16px]">
-        <div className="mr-auto">
-          <h2 className="text-[18px] font-extrabold text-midnight-900">Medidas cautelares</h2>
-          <p className="text-[13px] text-text-muted mt-[2px]">Resoluciones de urgencia del Subgerente para casos graves.</p>
-        </div>
-        <Button icon={<PlusIcon size={16} />} onClick={() => setFormulario({ medida: null })}>
-          Nueva medida cautelar
-        </Button>
-      </div>
+      <PageHeader
+        titulo="Medidas Cautelares"
+        descripcion="Resoluciones de urgencia del Subgerente para casos graves."
+        acciones={
+          <Button variant="primary" icon={<PlusIcon size={16} />} onClick={() => setFormulario({ medida: null })}>
+            Nueva medida cautelar
+          </Button>
+        }
+      />
 
       {mensaje && <Alert type={mensaje.type}>{mensaje.text}</Alert>}
 
       {/* Qué es y cuándo se usa (plegable): el módulo es excepcional y poco frecuente. */}
-      <details className="group mb-[16px] text-[13px]">
+      <details className="group mb-[24px] text-[13px]">
         <summary className="cursor-pointer select-none text-primary-600 font-semibold w-fit list-none">
           <span className="group-open:hidden">¿Qué es y cuándo se usa?</span>
           <span className="hidden group-open:inline">Ocultar explicación</span>
@@ -121,64 +115,61 @@ export const CautelaresView: React.FC = () => {
         </dl>
       </details>
 
-      <section className="rounded-[10px] border border-border bg-bg-card overflow-hidden">
-        <div className="flex gap-[2px] px-[10px] pt-[8px] border-b border-border">
-          {PESTANAS.map((p) => (
-            <button
-              key={p.clave}
-              type="button"
-              onClick={() => setPestana(p.clave)}
-              className={cn(
-                'py-[8px] px-[12px] text-[13px] font-semibold border-b-[2px] -mb-px cursor-pointer',
-                pestana === p.clave ? 'border-primary-600 text-text-main' : 'border-transparent text-text-muted hover:text-text-secondary',
-              )}
-            >
-              {p.etiqueta}
-              <span className="ml-[6px] text-[11px] text-text-light tabular-nums">{conteo[p.clave]}</span>
-            </button>
-          ))}
-        </div>
-
+      <PanelTabla
+        barra={
+          <SegmentedTabs<Pestana>
+            items={[
+              { clave: 'EMITIDA', etiqueta: 'Por ejecutar', contador: conteo.EMITIDA, tono: conteo.EMITIDA > 0 ? 'warning' : undefined },
+              { clave: 'EJECUTADA', etiqueta: 'Por anexar', contador: conteo.EJECUTADA, tono: conteo.EJECUTADA > 0 ? 'warning' : undefined },
+              { clave: 'ANEXADA', etiqueta: 'Anexadas', contador: conteo.ANEXADA },
+              { clave: 'TODAS', etiqueta: 'Todas', contador: conteo.TODAS },
+            ]}
+            activa={pestana}
+            onChange={setPestana}
+          />
+        }
+      >
         {!medidas ? (
-          <div className="py-[32px] text-center">
-            <Spinner size={20} />
+          <div className="py-[56px] text-center">
+            <Spinner size={24} />
           </div>
         ) : visibles.length === 0 ? (
-          <div className="py-[32px] text-center text-[13px] text-text-muted">
+          <div className="py-[56px] px-[24px] text-center text-[13px] text-text-muted">
             {medidas.length === 0 ? 'Todavía no hay medidas cautelares. Usa "Nueva medida cautelar" cuando un caso grave lo requiera.' : 'No hay medidas en esta etapa.'}
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-[12px] text-text-secondary">
-              <thead className="bg-bg-subtle">
-                <tr className="text-left text-[11px] text-text-muted">
-                  <th className="py-[9px] px-[14px] font-semibold">Administrado</th>
-                  <th className="py-[9px] px-[14px] font-semibold">Medida</th>
-                  <th className="py-[9px] px-[14px] font-semibold">Intervención</th>
-                  <th className="py-[9px] px-[14px] font-semibold">Expediente</th>
-                  <th className="py-[9px] px-[14px] font-semibold">Emitida</th>
-                  <th className="py-[9px] px-[14px] font-semibold">Estado</th>
+            <table className={TABLA.tabla}>
+              <thead>
+                <tr className={TABLA.encabezado}>
+                  <th className={TABLA.th}>Administrado</th>
+                  <th className={TABLA.th}>Medida</th>
+                  <th className={TABLA.th}>Expediente</th>
+                  <th className={TABLA.th}>Emitida</th>
+                  <th className={TABLA.th}>Estado</th>
                 </tr>
               </thead>
               <tbody>
                 {visibles.map((m) => (
-                  <tr key={m.id} onClick={() => setDetalleId(m.id)} className="border-t border-border-subtle hover:bg-bg-hover cursor-pointer">
-                    <td className="py-[10px] px-[14px]">
-                      <div className="font-semibold text-text-main">{m.administrado?.nombre ?? 'Sin identificar'}</div>
-                      {m.administrado?.documento && <div className="text-text-muted tabular-nums">{m.administrado.documento}</div>}
+                  <tr key={m.id} onClick={() => setDetalleId(m.id)} className={`${TABLA.fila} cursor-pointer`}>
+                    <td className={TABLA.td}>
+                      <div className="text-[13.5px] font-semibold text-text-main">{m.administrado?.nombre ?? 'Sin identificar'}</div>
+                      {m.administrado?.documento && <div className="text-[12px] text-text-muted mt-[3px] tabular-nums">{m.administrado.documento}</div>}
+                      <div className="text-[12px] text-text-muted mt-[3px] whitespace-nowrap">
+                        {formatearFecha(m.fechaIntervencion)}
+                        {m.tipoActuacion && ` · ${ACTUACION[m.tipoActuacion] ?? m.tipoActuacion}`}
+                      </div>
                     </td>
-                    <td className="py-[10px] px-[14px] max-w-[260px]">
-                      <div className="text-text-main truncate">{m.tipoMedidaCautelar || '—'}</div>
-                      {m.modalidadEjecucion && <div className="text-text-muted truncate">{m.modalidadEjecucion}</div>}
+                    <td className={`${TABLA.td} max-w-[260px]`}>
+                      <div className="text-[13.5px] text-text-main truncate">{m.tipoMedidaCautelar || '—'}</div>
+                      {m.modalidadEjecucion && <div className="text-[12px] text-text-muted mt-[3px] truncate">{m.modalidadEjecucion}</div>}
                     </td>
-                    <td className="py-[10px] px-[14px] whitespace-nowrap">
-                      {formatearFecha(m.fechaIntervencion)}
-                      {m.tipoActuacion && <div className="text-text-muted">{ACTUACION[m.tipoActuacion] ?? m.tipoActuacion}</div>}
+                    <td className={`${TABLA.td} whitespace-nowrap`}>
+                      {m.numeroExpediente ?? <span className="text-text-light">Sin expediente aún</span>}
                     </td>
-                    <td className="py-[10px] px-[14px] whitespace-nowrap">{m.numeroExpediente ?? <span className="text-text-light">Sin expediente aún</span>}</td>
-                    <td className="py-[10px] px-[14px] whitespace-nowrap">{formatearFecha(m.createdAt)}</td>
-                    <td className="py-[10px] px-[14px] whitespace-nowrap">
-                      <Badge variant={ESTADO[m.estado].variante}>{ESTADO[m.estado].texto}</Badge>
+                    <td className={`${TABLA.td} whitespace-nowrap text-[13px] text-text-secondary`}>{formatearFecha(m.createdAt)}</td>
+                    <td className={`${TABLA.td} whitespace-nowrap`}>
+                      <EstadoPunto tono={ESTADO[m.estado].tono}>{ESTADO[m.estado].texto}</EstadoPunto>
                     </td>
                   </tr>
                 ))}
@@ -186,7 +177,7 @@ export const CautelaresView: React.FC = () => {
             </table>
           </div>
         )}
-      </section>
+      </PanelTabla>
 
       {detalle && (
         <DetalleMedida
@@ -504,13 +495,13 @@ const FormularioMedida: React.FC<{ medida: MedidaCautelarItem | null; onClose: (
           <label className="flex items-start gap-[8px] cursor-pointer">
             <input type="checkbox" className="mt-[3px]" checked={!!d.incluyeResguardoSerenazgo} onChange={(e) => set('incluyeResguardoSerenazgo', e.target.checked)} />
             <span>
-              <strong className="text-text-main">Resguardo de Serenazgo</strong> — artículo que encarga a Serenazgo el resguardo durante la ejecución.
+              <strong className="text-text-main">Resguardo de Serenazgo</strong> - artículo que encarga a Serenazgo el resguardo durante la ejecución.
             </span>
           </label>
           <label className="flex items-start gap-[8px] cursor-pointer">
             <input type="checkbox" className="mt-[3px]" checked={!!d.incluyeAdvertenciaUsurpacion} onChange={(e) => set('incluyeAdvertenciaUsurpacion', e.target.checked)} />
             <span>
-              <strong className="text-text-main">Advertencia por usurpación</strong> — párrafo de la consecuencia penal por ocupar un bien de dominio público.
+              <strong className="text-text-main">Advertencia por usurpación</strong> - párrafo de la consecuencia penal por ocupar un bien de dominio público.
             </span>
           </label>
         </div>
