@@ -3,7 +3,8 @@ import { BandejaLevantamientos, LevantamientosApi, SolicitudLevantamientoItem } 
 import { socket } from '../../lib/socket';
 import { cn } from '../../lib/cn';
 import { formatearFechaHora } from '../../lib/fechas';
-import { Alert, Badge, Button, Card, EmptyState, Spinner } from '../../components/common/Common';
+import { Alert, Button, EmptyState, Spinner } from '../../components/common/Common';
+import { EstadoPunto, PageHeader, PanelTabla, SegmentedTabs, TABLA, type TonoContador, type TonoEstado } from '../../components/common/PageKit';
 import { CheckCircleIcon, EyeIcon, PlusIcon, RefreshCwIcon } from '../../components/icons/Icons';
 import { RegistrarSolicitudModal } from './RegistrarSolicitudModal';
 import { SolicitudPanel } from './SolicitudPanel';
@@ -30,6 +31,14 @@ const PESTANAS: { clave: Pestana; titulo: string; ayuda: string }[] = [
 ];
 
 const BANDEJA_VACIA: BandejaLevantamientos = { enEvaluacion: [], resueltas: [], levantadasPorVencimiento: [] };
+
+/** Variante de Badge que usa VARIANTE_ESTADO -> punto de estado de la tabla. */
+const TONO_VARIANTE: Record<'info' | 'success' | 'danger' | 'warning', TonoEstado> = {
+  info: 'info',
+  success: 'ok',
+  danger: 'peligro',
+  warning: 'aviso',
+};
 
 /**
  * F1 — Levantamiento de medidas provisionales (expediente incidental).
@@ -81,26 +90,35 @@ export const LevantamientosView: React.FC = () => {
   const urgentes = bandeja.enEvaluacion.filter((s) => cuentaRegresiva(s.venceEn, s.esClausura, ahora).nivel === 'rojo').length;
   const vencidasSinCarta = bandeja.levantadasPorVencimiento.filter((s) => !s.fechaHoraFirma).length;
 
+  /** Solo se resalta la pestaña cuando hay algo que atender. */
+  const tonoPestana = (clave: Pestana): TonoContador | undefined => {
+    if (clave === 'enEvaluacion' && urgentes > 0) return 'danger';
+    if (clave === 'levantadasPorVencimiento' && vencidasSinCarta > 0) return 'warning';
+    return undefined;
+  };
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-[20px] gap-[12px] flex-wrap">
-        <div>
-          <h2 className="text-[18px] font-extrabold text-midnight-900">Levantamiento de medidas provisionales</h2>
-          <p className="text-[13px] text-text-muted mt-[2px] max-w-[760px]">
+      <PageHeader
+        titulo="Levantamiento de Medidas"
+        descripcion={
+          <>
             Expediente incidental. <strong>Clausura</strong>: responder en <strong>48 horas corridas</strong> desde la presentación
-            (Ley 28976, art. 21.6 — cuentan sábados, domingos y feriados). <strong>Otras medidas</strong>: 30 días calendario (Ord.
+            (Ley 28976, art. 21.6 - cuentan sábados, domingos y feriados). <strong>Otras medidas</strong>: 30 días calendario (Ord.
             464-MDSJL, art. 63.2). Si vence sin carta firmada, la medida queda levantada por ley.
-          </p>
-        </div>
-        <div className="flex gap-[8px]">
-          <Button variant="secondary" icon={<RefreshCwIcon size={16} />} loading={loading} onClick={cargar}>
-            Actualizar
-          </Button>
-          <Button icon={<PlusIcon size={16} />} onClick={() => setRegistrando(true)}>
-            Registrar solicitud
-          </Button>
-        </div>
-      </div>
+          </>
+        }
+        acciones={
+          <>
+            <Button variant="secondary" icon={<RefreshCwIcon size={16} />} loading={loading} onClick={cargar}>
+              Actualizar
+            </Button>
+            <Button variant="primary" icon={<PlusIcon size={16} />} onClick={() => setRegistrando(true)}>
+              Registrar solicitud
+            </Button>
+          </>
+        }
+      />
 
       {error && <Alert type="error">{error}</Alert>}
       {urgentes > 0 && (
@@ -115,39 +133,21 @@ export const LevantamientosView: React.FC = () => {
         </Alert>
       )}
 
-      <div className="flex gap-[4px] border-b border-b-border mb-0">
-        {PESTANAS.map((p) => {
-          const activa = p.clave === pestana;
-          return (
-            <button
-              key={p.clave}
-              onClick={() => setPestana(p.clave)}
-              className={cn(
-                'py-[10px] px-[16px] text-[13px] font-bold border-0 bg-transparent cursor-pointer flex items-center gap-[8px] border-b-2',
-                activa ? 'border-b-primary-600 text-primary-600' : 'border-b-transparent text-text-muted',
-              )}
-            >
-              {p.titulo}
-              <Badge
-                variant={
-                  p.clave === 'enEvaluacion' && urgentes > 0
-                    ? 'danger'
-                    : p.clave === 'levantadasPorVencimiento' && vencidasSinCarta > 0
-                      ? 'warning'
-                      : activa
-                        ? 'info'
-                        : 'neutral'
-                }
-              >
-                {bandeja[p.clave].length}
-              </Badge>
-            </button>
-          );
-        })}
-      </div>
-
-      <Card className="rounded-tl-none! rounded-tr-none! border-t-0!">
-        <p className="text-[12px] text-text-muted mb-[12px]">{PESTANAS.find((p) => p.clave === pestana)?.ayuda}</p>
+      <PanelTabla
+        barra={
+          <SegmentedTabs<Pestana>
+            items={PESTANAS.map((p) => ({
+              clave: p.clave,
+              etiqueta: p.titulo,
+              contador: bandeja[p.clave].length,
+              tono: tonoPestana(p.clave),
+            }))}
+            activa={pestana}
+            onChange={setPestana}
+          />
+        }
+      >
+        <p className="text-[13px] text-text-muted py-[14px] px-[24px] m-0 border-b border-border">{PESTANAS.find((p) => p.clave === pestana)?.ayuda}</p>
         {loading && filas.length === 0 ? (
           <div className="p-[40px] text-center">
             <Spinner size={32} />
@@ -157,7 +157,7 @@ export const LevantamientosView: React.FC = () => {
         ) : (
           <TablaSolicitudes filas={filas} pestana={pestana} ahora={ahora} onVer={setAbierta} />
         )}
-      </Card>
+      </PanelTabla>
 
       {registrando && (
         <RegistrarSolicitudModal
@@ -182,60 +182,60 @@ const TablaSolicitudes: React.FC<{
   onVer: (id: string) => void;
 }> = ({ filas, pestana, ahora, onVer }) => (
   <div className="overflow-x-auto">
-    <table className="w-full border-collapse text-[13px] text-left">
+    <table className={TABLA.tabla}>
       <thead>
-        <tr className="bg-[#f8fafc] border-b border-b-border">
-          <th className="py-[10px] px-[14px] font-bold">Medida</th>
-          <th className="py-[10px] px-[14px] font-bold">Administrado</th>
-          <th className="py-[10px] px-[14px] font-bold">Presentada</th>
-          <th className="py-[10px] px-[14px] font-bold">{pestana === 'enEvaluacion' ? 'Vence en' : 'Estado'}</th>
-          <th className="py-[10px] px-[14px] font-bold">Siguiente paso</th>
-          <th className="py-[10px] px-[14px]"></th>
+        <tr className={TABLA.encabezado}>
+          <th className={TABLA.th}>Medida</th>
+          <th className={TABLA.th}>Presentada</th>
+          <th className={TABLA.th}>{pestana === 'enEvaluacion' ? 'Vence en' : 'Estado'}</th>
+          <th className={TABLA.th}>Siguiente paso</th>
+          <th className={`${TABLA.th} text-right`}></th>
         </tr>
       </thead>
       <tbody>
         {filas.map((s) => {
           const plazo = cuentaRegresiva(s.venceEn, s.esClausura, ahora);
           return (
-            <tr key={s.id} className={cn('border-b border-b-border', pestana === 'enEvaluacion' && plazo.nivel === 'rojo' && 'bg-[#fff1f2]')}>
-              <td className="py-[12px] px-[14px]">
+            <tr key={s.id} className={cn(TABLA.fila, pestana === 'enEvaluacion' && plazo.nivel === 'rojo' && 'bg-danger-bg')}>
+              <td className={TABLA.td}>
                 <div className="font-bold text-midnight-900">
-                  {tipoMedidaTexto(s.medida.tipoMedida)} — Acta N° {s.medida.numeroActa}
+                  {tipoMedidaTexto(s.medida.tipoMedida)} - Acta N° {s.medida.numeroActa}
                 </div>
-                <div className="text-[11px] text-text-muted mt-[2px]">{s.medida.numeroExpediente ?? 'Sin expediente'}</div>
+                <div className="text-[12px] text-text-muted mt-[3px]">
+                  {s.medida.numeroExpediente ?? 'Sin expediente'} · {s.medida.administradoNombre ?? 'No identificado'}
+                </div>
               </td>
-              <td className="py-[12px] px-[14px]">{s.medida.administradoNombre ?? <span className="text-text-muted">No identificado</span>}</td>
-              <td className="py-[12px] px-[14px] whitespace-nowrap">
+              <td className={`${TABLA.td} whitespace-nowrap`}>
                 {formatearFechaHora(s.fechaHoraPresentacion)}
-                <div className="text-[11px] text-text-muted">{s.plazoTexto}</div>
+                <div className="text-[12px] text-text-muted mt-[3px]">{s.plazoTexto}</div>
               </td>
-              <td className="py-[12px] px-[14px] whitespace-nowrap">
+              <td className={`${TABLA.td} whitespace-nowrap`}>
                 {pestana === 'enEvaluacion' ? (
                   <>
                     <span className={cn('tabular-nums', CLASE_NIVEL[plazo.nivel])}>{plazo.texto}</span>
-                    <div className="text-[11px] text-text-muted">hasta {formatearFechaHora(s.venceEn)}</div>
+                    <div className="text-[12px] text-text-muted mt-[3px]">hasta {formatearFechaHora(s.venceEn)}</div>
                   </>
                 ) : (
                   <>
-                    <Badge variant={VARIANTE_ESTADO[s.estado]}>{ETIQUETA_ESTADO[s.estado]}</Badge>
+                    <EstadoPunto tono={TONO_VARIANTE[VARIANTE_ESTADO[s.estado]]}>{ETIQUETA_ESTADO[s.estado]}</EstadoPunto>
                     {s.fechaHoraFirma && (
-                      <div className={cn('text-[11px] mt-[3px]', s.atendidaDentroDelPlazo ? 'text-[#047857]' : 'text-[#be123c]')}>
-                        Carta N° {s.numeroCarta} — {s.atendidaDentroDelPlazo ? 'dentro del plazo' : 'fuera del plazo'}
+                      <div className={cn('text-[12px] mt-[3px]', s.atendidaDentroDelPlazo ? 'text-[#047857]' : 'text-[#be123c]')}>
+                        Carta N° {s.numeroCarta} - {s.atendidaDentroDelPlazo ? 'dentro del plazo' : 'fuera del plazo'}
                       </div>
                     )}
                     {pestana === 'levantadasPorVencimiento' && (
-                      <div className="text-[11px] text-text-muted mt-[3px]">venció el {formatearFechaHora(s.venceEn)}</div>
+                      <div className="text-[12px] text-text-muted mt-[3px]">venció el {formatearFechaHora(s.venceEn)}</div>
                     )}
                   </>
                 )}
               </td>
-              <td className="py-[12px] px-[14px]">
+              <td className={TABLA.td}>
                 <span className={s.siguientePaso === 'COMPLETO' ? 'text-text-muted' : 'font-semibold text-text-secondary'}>
                   {ETIQUETA_PASO[s.siguientePaso]}
                 </span>
               </td>
-              <td className="py-[12px] px-[14px] text-right">
-                <Button size="sm" icon={<EyeIcon size={14} />} onClick={() => onVer(s.id)}>
+              <td className={`${TABLA.td} text-right`}>
+                <Button variant="primary" size="sm" icon={<EyeIcon size={14} />} onClick={() => onVer(s.id)}>
                   Ver
                 </Button>
               </td>

@@ -28,7 +28,8 @@ import { BotonCorregirDato, CorreccionMaterialSeccion } from '../correcciones/Co
 import { cn } from '../../lib/cn';
 import { textoCaducidad } from '../resoluciones/resolucionUi';
 import { socket } from '../../lib/socket';
-import { Card, Button, Badge, Modal, Input, Textarea, Alert, EmptyState, Spinner } from '../../components/common/Common';
+import { Button, Badge, Modal, Input, Textarea, Alert, EmptyState, Spinner } from '../../components/common/Common';
+import { EstadoPunto, PageHeader, PanelTabla, SegmentedTabs, TABLA } from '../../components/common/PageKit';
 import { useConfirm } from '../../context/ConfirmContext';
 import { formatearFecha, formatearFechaHora, hoyLocal } from '../../lib/fechas';
 import { LABEL_FOTO_ACTA } from '../resoluciones/resolucionUi';
@@ -124,10 +125,10 @@ const PREGUNTAS_CHECKLIST: { clave: ClaveChecklist; pregunta: string; ayuda: str
 ];
 
 const LABEL_MODO_NOTIFICACION: Record<string, string> = {
-  PERSONAL_FIRMA: 'Personal — firmó la recepción',
-  PERSONAL_NEGATIVA: 'Personal — se negó a firmar/recibir',
-  DOMICILIARIA_PENDIENTE: 'Domiciliaria — pendiente',
-  DOMICILIARIA_EFECTIVA: 'Domiciliaria — efectiva',
+  PERSONAL_FIRMA: 'Personal - firmó la recepción',
+  PERSONAL_NEGATIVA: 'Personal - se negó a firmar/recibir',
+  DOMICILIARIA_PENDIENTE: 'Domiciliaria - pendiente',
+  DOMICILIARIA_EFECTIVA: 'Domiciliaria - efectiva',
 };
 
 const estiloTarjetaEvidencia = 'bg-[#f8fafc] p-[12px] rounded-[8px] border border-border';
@@ -535,39 +536,30 @@ export const IfiView: React.FC = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-[20px]">
-        <div>
-          <h2 className="text-[18px] font-extrabold text-midnight-900">
-            Fase de Instrucción e Informe Final (IFI - SP4)
-          </h2>
-          <p className="text-[13px] text-text-muted mt-[2px]">
-            Control de descargos, hechos y base legal, análisis fáctico y propuesta instructora.
-          </p>
-        </div>
-        <Button variant="secondary" icon={<RefreshCwIcon size={16} />} loading={loading} onClick={cargar}>
-          Actualizar
-        </Button>
-      </div>
+      <PageHeader
+        titulo="Instrucción e IFI"
+        descripcion="Control de descargos, hechos y base legal, análisis fáctico y propuesta instructora."
+        acciones={
+          <Button variant="secondary" icon={<RefreshCwIcon size={14} />} loading={loading} onClick={cargar}>
+            Actualizar
+          </Button>
+        }
+      />
 
       {message && <Alert type={message.type}>{message.text}</Alert>}
 
-      {/* Tabs */}
-      <div className="flex gap-[8px] mb-[16px]">
-        <button
-          onClick={() => setActiveTab('pendientes')}
-          className={`py-[8px] px-[18px] text-[13px] font-semibold rounded-sm cursor-pointer ${activeTab === 'pendientes' ? 'border border-primary-600' : 'border border-border'} ${activeTab === 'pendientes' ? 'bg-primary-50' : 'bg-[#ffffff]'} ${activeTab === 'pendientes' ? 'text-primary-600' : 'text-text-secondary'}`}
-        >
-          Expedientes en Instrucción ({pendientes.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('esperando')}
-          className={`py-[8px] px-[18px] text-[13px] font-semibold rounded-sm cursor-pointer ${activeTab === 'esperando' ? 'border border-primary-600' : 'border border-border'} ${activeTab === 'esperando' ? 'bg-primary-50' : 'bg-[#ffffff]'} ${activeTab === 'esperando' ? 'text-primary-600' : 'text-text-secondary'}`}
-        >
-          Esperando Notificación NC ({esperando.length})
-        </button>
-      </div>
-
-      <Card>
+      <PanelTabla
+        barra={
+          <SegmentedTabs<'pendientes' | 'esperando'>
+            items={[
+              { clave: 'pendientes', etiqueta: 'En instrucción', contador: pendientes.length },
+              { clave: 'esperando', etiqueta: 'Esperando notificación de la NC', contador: esperando.length },
+            ]}
+            activa={activeTab}
+            onChange={setActiveTab}
+          />
+        }
+      >
         {loading ? (
           <div className="p-[40px] text-center">
             <Spinner size={32} />
@@ -580,17 +572,17 @@ export const IfiView: React.FC = () => {
             <EmptyState title="No hay expedientes en espera de notificación" />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-[13px] text-left">
+              <table className={TABLA.tabla}>
                 <thead>
-                  <tr className="bg-[#f8fafc] border-b border-b-border">
-                    <th className="py-[12px] px-[16px] font-bold">N° Expediente</th>
-                    <th className="py-[12px] px-[16px] font-bold">Condición Legal</th>
+                  <tr className={TABLA.encabezado}>
+                    <th className={TABLA.th}>Expediente</th>
+                    <th className={TABLA.th}>Condición legal</th>
                   </tr>
                 </thead>
                 <tbody>
                   {esperando.map((e) => (
-                    <tr key={e.expedienteId} className="border-b border-b-border">
-                      <td className="py-[14px] px-[16px] font-bold">
+                    <tr key={e.expedienteId} className={TABLA.fila}>
+                      <td className={`${TABLA.td} font-bold text-midnight-900 align-top!`}>
                         {e.numeroExpediente}
                         {e.tienePago && (
                           <div className="mt-[4px]">
@@ -598,8 +590,8 @@ export const IfiView: React.FC = () => {
                           </div>
                         )}
                       </td>
-                      <td className="py-[14px] px-[16px] text-text-muted text-[12px]">
-                        ⏳ Bloqueado por regla de negocio hasta que la Notificación de Cargo sea efectivamente diligenciada.
+                      <td className={`${TABLA.td} text-text-muted text-[12px]`}>
+                        Bloqueado por regla de negocio hasta que la Notificación de Cargo sea efectivamente diligenciada.
                         <div className="mt-[8px] text-text-main text-[13px]">
                           <AvisoRetroaccion expedienteId={e.expedienteId} onCambio={cargar} />
                         </div>
@@ -618,14 +610,14 @@ export const IfiView: React.FC = () => {
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-[13px] text-left">
+            <table className={TABLA.tabla}>
               <thead>
-                <tr className="bg-[#f8fafc] border-b border-b-border">
-                  <th className="py-[12px] px-[16px] font-bold">N° Expediente</th>
-                  <th className="py-[12px] px-[16px] font-bold">Estado IFI</th>
-                  <th className="py-[12px] px-[16px] font-bold">Avance</th>
-                  <th className="py-[12px] px-[16px] font-bold">Plazo</th>
-                  <th className="py-[12px] px-[16px] font-bold"></th>
+                <tr className={TABLA.encabezado}>
+                  <th className={TABLA.th}>Expediente</th>
+                  <th className={TABLA.th}>Estado IFI</th>
+                  <th className={TABLA.th}>Avance</th>
+                  <th className={TABLA.th}>Plazo</th>
+                  <th className={`${TABLA.th} text-right`}></th>
                 </tr>
               </thead>
               <tbody>
@@ -634,15 +626,9 @@ export const IfiView: React.FC = () => {
                   const esCaminoVicio = e.imputacionCorrecta === false;
                   const caducidad = textoCaducidad(e.diasParaCaducidad);
                   return (
-                    <tr key={e.expedienteId} className={`border-b border-b-border ${e.alertaAmpliacion ? 'bg-[#fff1f2]' : ''}`}>
-                      <td className="py-[14px] px-[16px] font-bold text-midnight-900">
-                        <div className="flex items-center gap-[8px]">
-                          <FileTextIcon size={16} color="var(--color-primary-600)" />
-                          {e.numeroExpediente}
-                        </div>
-                        <div className="text-[11px] text-text-muted mt-[4px]">
-                          ID: {e.expedienteId.slice(0, 8)}...
-                        </div>
+                    <tr key={e.expedienteId} className={cn(TABLA.fila, e.alertaAmpliacion && 'bg-danger-bg')}>
+                      <td className={`${TABLA.td} font-bold text-midnight-900`}>
+                        <div className="text-[14px]">{e.numeroExpediente}</div>
                         {e.tienePago && (
                           <div className="mt-[4px]">
                             <PagadoBadge tienePago montoPagado={e.montoPagado} fechaPago={e.fechaPago} />
@@ -650,13 +636,11 @@ export const IfiView: React.FC = () => {
                         )}
                       </td>
 
-                      <td className="py-[14px] px-[16px]">
-                        <Badge variant={e.ifiEstado === 'NOTIFICADO' ? 'success' : e.ifiEstado === 'EMITIDO' ? 'info' : 'neutral'}>
-                          {labelEstadoIfi(e)}
-                        </Badge>
+                      <td className={TABLA.td}>
+                        <EstadoPunto tono={e.ifiEstado === 'NOTIFICADO' ? 'ok' : e.ifiEstado === 'EMITIDO' ? 'info' : 'neutro'}>{labelEstadoIfi(e)}</EstadoPunto>
                       </td>
 
-                      <td className="py-[14px] px-[16px]">
+                      <td className={TABLA.td}>
                         <div className="flex flex-col gap-[6px]">
                           <span className={`text-[12px] font-semibold ${esCaminoVicio ? 'text-[#be123c]' : 'text-text-secondary'}`}>
                             {`Paso ${pasoNumero} de ${totalPasos}: ${pasoActualLabel}`}
@@ -665,7 +649,7 @@ export const IfiView: React.FC = () => {
                         </div>
                       </td>
 
-                      <td className="py-[14px] px-[16px] whitespace-nowrap">
+                      <td className={`${TABLA.td} whitespace-nowrap`}>
                         {caducidad ? (
                           <span className={`font-semibold text-[12px] ${caducidad.urgente ? 'text-[#be123c]' : 'text-text-secondary'}`}>{caducidad.texto}</span>
                         ) : (
@@ -679,7 +663,7 @@ export const IfiView: React.FC = () => {
                         )}
                       </td>
 
-                      <td className="py-[14px] px-[16px] whitespace-nowrap">
+                      <td className={`${TABLA.td} whitespace-nowrap text-right`}>
                         {e.alertaAmpliacion && (
                           <Button variant="danger" size="sm" className="mr-[8px]!" onClick={() => setDetalleExp(e)}>
                             {e.ampliacionEstado ? 'Ver RSG de ampliación' : 'Emitir RSG de ampliación'}
@@ -696,7 +680,7 @@ export const IfiView: React.FC = () => {
             </table>
           </div>
         )}
-      </Card>
+      </PanelTabla>
 
       {/* ============================================================ */}
       {/* PANEL DE DETALLE EN PASOS                                     */}
@@ -855,7 +839,7 @@ export const IfiView: React.FC = () => {
                 {evidencia.actaFiscalizacion && (
                   <span className="font-normal text-text-muted">
                     {' '}
-                    — Acta de Fiscalización N° {evidencia.actaFiscalizacion.numeroCorrelativo}
+                    - Acta de Fiscalización N° {evidencia.actaFiscalizacion.numeroCorrelativo}
                   </span>
                 )}
               </h4>
@@ -1119,13 +1103,13 @@ export const IfiView: React.FC = () => {
         <div className="mt-[12px]">
           <Textarea
             label="Base normativa adicional (opcional)"
-            placeholder="Leyes o decretos que el marco normativo automático (catálogo CUIS) no cubre — ej. Ley de Canes, Ley General de Salud, normas del MTC, otra ordenanza específica..."
+            placeholder="Leyes o decretos que el marco normativo automático (catálogo CUIS) no cubre - ej. Ley de Canes, Ley General de Salud, normas del MTC, otra ordenanza específica..."
             value={basesLegalesTexto}
             onChange={(e) => setBasesLegalesTexto(e.target.value)}
             rows={3}
           />
           <p className="text-[11px] text-text-muted mt-[4px]">
-            Se muestra aparte del marco normativo automático — nunca lo reemplaza.
+            Se muestra aparte del marco normativo automático - nunca lo reemplaza.
           </p>
         </div>
       </Modal>
@@ -1315,7 +1299,7 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
       descripcion: (
         <div className="flex flex-col gap-[6px]">
           {!e.recibioDescargo && (
-            <span className="text-[#b45309]">Sin descargo aún. Paso informativo — no bloquea el resto del flujo.</span>
+            <span className="text-[#b45309]">Sin descargo aún. Paso informativo  no bloquea el resto del flujo.</span>
           )}
           <DescargosLista expedienteId={e.expedienteId} onCambio={onCambioDescargos} />
         </div>
@@ -1335,7 +1319,7 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
         </span>
       ) : (
         <span className="text-[#be123c] font-semibold">
-          Imputación declarada VICIADA (vicio trascendente insubsanable) — recomendación fijada automáticamente en
+          Imputación declarada VICIADA (vicio trascendente insubsanable) - recomendación fijada automáticamente en
           ARCHIVAR. Esta decisión no se puede corregir (regla legal, no un error a arreglar).
         </span>
       ),
@@ -1356,7 +1340,7 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
 
       lista.push({
         numero: 3,
-        titulo: 'Análisis — fundamentar el archivo',
+        titulo: 'Análisis - fundamentar el archivo',
         estado: e.tieneAnalisis ? 'completado' : 'actual',
         descripcion: e.tieneAnalisis ? (
           <span className="flex items-center gap-[4px] text-[#047857] font-semibold">
@@ -1364,7 +1348,7 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
           </span>
         ) : (
           <span className="text-text-muted">
-            Redacta la fundamentación del archivo (puede citar el motivo del vicio ya registrado) — texto libre
+            Redacta la fundamentación del archivo (puede citar el motivo del vicio ya registrado) - texto libre
             del instructor, nunca generado por el sistema.
           </span>
         ),
@@ -1377,7 +1361,7 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
         estado: yaFirmadoVicio ? 'completado' : puedeFirmarVicio ? 'actual' : 'pendiente',
         descripcion: yaFirmadoVicio ? (
           <span className="flex items-center gap-[4px] text-[#047857] font-semibold">
-            <CheckIcon size={12} /> Firmado{e.numeroInforme ? ` — N° Informe ${e.numeroInforme}` : ''}.
+            <CheckIcon size={12} /> Firmado{e.numeroInforme ? ` - N° Informe ${e.numeroInforme}` : ''}.
           </span>
         ) : puedeFirmarVicio ? (
           <span className="text-text-muted">Al firmar se pide el N° del Informe Final de Instrucción (el número que la oficina le asigna, ej. 756-2026-MDSJL/GOP-SFSA-JLVN).</span>
@@ -1461,7 +1445,7 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
           <CheckIcon size={12} /> Análisis redactado.
         </span>
       ) : (
-        <span className="text-text-muted">Criterio jurídico del instructor — texto libre, nunca generado por el sistema.</span>
+        <span className="text-text-muted">Criterio jurídico del instructor - texto libre, nunca generado por el sistema.</span>
       ),
       accion: !e.tieneSeccionAutomatica
         ? undefined
@@ -1498,7 +1482,7 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
       estado: yaFirmado ? 'completado' : puedeFirmar ? 'actual' : 'pendiente',
       descripcion: yaFirmado ? (
         <span className="flex items-center gap-[4px] text-[#047857] font-semibold">
-          <CheckIcon size={12} /> Firmado{e.numeroInforme ? ` — N° Informe ${e.numeroInforme}` : ''}.
+          <CheckIcon size={12} /> Firmado{e.numeroInforme ? ` - N° Informe ${e.numeroInforme}` : ''}.
         </span>
       ) : puedeFirmar ? (
         <span className="text-text-muted">Al firmar se pide el N° del Informe Final de Instrucción (el número que la oficina le asigna, ej. 756-2026-MDSJL/GOP-SFSA-JLVN).</span>
@@ -1546,7 +1530,7 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
   }, [e, esViciada, esCorrecta, imputacionSaneada, actionLoading, descargandoDocumento]);
 
   return (
-    <Modal isOpen onClose={onClose} title={`Expediente ${e.numeroExpediente} — Detalle de instrucción`} maxWidth="680px">
+    <Modal isOpen onClose={onClose} title={`Expediente ${e.numeroExpediente} - Detalle de instrucción`} maxWidth="680px">
       <ResumenPlazoPagoIfi e={e} />
       <AvisoLevantamientoMedidas expedienteId={e.expedienteId} />
       <AvisoCaducidadExpediente expedienteId={e.expedienteId} />
@@ -1612,7 +1596,7 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
         <div className="border-t border-t-border pt-[16px] flex items-center justify-between">
           <div>
             <div className="text-[13px] font-bold text-midnight-900">Documentos Adjuntos</div>
-            <div className="text-[11px] text-text-muted">Memos, evidencia adicional — se puede usar en cualquier momento.</div>
+            <div className="text-[11px] text-text-muted">Memos, evidencia adicional - se puede usar en cualquier momento.</div>
           </div>
           <Button variant="secondary" size="sm" icon={<FileTextIcon size={14} />} onClick={onAbrirDocumentos}>
             Ver documentos
@@ -1633,8 +1617,8 @@ const ResumenPlazoPagoIfi: React.FC<{ e: ExpedienteIfiItem }> = ({ e }) => {
       {caducidad && (
         <span className={`font-semibold ${caducidad.urgente ? 'text-[#be123c]' : 'text-text-secondary'}`}>
           {caducidad.texto} ({formatearFecha(e.fechaCaducidad)})
-          {e.ampliacionEstado === 'EMITIDA' || e.ampliacionEstado === 'NOTIFICADA' ? ' — ampliado +3 meses' : ''}
-          {e.alertaAmpliacion ? ' — emitir RSG de ampliación' : ''}
+          {e.ampliacionEstado === 'EMITIDA' || e.ampliacionEstado === 'NOTIFICADA' ? ' - ampliado +3 meses' : ''}
+          {e.alertaAmpliacion ? ' - emitir RSG de ampliación' : ''}
         </span>
       )}
     </div>

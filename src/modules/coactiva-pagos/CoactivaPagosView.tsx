@@ -6,10 +6,11 @@ import {
 } from '../../api';
 import { RegistroPagoCard } from '../pagos/RegistroPagoCard';
 import { Card, Button, Input, Alert, Badge } from '../../components/common/Common';
+import { PageHeader, SegmentedTabs } from '../../components/common/PageKit';
 import { ComboboxExpediente } from '../../components/common/ComboboxExpediente';
 import { PagadoBadge } from '../../components/common/PagadoBadge';
 import { formatearFecha, hoyLocal } from '../../lib/fechas';
-import { CreditCardIcon, GavelIcon, FileTextIcon } from '../../components/icons/Icons';
+import { FileTextIcon } from '../../components/icons/Icons';
 
 type MotivoFirmeza = CandidatoActoFirme['motivo'];
 
@@ -155,32 +156,22 @@ export const CoactivaPagosView: React.FC = () => {
 
   return (
     <div>
-      <div className="mb-[20px]">
-        <h2 className="text-[18px] font-extrabold text-midnight-900">
-          Acto Firme, Ejecución Coactiva & Control de Pagos (SP8 / ES1)
-        </h2>
-        <p className="text-[13px] text-text-muted mt-[2px]">
-          Declaratoria de firmeza para cobro coactivo forzoso y control administrativo de recaudación de multas.
-        </p>
-      </div>
+      <PageHeader
+        titulo="Acto Firme y Cobranza"
+        descripcion="Declaratoria de firmeza para cobro coactivo forzoso y control administrativo de recaudación de multas."
+      />
 
       {message && <Alert type={message.type}>{message.text}</Alert>}
 
-      <div className="flex gap-[8px] mb-[16px]">
-        <button
-          onClick={() => setActiveTab('coactiva')}
-          className={`py-[10px] px-[20px] text-[13px] font-bold rounded-sm cursor-pointer flex items-center gap-[8px] ${activeTab === 'coactiva' ? 'border border-primary-600' : 'border border-border'} ${activeTab === 'coactiva' ? 'bg-primary-50' : 'bg-[#ffffff]'} ${activeTab === 'coactiva' ? 'text-primary-600' : 'text-text-secondary'}`}
-        >
-          <GavelIcon size={16} />
-          1. Acto Firme & Derivación Coactiva (SP8)
-        </button>
-        <button
-          onClick={() => setActiveTab('pagos')}
-          className={`py-[10px] px-[20px] text-[13px] font-bold rounded-sm cursor-pointer flex items-center gap-[8px] ${activeTab === 'pagos' ? 'border border-primary-600' : 'border border-border'} ${activeTab === 'pagos' ? 'bg-primary-50' : 'bg-[#ffffff]'} ${activeTab === 'pagos' ? 'text-primary-600' : 'text-text-secondary'}`}
-        >
-          <CreditCardIcon size={16} />
-          2. Registro de Pagos de Multas (por N° de NC)
-        </button>
+      <div className="mb-[24px]">
+        <SegmentedTabs<'coactiva' | 'pagos'>
+          items={[
+            { clave: 'coactiva', etiqueta: 'Acto firme y derivación' },
+            { clave: 'pagos', etiqueta: 'Pagos de multas' },
+          ]}
+          activa={activeTab}
+          onChange={setActiveTab}
+        />
       </div>
 
       {activeTab === 'coactiva' ? (

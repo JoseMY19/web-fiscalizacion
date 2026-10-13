@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { BandejaRecursos, ExpedienteRecursos, RecursosApi } from '../../api';
 import { Alert, Badge, Button, Card, EmptyState, Spinner } from '../../components/common/Common';
 import { PagadoBadge } from '../../components/common/PagadoBadge';
+import { EstadoPunto, PageHeader, PanelTabla, SegmentedTabs, TABLA, type TonoEstado } from '../../components/common/PageKit';
 import { CheckCircleIcon, EyeIcon, RefreshCwIcon, ScaleIcon, SearchIcon } from '../../components/icons/Icons';
 import { RecursoPanel } from './RecursoPanel';
 import { LABEL_SITUACION, textoPlazoRecurso, textoUltimoActo, varianteSituacion } from './recursosUi';
@@ -37,6 +38,16 @@ const PESTANAS: { clave: Pestana; titulo: string; ayuda: string; vacio: string }
 ];
 
 const BANDEJA_VACIA: BandejaRecursos = { plazoAbierto: [], reconsideraciones: [], apelaciones: [], resueltos: [] };
+
+/** Variante de Badge de la situación -> punto de estado de la tabla. */
+const TONO_VARIANTE: Record<ReturnType<typeof varianteSituacion>, TonoEstado> = {
+  warning: 'aviso',
+  info: 'info',
+  purple: 'info',
+  success: 'ok',
+  neutral: 'neutro',
+  danger: 'peligro',
+};
 
 /**
  * SP6 (reconsideración) y SP7 (apelación). Mismo esquema que Resoluciones:
@@ -148,24 +159,25 @@ export const RecursosView: React.FC = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-[20px] gap-[12px] flex-wrap">
-        <div>
-          <h2 className="text-[18px] font-extrabold text-midnight-900">Recursos impugnativos (SP6 y SP7)</h2>
-          <p className="text-[13px] text-text-muted mt-[2px] max-w-[760px]">
+      <PageHeader
+        titulo="Recursos Impugnativos"
+        descripcion={
+          <>
             Notificada la resolución, el administrado tiene <strong>15 días hábiles</strong> para recurrir. La{' '}
             <strong>reconsideración</strong> la resuelve esta Subgerencia con una RSG (requiere prueba nueva); la{' '}
-            <strong>apelación</strong> va contra el último acto y la resuelve la Gerencia de Orden Público (GOP). Ninguno es
-            obligatorio.
-          </p>
-        </div>
-        <Button variant="secondary" icon={<RefreshCwIcon size={16} />} loading={loading} onClick={refrescarTodo}>
-          Actualizar
-        </Button>
-      </div>
+            <strong>apelación</strong> va contra el último acto y la resuelve la Gerencia de Orden Público (GOP). Ninguno es obligatorio.
+          </>
+        }
+        acciones={
+          <Button variant="secondary" icon={<RefreshCwIcon size={16} />} loading={loading} onClick={refrescarTodo}>
+            Actualizar
+          </Button>
+        }
+      />
 
       {error && <Alert type="error">{error}</Alert>}
 
-      <Card className="mb-[20px]! overflow-visible! relative! z-[20]!">
+      <Card className="mb-[24px]! overflow-visible! relative! z-[20]!">
         <label className="block text-[13px] font-bold mb-[8px] text-midnight-900">Buscar por N° de expediente</label>
         <div ref={buscadorRef} className="relative">
           <span className="absolute left-[12px] top-[21px] [transform:translateY(-50%)] text-text-muted flex pointer-events-none">
@@ -193,7 +205,7 @@ export const RecursosView: React.FC = () => {
           {listaAbierta && (
             <div
               role="listbox"
-              className="absolute top-[calc(100%_+_6px)] left-0 right-0 z-[50] bg-[#ffffff] border border-border rounded-sm shadow-xl max-h-[340px] overflow-y-auto"
+              className="absolute top-[calc(100%_+_6px)] left-0 right-0 z-[50] bg-white border border-border rounded-sm shadow-xl max-h-[340px] overflow-y-auto"
             >
               {errorBusqueda ? (
                 <div className="p-[12px]">
@@ -211,10 +223,10 @@ export const RecursosView: React.FC = () => {
                 </p>
               ) : resultados ? (
                 <>
-                  <div className="py-[8px] px-[14px] text-[11px] font-semibold text-text-muted border-b border-b-border bg-[#f8fafc]">
+                  <div className="py-[8px] px-[14px] text-[11px] font-semibold text-text-muted border-b border-b-border bg-bg-subtle">
                     {busqueda.trim()
                       ? `${resultados.length} resultado${resultados.length === 1 ? '' : 's'}`
-                      : `Todos los expedientes con resolución notificada (${resultados.length}) — escribe para filtrar`}
+                      : `Todos los expedientes con resolución notificada (${resultados.length}) - escribe para filtrar`}
                     {buscando && ' · actualizando…'}
                   </div>
                   {resultados.map((f, i) => (
@@ -225,7 +237,7 @@ export const RecursosView: React.FC = () => {
                       aria-selected={i === indiceActivo}
                       onMouseEnter={() => setIndiceActivo(i)}
                       onClick={() => elegir(f)}
-                      className={`flex items-center justify-between gap-[12px] w-full py-[10px] px-[14px] border-0 border-b border-b-border cursor-pointer text-left text-[13px] ${i === indiceActivo ? 'bg-primary-50' : 'bg-[#ffffff]'}`}
+                      className={`flex items-center justify-between gap-[12px] w-full py-[10px] px-[14px] border-0 border-b border-b-border cursor-pointer text-left text-[13px] ${i === indiceActivo ? 'bg-primary-50' : 'bg-white'}`}
                     >
                       <span className="flex items-center gap-[8px] font-bold text-midnight-900">
                         <ScaleIcon size={15} color="var(--color-purple)" />
@@ -247,24 +259,16 @@ export const RecursosView: React.FC = () => {
         </div>
       </Card>
 
-      <div className="flex gap-[4px] border-b border-b-border mb-0 flex-wrap">
-        {PESTANAS.map((p) => {
-          const activa = p.clave === pestana;
-          return (
-            <button
-              key={p.clave}
-              onClick={() => setPestana(p.clave)}
-              className={`py-[10px] px-[16px] text-[13px] font-bold border-0 bg-transparent cursor-pointer flex items-center gap-[8px] border-b-2 ${activa ? 'border-b-primary-600 text-primary-600' : 'border-b-transparent text-text-muted'}`}
-            >
-              {p.titulo}
-              <Badge variant={activa ? 'info' : 'neutral'}>{bandeja[p.clave].length}</Badge>
-            </button>
-          );
-        })}
-      </div>
-
-      <Card className="rounded-tl-none! rounded-tr-none! border-t-0!">
-        <p className="text-[12px] text-text-muted mb-[12px]">{def.ayuda}</p>
+      <PanelTabla
+        barra={
+          <SegmentedTabs<Pestana>
+            items={PESTANAS.map((p) => ({ clave: p.clave, etiqueta: p.titulo, contador: bandeja[p.clave].length }))}
+            activa={pestana}
+            onChange={setPestana}
+          />
+        }
+      >
+        <p className="text-[13px] text-text-muted py-[14px] px-[24px] m-0 border-b border-border">{def.ayuda}</p>
         {loading && filas.length === 0 ? (
           <div className="p-[40px] text-center">
             <Spinner size={32} />
@@ -275,7 +279,7 @@ export const RecursosView: React.FC = () => {
         ) : (
           <TablaRecursos filas={filas} onVer={elegir} />
         )}
-      </Card>
+      </PanelTabla>
 
       {abierto && (
         <RecursoPanel
@@ -291,43 +295,43 @@ export const RecursosView: React.FC = () => {
 
 const TablaRecursos: React.FC<{ filas: ExpedienteRecursos[]; onVer: (f: ExpedienteRecursos) => void }> = ({ filas, onVer }) => (
   <div className="overflow-x-auto">
-    <table className="w-full border-collapse text-[13px] text-left">
+    <table className={TABLA.tabla}>
       <thead>
-        <tr className="bg-[#f8fafc] border-b border-b-border">
-          <th className="py-[10px] px-[14px] font-bold">N° Expediente</th>
-          <th className="py-[10px] px-[14px] font-bold">Último acto</th>
-          <th className="py-[10px] px-[14px] font-bold">Situación</th>
-          <th className="py-[10px] px-[14px] font-bold">Plazo</th>
-          <th className="py-[10px] px-[14px] font-bold text-right"></th>
+        <tr className={TABLA.encabezado}>
+          <th className={TABLA.th}>N° Expediente</th>
+          <th className={TABLA.th}>Último acto</th>
+          <th className={TABLA.th}>Situación</th>
+          <th className={TABLA.th}>Plazo</th>
+          <th className={`${TABLA.th} text-right`}></th>
         </tr>
       </thead>
       <tbody>
         {filas.map((f) => {
           const plazo = f.situacion === 'PLAZO_ABIERTO' || f.situacion === 'PLAZO_VENCIDO' ? textoPlazoRecurso(f) : null;
           return (
-            <tr key={f.expedienteId} className="border-b border-b-border">
-              <td className="py-[12px] px-[14px] font-bold text-midnight-900">
-                <div className="flex items-center gap-[8px]">
+            <tr key={f.expedienteId} className={TABLA.fila}>
+              <td className={TABLA.td}>
+                <div className="flex items-center gap-[8px] font-bold text-midnight-900">
                   <ScaleIcon size={16} color="var(--color-purple)" />
                   {f.numeroExpediente}
                 </div>
-                {f.administrado && <div className="text-[11px] text-text-muted mt-[3px] font-medium">{f.administrado}</div>}
+                {f.administrado && <div className="text-[12px] text-text-muted mt-[3px] font-medium">{f.administrado}</div>}
               </td>
-              <td className="py-[12px] px-[14px] text-[12px]">{textoUltimoActo(f)}</td>
-              <td className="py-[12px] px-[14px]">
-                <div className="flex flex-col items-start gap-[4px]">
-                  <Badge variant={varianteSituacion(f.situacion)}>{LABEL_SITUACION[f.situacion]}</Badge>
+              <td className={`${TABLA.td} text-[12px]`}>{textoUltimoActo(f)}</td>
+              <td className={TABLA.td}>
+                <div className="flex flex-col items-start gap-[6px]">
+                  <EstadoPunto tono={TONO_VARIANTE[varianteSituacion(f.situacion)]}>{LABEL_SITUACION[f.situacion]}</EstadoPunto>
                   <PagadoBadge tienePago={f.tienePago} montoPagado={f.pago?.montoPagado} fechaPago={f.pago?.fechaPago} />
                 </div>
               </td>
-              <td className="py-[12px] px-[14px] whitespace-nowrap">
+              <td className={`${TABLA.td} whitespace-nowrap`}>
                 {plazo ? (
                   <span className={`font-semibold ${plazo.urgente ? 'text-[#be123c]' : 'text-text-secondary'}`}>{plazo.texto}</span>
                 ) : (
                   <span className="text-text-muted">—</span>
                 )}
               </td>
-              <td className="py-[12px] px-[14px] text-right">
+              <td className={`${TABLA.td} text-right`}>
                 <Button variant="primary" size="sm" icon={<EyeIcon size={14} />} onClick={() => onVer(f)}>
                   Ver expediente
                 </Button>

@@ -2,10 +2,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { BandejaCaducidad, CaducidadApi, CaducidadExpedienteItem } from '../../api';
 import { socket } from '../../lib/socket';
-import { cn } from '../../lib/cn';
 import { formatearFecha } from '../../lib/fechas';
-import { Alert, Badge, Button, Card, EmptyState, Modal, Spinner } from '../../components/common/Common';
+import { Alert, Badge, Button, EmptyState, Modal, Spinner } from '../../components/common/Common';
 import { ComboboxExpediente } from '../../components/common/ComboboxExpediente';
+import { EstadoPunto, PageHeader, PanelTabla, SegmentedTabs, TABLA, type PestanaItem, type TonoEstado } from '../../components/common/PageKit';
 import { CheckCircleIcon, EyeIcon, PlusIcon, RefreshCwIcon } from '../../components/icons/Icons';
 import { CaducidadPanel } from './CaducidadPanel';
 import { ETIQUETA_PASO_CADUCIDAD, textoPlazoCaducidad, textoResultadoCaducidad } from './caducidadUi';
@@ -68,24 +68,26 @@ export const CaducidadView: React.FC = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-[20px] gap-[12px] flex-wrap">
-        <div>
-          <h2 className="text-[18px] font-extrabold text-midnight-900">Caducidad del PAS</h2>
-          <p className="text-[13px] text-text-muted mt-[2px] max-w-[760px]">
+      <PageHeader
+        titulo="Caducidad del PAS"
+        descripcion={
+          <>
             Art. 237-A Ley 27444: si en <strong>9 meses</strong> desde la notificación de la NC (<strong>12</strong> con RSG de ampliación firmada) no
             se notifica la resolución final, el PAS caduca. Se declara de oficio o a pedido de parte con RSG firmada por el Subgerente. No aplica
             una vez notificada la resolución (etapa recursiva).
-          </p>
-        </div>
-        <div className="flex gap-[8px]">
-          <Button variant="secondary" icon={<RefreshCwIcon size={16} />} loading={loading} onClick={cargar}>
-            Actualizar
-          </Button>
-          <Button icon={<PlusIcon size={16} />} onClick={() => setEligiendo(true)}>
-            Registrar solicitud del administrado
-          </Button>
-        </div>
-      </div>
+          </>
+        }
+        acciones={
+          <>
+            <Button variant="secondary" icon={<RefreshCwIcon size={16} />} loading={loading} onClick={cargar}>
+              Actualizar
+            </Button>
+            <Button variant="primary" icon={<PlusIcon size={16} />} onClick={() => setEligiendo(true)}>
+              Registrar solicitud del administrado
+            </Button>
+          </>
+        }
+      />
 
       {error && <Alert type="error">{error}</Alert>}
       {sinDeclarar > 0 && (
@@ -94,27 +96,23 @@ export const CaducidadView: React.FC = () => {
         </Alert>
       )}
 
-      <div className="flex gap-[4px] border-b border-b-border mb-0 flex-wrap">
-        {PESTANAS.map((p) => {
-          const activa = p.clave === pestana;
-          return (
-            <button
-              key={p.clave}
-              onClick={() => setPestana(p.clave)}
-              className={cn(
-                'py-[10px] px-[16px] text-[13px] font-bold border-0 bg-transparent cursor-pointer flex items-center gap-[8px] border-b-2',
-                activa ? 'border-b-primary-600 text-primary-600' : 'border-b-transparent text-text-muted',
-              )}
-            >
-              {p.titulo}
-              <Badge variant={p.clave === 'caducadosSinDeclarar' && sinDeclarar > 0 ? 'danger' : activa ? 'info' : 'neutral'}>{bandeja[p.clave].length}</Badge>
-            </button>
-          );
-        })}
-      </div>
-
-      <Card className="rounded-tl-none! rounded-tr-none! border-t-0!">
-        <p className="text-[12px] text-text-muted mb-[12px]">{PESTANAS.find((p) => p.clave === pestana)?.ayuda}</p>
+      <PanelTabla
+        barra={
+          <SegmentedTabs<Pestana>
+            items={PESTANAS.map(
+              (p): PestanaItem<Pestana> => ({
+                clave: p.clave,
+                etiqueta: p.titulo,
+                contador: bandeja[p.clave].length,
+                tono: p.clave === 'caducadosSinDeclarar' && sinDeclarar > 0 ? 'danger' : undefined,
+              }),
+            )}
+            activa={pestana}
+            onChange={setPestana}
+          />
+        }
+      >
+        <p className="text-[13px] text-text-muted py-[14px] px-[24px] m-0 border-b border-border">{PESTANAS.find((p) => p.clave === pestana)?.ayuda}</p>
         {loading && filas.length === 0 ? (
           <div className="p-[40px] text-center">
             <Spinner size={32} />
@@ -124,7 +122,7 @@ export const CaducidadView: React.FC = () => {
         ) : (
           <TablaCaducidad filas={filas} onVer={abrir} />
         )}
-      </Card>
+      </PanelTabla>
 
       {eligiendo && (
         <ElegirExpedienteModal
@@ -140,17 +138,26 @@ export const CaducidadView: React.FC = () => {
   );
 };
 
+type Variante = 'success' | 'warning' | 'danger' | 'info' | 'purple' | 'neutral' | 'midnight';
+
+const TONO_ESTADO: Partial<Record<Variante, TonoEstado>> = { success: 'ok', warning: 'aviso', danger: 'peligro', info: 'info', neutral: 'neutro' };
+
+/** Estado en celda: punto de color si hay equivalente; purple y midnight no tienen punto y se quedan como etiqueta. */
+const EstadoCelda: React.FC<{ variante: Variante; children: React.ReactNode }> = ({ variante, children }) => {
+  const tono = TONO_ESTADO[variante];
+  return tono ? <EstadoPunto tono={tono}>{children}</EstadoPunto> : <Badge variant={variante}>{children}</Badge>;
+};
+
 const TablaCaducidad: React.FC<{ filas: CaducidadExpedienteItem[]; onVer: (id: string) => void }> = ({ filas, onVer }) => (
   <div className="overflow-x-auto">
-    <table className="w-full border-collapse text-[13px] text-left">
+    <table className={TABLA.tabla}>
       <thead>
-        <tr className="bg-[#f8fafc] border-b border-b-border">
-          <th className="py-[10px] px-[14px] font-bold">Expediente</th>
-          <th className="py-[10px] px-[14px] font-bold">Administrado</th>
-          <th className="py-[10px] px-[14px] font-bold">NC notificada</th>
-          <th className="py-[10px] px-[14px] font-bold">Plazo</th>
-          <th className="py-[10px] px-[14px] font-bold">Siguiente paso</th>
-          <th className="py-[10px] px-[14px]"></th>
+        <tr className={TABLA.encabezado}>
+          <th className={TABLA.th}>Expediente</th>
+          <th className={TABLA.th}>Administrado</th>
+          <th className={TABLA.th}>Plazo</th>
+          <th className={TABLA.th}>Siguiente paso</th>
+          <th className={`${TABLA.th} text-right`}></th>
         </tr>
       </thead>
       <tbody>
@@ -158,27 +165,26 @@ const TablaCaducidad: React.FC<{ filas: CaducidadExpedienteItem[]; onVer: (id: s
           const plazo = textoPlazoCaducidad(e);
           const estado = textoResultadoCaducidad(e);
           return (
-            <tr key={e.expedienteId} className="border-b border-b-border">
-              <td className="py-[12px] px-[14px]">
-                <div className="font-bold text-midnight-900">{e.numeroExpediente}</div>
-                {e.caducidad && <div className="text-[11px] text-text-muted">{e.caducidad.origen === 'DE_OFICIO' ? 'De oficio' : 'A pedido de parte'}</div>}
-              </td>
-              <td className="py-[12px] px-[14px]">{e.administradoNombre ?? <span className="text-text-muted">No identificado</span>}</td>
-              <td className="py-[12px] px-[14px] whitespace-nowrap">
-                {formatearFecha(e.ncFechaNotificacion)}
-                <div className="text-[11px] text-text-muted">NC N° {e.numeroNotificacionCargo ?? '—'}</div>
-              </td>
-              <td className="py-[12px] px-[14px]">
-                <div className="flex flex-col gap-[4px] items-start">
-                  <Badge variant={plazo.variante}>{plazo.texto}</Badge>
-                  {estado && <Badge variant={estado.variante}>{estado.texto}</Badge>}
+            <tr key={e.expedienteId} className={TABLA.fila}>
+              <td className={TABLA.td}>
+                <div className="text-[14px] font-bold text-midnight-900">{e.numeroExpediente}</div>
+                {e.caducidad && <div className="text-[12px] text-text-muted mt-[3px]">{e.caducidad.origen === 'DE_OFICIO' ? 'De oficio' : 'A pedido de parte'}</div>}
+                <div className="text-[12px] text-text-muted mt-[3px] whitespace-nowrap">
+                  Notificada el {formatearFecha(e.ncFechaNotificacion)} · NC N° {e.numeroNotificacionCargo ?? '—'}
                 </div>
               </td>
-              <td className="py-[12px] px-[14px]">
+              <td className={TABLA.td}>{e.administradoNombre ?? <span className="text-text-muted">No identificado</span>}</td>
+              <td className={TABLA.td}>
+                <div className="flex flex-col gap-[6px] items-start">
+                  <EstadoCelda variante={plazo.variante}>{plazo.texto}</EstadoCelda>
+                  {estado && <EstadoCelda variante={estado.variante}>{estado.texto}</EstadoCelda>}
+                </div>
+              </td>
+              <td className={TABLA.td}>
                 <span className={e.siguientePaso === 'COMPLETO' ? 'text-text-muted' : 'font-semibold text-text-secondary'}>{ETIQUETA_PASO_CADUCIDAD[e.siguientePaso]}</span>
               </td>
-              <td className="py-[12px] px-[14px] text-right">
-                <Button size="sm" icon={<EyeIcon size={14} />} onClick={() => onVer(e.expedienteId)}>
+              <td className={`${TABLA.td} text-right`}>
+                <Button variant="primary" size="sm" icon={<EyeIcon size={14} />} onClick={() => onVer(e.expedienteId)}>
                   Ver
                 </Button>
               </td>

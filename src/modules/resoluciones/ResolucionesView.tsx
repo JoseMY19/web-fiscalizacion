@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ResolucionesApi, ExpedienteResolucionItem, BandejaResoluciones } from '../../api';
 import { socket } from '../../lib/socket';
 import { Card, Button, Badge, Alert, EmptyState, Spinner } from '../../components/common/Common';
+import { EstadoPunto, PageHeader, PanelTabla, SegmentedTabs, TABLA, TonoEstado } from '../../components/common/PageKit';
 import { GavelIcon, RefreshCwIcon, CheckCircleIcon, SearchIcon, EyeIcon } from '../../components/icons/Icons';
 import { ResolucionPanel } from './ResolucionPanel';
 import { NOMBRE_TIPO, diasDesde, labelEtapa, textoCaducidad, varianteDiasEnFirma, varianteEtapa } from './resolucionUi';
@@ -12,6 +13,9 @@ function claseDiasEnFirma(dias: number | null): string {
   const v = varianteDiasEnFirma(dias);
   return v === 'danger' ? 'text-[#be123c] font-semibold' : v === 'warning' ? 'text-[#b45309] font-semibold' : 'text-text-muted';
 }
+
+/** Punto de estado de la etapa (EstadoPunto) según la variante que ya calcula varianteEtapa. */
+const TONO_ETAPA: Record<string, TonoEstado> = { success: 'ok', warning: 'aviso', danger: 'peligro', info: 'info', purple: 'info', neutral: 'neutro' };
 
 type Pestana = 'enRedaccion' | 'porFirmar' | 'firmadas';
 
@@ -153,22 +157,26 @@ export const ResolucionesView: React.FC = () => {
   const ayudaPestana = PESTANAS.find((p) => p.clave === pestana)?.ayuda;
   // O5: la más antigua en firma define el color del contador de la pestaña.
   const maxDiasEnFirma = bandeja.porFirmar.reduce((m, f) => Math.max(m, f.plazos.diasEnFirma ?? 0), 0);
+  // El contador "Por firmar" solo se pinta cuando hay resoluciones en firma demasiado tiempo.
+  const tonoPorFirmar = varianteDiasEnFirma(maxDiasEnFirma) === 'danger' ? 'danger' : varianteDiasEnFirma(maxDiasEnFirma) === 'warning' ? 'warning' : undefined;
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-[20px] gap-[12px] flex-wrap">
-        <div>
-          <h2 className="text-[18px] font-extrabold text-midnight-900">Resoluciones (SP5)</h2>
-          <p className="text-[13px] text-text-muted mt-[2px] max-w-[720px]">
+      <PageHeader
+        titulo="Resolución Sancionadora"
+        descripcion={
+          <>
             La decisión oficial del caso. El tipo sale del IFI: si recomendó <strong>sancionar</strong> → RSGSA (multa y/o
             medida complementaria); si recomendó <strong>archivar</strong> → RSG (a favor del administrado). Se redacta,
             se entrega al Subgerente para su firma en papel, se registra la firma y se notifica.
-          </p>
-        </div>
-        <Button variant="secondary" icon={<RefreshCwIcon size={16} />} loading={loading} onClick={refrescarTodo}>
-          Actualizar
-        </Button>
-      </div>
+          </>
+        }
+        acciones={
+          <Button variant="secondary" icon={<RefreshCwIcon size={14} />} loading={loading} onClick={refrescarTodo}>
+            Actualizar
+          </Button>
+        }
+      />
 
       {error && <Alert type="error">{error}</Alert>}
 
@@ -204,7 +212,7 @@ export const ResolucionesView: React.FC = () => {
           {listaAbierta && (
             <div
               role="listbox"
-              className="absolute top-[calc(100%_+_6px)] left-0 right-0 z-[50] bg-[#ffffff] border border-border rounded-sm shadow-xl max-h-[340px] overflow-y-auto"
+              className="absolute top-[calc(100%_+_6px)] left-0 right-0 z-[50] bg-white border border-border rounded-sm shadow-xl max-h-[340px] overflow-y-auto"
             >
               {errorBusqueda ? (
                 <div className="p-[12px]">
@@ -222,10 +230,10 @@ export const ResolucionesView: React.FC = () => {
                 </p>
               ) : resultados ? (
                 <>
-                  <div className="py-[8px] px-[14px] text-[11px] font-semibold text-text-muted border-b border-b-border bg-[#f8fafc]">
+                  <div className="py-[8px] px-[14px] text-[11px] font-semibold text-text-muted border-b border-b-border bg-bg-subtle">
                     {busqueda.trim()
                       ? `${resultados.length} resultado${resultados.length === 1 ? '' : 's'}`
-                      : `Todos los expedientes disponibles (${resultados.length}) — escribe para filtrar`}
+                      : `Todos los expedientes disponibles (${resultados.length}) - escribe para filtrar`}
                     {buscando && ' · actualizando…'}
                   </div>
                   {resultados.map((f, i) => {
@@ -239,7 +247,7 @@ export const ResolucionesView: React.FC = () => {
                         aria-selected={activo}
                         onMouseEnter={() => setIndiceActivo(i)}
                         onClick={() => elegirResultado(f)}
-                        className={`flex items-center justify-between gap-[12px] w-full py-[10px] px-[14px] border-0 border-b border-b-border cursor-pointer text-left text-[13px] ${activo ? 'bg-primary-50' : 'bg-[#ffffff]'}`}
+                        className={`flex items-center justify-between gap-[12px] w-full py-[10px] px-[14px] border-0 border-b border-b-border cursor-pointer text-left text-[13px] ${activo ? 'bg-primary-50' : 'bg-white'}`}
                       >
                         <span className="flex items-center gap-[8px] font-bold text-midnight-900">
                           <GavelIcon size={15} color="var(--color-purple)" />
@@ -265,39 +273,28 @@ export const ResolucionesView: React.FC = () => {
       </Card>
 
       {/* Pestañas */}
-      <div className="flex gap-[4px] border-b border-b-border mb-0">
-        {PESTANAS.map((p) => {
-          const activa = p.clave === pestana;
-          return (
-            <button
-              key={p.clave}
-              onClick={() => setPestana(p.clave)}
-              className={`py-[10px] px-[16px] text-[13px] font-bold border-0 bg-transparent cursor-pointer flex items-center gap-[8px] ${activa ? 'border-b-2 border-b-primary-600' : 'border-b-2 border-b-transparent'} ${activa ? 'text-primary-600' : 'text-text-muted'}`}
-            >
-              {p.titulo}
-              <Badge
-                variant={
-                  p.clave === 'porFirmar' && bandeja.porFirmar.length > 0
-                    ? varianteDiasEnFirma(maxDiasEnFirma)
-                    : activa
-                      ? 'info'
-                      : 'neutral'
-                }
-              >
-                {bandeja[p.clave].length}
-              </Badge>
-            </button>
-          );
-        })}
-      </div>
-
-      <Card className="rounded-tl-none! rounded-tr-none! border-t-0!">
-        {ayudaPestana && <p className="text-[12px] text-text-muted mb-[12px]">{ayudaPestana}</p>}
+      <PanelTabla
+        barra={
+          <SegmentedTabs<Pestana>
+            items={PESTANAS.map((p) => ({
+              clave: p.clave,
+              etiqueta: p.titulo,
+              contador: bandeja[p.clave].length,
+              tono: p.clave === 'porFirmar' ? tonoPorFirmar : undefined,
+            }))}
+            activa={pestana}
+            onChange={setPestana}
+          />
+        }
+      >
+        {ayudaPestana && <p className="text-[13px] text-text-muted py-[14px] px-[24px] m-0 border-b border-border">{ayudaPestana}</p>}
         {pestana === 'porFirmar' && bandeja.porFirmar.length > 0 && (
-          <Alert type={varianteDiasEnFirma(maxDiasEnFirma) === 'purple' ? 'info' : varianteDiasEnFirma(maxDiasEnFirma) === 'danger' ? 'error' : 'warning'}>
-            Falta firmar: {bandeja.porFirmar.length} resoluci{bandeja.porFirmar.length === 1 ? 'ón espera' : 'ones esperan'} la firma del Subgerente
-            (la más antigua hace {maxDiasEnFirma} día{maxDiasEnFirma === 1 ? '' : 's'}). La firma es obligatoria para notificar.
-          </Alert>
+          <div className="py-[16px] px-[24px] pb-0">
+            <Alert type={varianteDiasEnFirma(maxDiasEnFirma) === 'purple' ? 'info' : varianteDiasEnFirma(maxDiasEnFirma) === 'danger' ? 'error' : 'warning'}>
+              Falta firmar: {bandeja.porFirmar.length} resoluci{bandeja.porFirmar.length === 1 ? 'ón espera' : 'ones esperan'} la firma del Subgerente
+              (la más antigua hace {maxDiasEnFirma} día{maxDiasEnFirma === 1 ? '' : 's'}). La firma es obligatoria para notificar.
+            </Alert>
+          </div>
         )}
         {loading && filas.length === 0 ? (
           <div className="p-[40px] text-center">
@@ -319,7 +316,7 @@ export const ResolucionesView: React.FC = () => {
         ) : (
           <TablaResoluciones filas={filas} onVer={(f) => setAbierto(f)} />
         )}
-      </Card>
+      </PanelTabla>
 
       {abierto && (
         <ResolucionPanel
@@ -338,14 +335,14 @@ const TablaResoluciones: React.FC<{
   onVer: (f: { expedienteId: string; numeroExpediente: string }) => void;
 }> = ({ filas, onVer }) => (
   <div className="overflow-x-auto">
-    <table className="w-full border-collapse text-[13px] text-left">
+    <table className={TABLA.tabla}>
       <thead>
-        <tr className="bg-[#f8fafc] border-b border-b-border">
-          <th className="py-[10px] px-[14px] font-bold">N° Expediente</th>
-          <th className="py-[10px] px-[14px] font-bold">Tipo</th>
-          <th className="py-[10px] px-[14px] font-bold">Etapa</th>
-          <th className="py-[10px] px-[14px] font-bold">Plazo</th>
-          <th className="py-[10px] px-[14px] font-bold text-right"></th>
+        <tr className={TABLA.encabezado}>
+          <th className={TABLA.th}>N° Expediente</th>
+          <th className={TABLA.th}>Tipo</th>
+          <th className={TABLA.th}>Etapa</th>
+          <th className={TABLA.th}>Plazo</th>
+          <th className={`${TABLA.th} text-right`}></th>
         </tr>
       </thead>
       <tbody>
@@ -355,9 +352,9 @@ const TablaResoluciones: React.FC<{
           return (
             <tr
               key={f.expedienteId}
-              className={`border-b border-b-border ${f.plazos.alertaAmpliacion ? 'bg-[#fff1f2]' : ''}`}
+              className={`${TABLA.fila} ${f.plazos.alertaAmpliacion ? 'bg-[#fff1f2]' : ''}`}
             >
-              <td className="py-[12px] px-[14px] font-bold text-midnight-900">
+              <td className={`${TABLA.td} font-bold text-midnight-900`}>
                 <div className="flex items-center gap-[8px]">
                   <GavelIcon size={16} color="var(--color-purple)" />
                   {f.numeroExpediente}
@@ -370,11 +367,11 @@ const TablaResoluciones: React.FC<{
                 {f.tienePago && (
                   <div className="mt-[4px]">
                     <PagadoBadge tienePago montoPagado={f.montoPagado} fechaPago={f.fechaPago} />
-                    {f.concluidaPorPago && <Badge variant="success">Concluido por pago</Badge>}
+                    {f.concluidaPorPago && <EstadoPunto tono="ok">Concluido por pago</EstadoPunto>}
                   </div>
                 )}
               </td>
-              <td className="py-[12px] px-[14px]">
+              <td className={TABLA.td}>
                 {tipo ? <Badge variant={tipo === 'RSGSA' ? 'danger' : 'info'}>{NOMBRE_TIPO[tipo]}</Badge> : <span className="text-text-muted">—</span>}
                 {f.archivoPorVicio && (
                   <div className="text-[11px] text-[#be123c] mt-[3px]">archivo por error de fondo</div>
@@ -386,10 +383,10 @@ const TablaResoluciones: React.FC<{
                 )}
                 {f.enParte && <div className="text-[11px] text-text-muted mt-[3px]">sancionar en parte</div>}
               </td>
-              <td className="py-[12px] px-[14px]">
-                <Badge variant={varianteEtapa(f)}>{labelEtapa(f)}</Badge>
+              <td className={TABLA.td}>
+                <EstadoPunto tono={TONO_ETAPA[varianteEtapa(f)] ?? 'neutro'}>{labelEtapa(f)}</EstadoPunto>
               </td>
-              <td className="py-[12px] px-[14px] whitespace-nowrap">
+              <td className={`${TABLA.td} whitespace-nowrap`}>
                 {caducidad ? (
                   <span className={`font-semibold ${caducidad.urgente ? 'text-[#be123c]' : 'text-text-secondary'}`}>{caducidad.texto}</span>
                 ) : (
@@ -402,25 +399,26 @@ const TablaResoluciones: React.FC<{
                   </div>
                 )}
               </td>
-              <td className="py-[12px] px-[14px] text-right">
-                {f.plazos.alertaAmpliacion && (
+              <td className={`${TABLA.td} text-right`}>
+                <div className="inline-flex items-center gap-[8px]">
+                  {f.plazos.alertaAmpliacion && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => onVer({ expedienteId: f.expedienteId, numeroExpediente: f.numeroExpediente })}
+                    >
+                      {f.ampliacionEstado ? 'Ver RSG de ampliación' : 'Emitir RSG de ampliación'}
+                    </Button>
+                  )}
                   <Button
-                    variant="danger"
+                    variant="primary"
                     size="sm"
-                    className="mr-[8px]!"
+                    icon={<EyeIcon size={14} />}
                     onClick={() => onVer({ expedienteId: f.expedienteId, numeroExpediente: f.numeroExpediente })}
                   >
-                    {f.ampliacionEstado ? 'Ver RSG de ampliación' : 'Emitir RSG de ampliación'}
+                    Ver expediente
                   </Button>
-                )}
-                <Button
-                  variant="primary"
-                  size="sm"
-                  icon={<EyeIcon size={14} />}
-                  onClick={() => onVer({ expedienteId: f.expedienteId, numeroExpediente: f.numeroExpediente })}
-                >
-                  Ver expediente
-                </Button>
+                </div>
               </td>
             </tr>
           );

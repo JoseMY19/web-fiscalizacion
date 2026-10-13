@@ -1,6 +1,7 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NotificacionesApi, NotificacionItem, AuthApi } from '../../api';
-import { Card, Button, Badge, Modal, Input, Textarea, Alert, EmptyState, Spinner } from '../../components/common/Common';
+import { Button, Modal, Input, Textarea, Alert, EmptyState, Spinner } from '../../components/common/Common';
+import { EstadoPunto, MenuAcciones, PageHeader, PanelTabla, SegmentedTabs, TABLA } from '../../components/common/PageKit';
 import { VisitasNotificacionModal } from './VisitasNotificacionModal';
 import { hoyLocal } from '../../lib/fechas';
 import { MailIcon, RefreshCwIcon, UserIcon, CheckCircleIcon } from '../../components/icons/Icons';
@@ -130,34 +131,32 @@ export const NotificacionesView: React.FC = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-[20px]">
-        <div>
-          <h2 className="text-[18px] font-extrabold text-midnight-900">
-            Diligenciamiento de Notificaciones Domiciliarias (SP3)
-          </h2>
-          <p className="text-[13px] text-text-muted mt-[2px]">
-            Asignación de cédulas de notificación de cargo (NC) no entregadas in situ para diligencia en domicilio.
-          </p>
-        </div>
-        <Button variant="secondary" icon={<RefreshCwIcon size={16} />} loading={loading} onClick={() => cargar()}>
-          Actualizar
-        </Button>
-      </div>
+      <PageHeader
+        titulo="Notificación de Cédulas"
+        descripcion="Asignación de cédulas de notificación de cargo (NC) no entregadas in situ para diligencia en domicilio."
+        acciones={
+          <Button variant="secondary" icon={<RefreshCwIcon size={14} />} loading={loading} onClick={() => cargar()}>
+            Actualizar
+          </Button>
+        }
+      />
 
       {message && <Alert type={message.type}>{message.text}</Alert>}
 
-      <div className="flex gap-[8px] mb-[16px]">
-        <Button variant={tab === 'pendientes' ? 'primary' : 'secondary'} size="sm" onClick={() => setTab('pendientes')}>
-          Pendientes de Asignación
-        </Button>
-        <Button variant={tab === 'asignadas' ? 'primary' : 'secondary'} size="sm" onClick={() => setTab('asignadas')}>
-          Asignadas — Esperando Visita/Entrega
-        </Button>
-      </div>
-
-      <Card>
+      <PanelTabla
+        barra={
+          <SegmentedTabs<Tab>
+            items={[
+              { clave: 'pendientes', etiqueta: 'Pendientes de Asignación' },
+              { clave: 'asignadas', etiqueta: 'Asignadas - Esperando Visita/Entrega' },
+            ]}
+            activa={tab}
+            onChange={setTab}
+          />
+        }
+      >
         {loading ? (
-          <div className="p-[40px] text-center">
+          <div className="py-[56px] text-center">
             <Spinner size={32} />
             <p className="text-[13px] text-text-muted mt-[12px]">
               Cargando cédulas de notificación...
@@ -175,48 +174,45 @@ export const NotificacionesView: React.FC = () => {
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-[13px] text-left">
+            <table className={TABLA.tabla}>
               <thead>
-                <tr className="bg-[#f8fafc] border-b border-b-border">
-                  <th className="py-[12px] px-[16px] font-bold text-text-secondary">ID Cédula</th>
-                  <th className="py-[12px] px-[16px] font-bold text-text-secondary">NC Asociada</th>
-                  <th className="py-[12px] px-[16px] font-bold text-text-secondary">Notificador</th>
-                  <th className="py-[12px] px-[16px] font-bold text-text-secondary">Estado</th>
-                  <th className="py-[12px] px-[16px] font-bold text-text-secondary text-right">Acciones</th>
+                <tr className={TABLA.encabezado}>
+                  <th className={TABLA.th}>ID Cédula</th>
+                  <th className={TABLA.th}>NC Asociada</th>
+                  <th className={TABLA.th}>Notificador</th>
+                  <th className={TABLA.th}>Estado</th>
+                  <th className={`${TABLA.th} text-right`}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {notificaciones.map((notif) => (
-                  <tr
-                    key={notif.id}
-                    className="border-b border-b-border"
-                  >
-                    <td className="py-[14px] px-[16px] font-mono font-semibold">
+                  <tr key={notif.id} className={TABLA.fila}>
+                    <td className={`${TABLA.td} font-mono font-semibold`}>
                       <div className="flex items-center gap-[8px]">
                         <MailIcon size={16} color="var(--color-primary-600)" />
                         {notif.id.slice(0, 8)}...
                       </div>
                     </td>
-                    <td className="py-[14px] px-[16px] text-text-secondary">
+                    <td className={`${TABLA.td} text-text-secondary`}>
                       {notif.notificacionCargoId || '---'}
                     </td>
-                    <td className="py-[14px] px-[16px] text-text-secondary">
+                    <td className={`${TABLA.td} text-text-secondary`}>
                       {notif.notificadorId ? (
                         <span className="flex items-center gap-[6px]">
                           <UserIcon size={14} />
                           {notif.notificadorNombre || notif.notificadorId}
                         </span>
                       ) : (
-                        <Badge variant="warning">Sin asignar</Badge>
+                        <EstadoPunto tono="aviso">Sin asignar</EstadoPunto>
                       )}
                     </td>
-                    <td className="py-[14px] px-[16px]">
-                      <Badge variant={notif.estado === 'PENDIENTE_ASIGNACION' ? 'warning' : 'info'}>
+                    <td className={TABLA.td}>
+                      <EstadoPunto tono={notif.estado === 'PENDIENTE_ASIGNACION' ? 'aviso' : 'info'}>
                         {notif.estado}
-                      </Badge>
+                      </EstadoPunto>
                     </td>
-                    <td className="py-[14px] px-[16px] text-right">
-                      <div className="inline-flex gap-[8px]">
+                    <td className={`${TABLA.td} text-right`}>
+                      <div className="inline-flex items-center gap-[8px]">
                         {tab === 'pendientes' ? (
                           <Button
                             variant="primary"
@@ -231,20 +227,7 @@ export const NotificacionesView: React.FC = () => {
                         ) : (
                           <>
                             <Button
-                              variant="warning"
-                              size="sm"
-                              onClick={() => {
-                                setReprogramarModal({ isOpen: true, id: notif.id });
-                                setMotivoReprogramacion('');
-                              }}
-                            >
-                              Reprogramar
-                            </Button>
-                            <Button variant="secondary" size="sm" onClick={() => setVisitasId(notif.id)}>
-                              Visitas / bajo puerta
-                            </Button>
-                            <Button
-                              variant="success"
+                              variant="primary"
                               size="sm"
                               onClick={() => {
                                 setEntregaModal({ isOpen: true, id: notif.id });
@@ -252,6 +235,18 @@ export const NotificacionesView: React.FC = () => {
                             >
                               Registrar Entrega
                             </Button>
+                            <MenuAcciones
+                              acciones={[
+                                {
+                                  etiqueta: 'Reprogramar',
+                                  onClick: () => {
+                                    setReprogramarModal({ isOpen: true, id: notif.id });
+                                    setMotivoReprogramacion('');
+                                  },
+                                },
+                                { etiqueta: 'Visitas / bajo puerta', onClick: () => setVisitasId(notif.id) },
+                              ]}
+                            />
                           </>
                         )}
                       </div>
@@ -262,7 +257,7 @@ export const NotificacionesView: React.FC = () => {
             </table>
           </div>
         )}
-      </Card>
+      </PanelTabla>
 
       {visitasId && <VisitasNotificacionModal id={visitasId} onClose={() => setVisitasId(null)} onCambio={() => cargar()} />}
 
@@ -303,7 +298,7 @@ export const NotificacionesView: React.FC = () => {
             <option value="">Selecciona un notificador…</option>
             {notificadores.map((n) => (
               <option key={n.id} value={n.id}>
-                {n.nombres} — DNI {n.dni}
+                {n.nombres} - DNI {n.dni}
               </option>
             ))}
           </select>
