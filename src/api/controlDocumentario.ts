@@ -35,6 +35,8 @@ export interface DocumentoControl {
   expedienteId: string | null;
   numeroExpediente: string | null;
   asunto: string | null;
+  /** Quién lo emitió (el fiscalizador, en las actas de campo). */
+  emitidoPor?: string | null;
   estado: string | null;
   /** Módulo de la web donde se trabaja este documento. */
   modulo: string | null;

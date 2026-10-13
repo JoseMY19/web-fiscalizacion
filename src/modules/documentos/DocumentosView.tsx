@@ -20,7 +20,7 @@ export const DocumentosView: React.FC = () => {
     <div>
       <PageHeader
         titulo="Control Documentario"
-        descripcion="Lo que entra, lo que sale y el expediente foliado, con los datos reales del sistema."
+        descripcion="Lo que entra, lo que sale (incluidas las actas de campo con su número) y el expediente foliado, con los datos reales del sistema."
       />
 
       <PanelTabla

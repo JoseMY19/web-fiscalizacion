@@ -1,11 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { ControlDocumentarioApi, DocumentoControl } from '../../api/controlDocumentario';
 import { Alert, Button, EmptyState, Input, Modal, Spinner } from '../../components/common/Common';
-import { Buscador, EstadoPunto, TABLA } from '../../components/common/PageKit';
+import { Buscador, EstadoPunto, SegmentedTabs, TABLA } from '../../components/common/PageKit';
 import { FileTextIcon } from '../../components/icons/Icons';
 import { formatearFecha, formatearFechaHora, hoyLocal } from '../../lib/fechas';
 
-/** Pestaña "Salida": documentos que emite el sistema, con el N° de SGD con el que se subieron. */
+type Filtro = 'todos' | 'campo' | 'subgerencia';
+
+/** Las actas que los fiscalizadores llevan a campo (cada una con su número preimpreso). */
+const esDeCampo = (d: DocumentoControl) => d.origen.startsWith('ACTA_') || d.origen === 'NOTIFICACION_CARGO';
+
+/** Pestaña "Salida": las actas que salen a campo y los documentos que emite la subgerencia, con su N° de SGD. */
 export const SalidasTab: React.FC = () => {
   const [busqueda, setBusqueda] = useState('');
   const [items, setItems] = useState<DocumentoControl[] | null>(null);
@@ -14,6 +19,7 @@ export const SalidasTab: React.FC = () => {
   const [mensaje, setMensaje] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   /** Documento al que se le anota el N° de SGD (null = modal cerrado). */
   const [editando, setEditando] = useState<DocumentoControl | null>(null);
+  const [filtro, setFiltro] = useState<Filtro>('todos');
   /** Sube cada vez que se guarda un SGD, para recargar la lista. */
   const [version, setVersion] = useState(0);
 
@@ -81,6 +87,9 @@ export const SalidasTab: React.FC = () => {
     }
   };
 
+  const deCampo = (items ?? []).filter(esDeCampo).length;
+  const visibles = (items ?? []).filter((d) => filtro === 'todos' || (filtro === 'campo' ? esDeCampo(d) : !esDeCampo(d)));
+
   const referencia = editando
     ? [editando.numeroExpediente && `Expediente ${editando.numeroExpediente}`, editando.numero && `N° ${editando.numero}`].filter(Boolean).join(' · ')
     : '';
@@ -89,7 +98,15 @@ export const SalidasTab: React.FC = () => {
     <>
       <div className="py-[16px] px-[24px] border-b border-border flex items-center justify-between flex-wrap gap-[14px]">
         <Buscador value={busqueda} onChange={setBusqueda} placeholder="Buscar por expediente, N° de documento o SGD" />
-        <p className="text-[12px] text-text-muted m-0">Lo que emite el sistema. Anota el N° de SGD cuando lo subas.</p>
+        <SegmentedTabs<Filtro>
+          items={[
+            { clave: 'todos', etiqueta: 'Todos', contador: items?.length },
+            { clave: 'campo', etiqueta: 'Actas de campo', contador: items ? deCampo : undefined },
+            { clave: 'subgerencia', etiqueta: 'Emitidos por la subgerencia', contador: items ? items.length - deCampo : undefined },
+          ]}
+          activa={filtro}
+          onChange={setFiltro}
+        />
       </div>
 
       {mensaje && (
@@ -114,28 +131,34 @@ export const SalidasTab: React.FC = () => {
         <EmptyState
           icon={<FileTextIcon size={40} />}
           title="Sin documentos de salida"
-          description="Aquí aparecen los documentos que emite el sistema: IFI, resoluciones, cartas y constancias."
+          description="Aquí aparecen las actas que salen a campo con su número y los documentos que emite la subgerencia: IFI, resoluciones y cartas."
         />
       )}
 
-      {items !== null && items.length > 0 && (
+      {items !== null && items.length > 0 && visibles.length === 0 && (
+        <p className="py-[40px] text-center text-[13px] text-text-muted m-0">No hay documentos de este tipo con la búsqueda actual.</p>
+      )}
+
+      {visibles.length > 0 && (
         <div className="overflow-x-auto">
           <table className={TABLA.tabla}>
             <thead>
               <tr className={TABLA.encabezado}>
                 <th className={TABLA.th}>Documento</th>
                 <th className={TABLA.th}>Expediente</th>
-                <th className={TABLA.th}>Emitido</th>
+                <th className={TABLA.th}>Fecha</th>
                 <th className={TABLA.th}>Estado</th>
                 <th className={`${TABLA.th} text-right`}>SGD</th>
               </tr>
             </thead>
             <tbody>
-              {items.map((d) => (
+              {visibles.map((d) => (
                 <tr key={d.clave} className={TABLA.fila}>
                   <td className={TABLA.td}>
                     <div className="text-[14px] font-bold text-midnight-900">{d.tipo}</div>
-                    {d.numero && <div className="text-[12px] text-text-muted mt-[3px]">{d.numero}</div>}
+                    {d.numero && <div className="text-[12px] text-text-muted mt-[3px]">{esDeCampo(d) ? `N° ${d.numero}` : d.numero}</div>}
+                    {d.asunto && <div className="text-[12px] text-text-muted mt-[2px] line-clamp-1">{d.asunto}</div>}
+                    {d.emitidoPor && <div className="text-[12px] text-text-muted mt-[2px]">Fiscalizador: {d.emitidoPor}</div>}
                   </td>
                   <td className={TABLA.td}>{d.numeroExpediente || '—'}</td>
                   <td className={TABLA.td}>
