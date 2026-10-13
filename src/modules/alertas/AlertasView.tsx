@@ -1,14 +1,15 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Alert, Badge, Button, Card, EmptyState, Spinner } from '../../components/common/Common';
-import { ArrowRightIcon, CheckCircleIcon, RefreshCwIcon, SearchIcon } from '../../components/icons/Icons';
+import { Alert, Badge, Button, EmptyState, Spinner } from '../../components/common/Common';
+import { Buscador, PageHeader, PanelTabla, SegmentedTabs, TABLA, type TonoContador } from '../../components/common/PageKit';
+import { ArrowRightIcon, CheckCircleIcon, RefreshCwIcon } from '../../components/icons/Icons';
 import { Alerta, AlertasApi, ExpedienteConAlertas, FaseExpediente, GrupoAlerta, ResultadoExpedientes } from '../../api/alertas';
 import { formatearFecha } from '../../lib/fechas';
 import { cn } from '../../lib/cn';
 import { ETIQUETA_MODULO, FASES, GRUPOS, GRUPO_META, NIVEL_META, PASOS_FASE, haceDias } from './alertasUi';
 
 const POR_PAGINA = 10;
-const CONTROL = 'h-[38px] px-[12px] text-[13px] rounded-sm border border-border bg-white text-text-main outline-none focus:border-primary-500';
+const SELECT = 'h-[38px] px-[12px] text-[13px] rounded-sm border border-border bg-white text-text-main outline-none focus:border-primary-500';
 
 type Vista = GrupoAlerta | 'ATENCION';
 
@@ -19,8 +20,15 @@ const VARIANTE_GRUPO: Record<GrupoAlerta, 'danger' | 'warning' | 'info' | 'neutr
   SEGUIMIENTO: 'neutral',
 };
 
+const TONO_GRUPO: Record<GrupoAlerta, TonoContador> = {
+  URGENTE: 'danger',
+  POR_VENCER: 'warning',
+  ACTUAR: 'info',
+  SEGUIMIENTO: 'neutral',
+};
+
 /**
- * Alertas y plazos, con la misma estructura que los demás módulos: título,
+ * Alertas y plazos, con la misma estructura que los demás módulos: cabecera,
  * pestañas con contadores y una tabla con una fila por expediente (en qué fase
  * está, qué toca hacer, desde cuándo espera y qué plazos corren). Por defecto
  * muestra lo que pide atención; "En seguimiento" guarda los plazos largos sin
@@ -68,75 +76,59 @@ export const AlertasView: React.FC = () => {
   const totalPaginas = datos ? Math.max(1, Math.ceil(datos.total / datos.porPagina)) : 1;
   const ayuda = vista === 'ATENCION' ? 'Expedientes con un plazo en riesgo o listos para dar el siguiente paso.' : `${GRUPO_META[vista].descripcion}.`;
 
-  const pestanas: { clave: Vista; titulo: string; cantidad: number | undefined }[] = [
-    { clave: 'ATENCION', titulo: 'Requieren atención', cantidad: atencion },
-    ...GRUPOS.map((g) => ({ clave: g as Vista, titulo: GRUPO_META[g].etiqueta, cantidad: grupos?.[g] })),
+  const pestanas = [
+    { clave: 'ATENCION' as Vista, etiqueta: 'Requieren atención', contador: atencion },
+    ...GRUPOS.map((g) => ({
+      clave: g as Vista,
+      etiqueta: GRUPO_META[g].etiqueta,
+      contador: grupos?.[g],
+      tono: grupos && grupos[g] > 0 ? TONO_GRUPO[g] : undefined,
+    })),
   ];
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-[20px] gap-[12px] flex-wrap">
-        <div>
-          <h2 className="text-[18px] font-extrabold text-midnight-900">Alertas y Plazos</h2>
-          <p className="text-[13px] text-text-muted mt-[2px] max-w-[760px]">
-            En qué fase está cada expediente, qué toca hacer y qué plazos corren. Solo ves lo de los módulos a los que tienes acceso.
-          </p>
-        </div>
-        <Button variant="secondary" icon={<RefreshCwIcon size={16} />} loading={cargando} onClick={cargar}>
-          Actualizar
-        </Button>
-      </div>
+      <PageHeader
+        titulo="Alertas y Plazos"
+        descripcion="En qué fase está cada expediente, qué toca hacer y qué plazos corren. Solo ves lo de los módulos a los que tienes acceso."
+        acciones={
+          <Button variant="secondary" icon={<RefreshCwIcon size={14} />} loading={cargando} onClick={cargar}>
+            Actualizar
+          </Button>
+        }
+      />
 
       {error && <Alert type="error">{error}</Alert>}
 
-      <div className="flex gap-[4px] border-b border-b-border mb-0 overflow-x-auto">
-        {pestanas.map((p) => {
-          const activa = p.clave === vista;
-          const cantidad = p.cantidad ?? 0;
-          return (
-            <button
-              key={p.clave}
-              onClick={() => elegirVista(p.clave)}
-              className={cn(
-                'py-[10px] px-[16px] text-[13px] font-bold border-0 bg-transparent cursor-pointer flex items-center gap-[8px] border-b-2 whitespace-nowrap',
-                activa ? 'border-b-primary-600 text-primary-600' : 'border-b-transparent text-text-muted',
-              )}
-            >
-              {p.titulo}
-              <Badge variant={p.clave !== 'ATENCION' && cantidad > 0 ? VARIANTE_GRUPO[p.clave] : activa ? 'info' : 'neutral'}>{p.cantidad ?? '–'}</Badge>
-            </button>
-          );
-        })}
-      </div>
-
-      <Card className="rounded-tl-none! rounded-tr-none! border-t-0!">
-        <div className="flex items-center gap-[10px] flex-wrap mb-[12px]">
-          <p className="text-[12px] text-text-muted m-0 flex-1 min-w-[240px]">{ayuda}</p>
-          <div className="relative min-w-[200px] max-w-[260px] flex-1">
-            <span className="absolute left-[10px] top-1/2 -translate-y-1/2 text-text-light flex">
-              <SearchIcon size={15} />
-            </span>
-            <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar N° de expediente" className={cn(CONTROL, 'w-full pl-[32px]')} />
-          </div>
-          <select
-            value={fase}
-            onChange={(e) => {
-              setFase(e.target.value as FaseExpediente | '');
-              setPagina(1);
-            }}
-            className={CONTROL}
-          >
-            <option value="">Todas las fases</option>
-            {FASES.map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.etiqueta}
-              </option>
-            ))}
-          </select>
-        </div>
+      <PanelTabla
+        barra={
+          <>
+            <SegmentedTabs<Vista> items={pestanas} activa={vista} onChange={elegirVista} />
+            <div className="flex items-center gap-[10px] flex-wrap">
+              <Buscador value={busqueda} onChange={setBusqueda} placeholder="Buscar N° de expediente" />
+              <select
+                value={fase}
+                onChange={(e) => {
+                  setFase(e.target.value as FaseExpediente | '');
+                  setPagina(1);
+                }}
+                className={SELECT}
+              >
+                <option value="">Todas las fases</option>
+                {FASES.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.etiqueta}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </>
+        }
+      >
+        <p className="text-[13px] text-text-muted py-[14px] px-[24px] m-0 border-b border-border">{ayuda}</p>
 
         {cargando && !datos ? (
-          <div className="p-[40px] text-center">
+          <div className="py-[56px] text-center">
             <Spinner size={32} />
           </div>
         ) : datos && datos.items.length === 0 ? (
@@ -154,7 +146,7 @@ export const AlertasView: React.FC = () => {
         )}
 
         {datos && datos.total > POR_PAGINA && (
-          <div className="mt-[14px] flex items-center justify-between text-[12px] text-text-muted">
+          <div className="py-[14px] px-[24px] border-t border-border flex items-center justify-between text-[12px] text-text-muted">
             <span>
               Página {pagina} de {totalPaginas} · {datos.total} expedientes
             </span>
@@ -168,7 +160,7 @@ export const AlertasView: React.FC = () => {
             </span>
           </div>
         )}
-      </Card>
+      </PanelTabla>
     </div>
   );
 };
@@ -178,7 +170,7 @@ const BarraFases: React.FC<{ fase: FaseExpediente }> = ({ fase }) => {
   const concluido = fase === 'CONCLUIDO';
   const actual = PASOS_FASE.findIndex((p) => p.id === fase);
   return (
-    <div className="flex items-center gap-[3px] mt-[5px]" aria-hidden="true">
+    <div className="flex items-center gap-[3px] mt-[6px]" aria-hidden="true">
       {PASOS_FASE.map((p, i) => {
         const estado = concluido || i < actual ? 'hecho' : i === actual ? 'actual' : 'pendiente';
         return (
@@ -212,15 +204,14 @@ const TablaExpedientes: React.FC<{ items: ExpedienteConAlertas[] }> = ({ items }
   const navigate = useNavigate();
   return (
     <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-[13px] text-left">
+      <table className={TABLA.tabla}>
         <thead>
-          <tr className="bg-[#f8fafc] border-b border-b-border">
-            <th className="py-[10px] px-[14px] font-bold">Expediente</th>
-            <th className="py-[10px] px-[14px] font-bold">Fase</th>
-            <th className="py-[10px] px-[14px] font-bold">Qué toca</th>
-            <th className="py-[10px] px-[14px] font-bold">Plazos</th>
-            <th className="py-[10px] px-[14px] font-bold">Estado</th>
-            <th className="py-[10px] px-[14px]"></th>
+          <tr className={TABLA.encabezado}>
+            <th className={TABLA.th}>Expediente</th>
+            <th className={TABLA.th}>Fase</th>
+            <th className={TABLA.th}>Qué toca</th>
+            <th className={TABLA.th}>Plazos</th>
+            <th className={`${TABLA.th} text-right`}>Acción</th>
           </tr>
         </thead>
         <tbody>
@@ -229,32 +220,31 @@ const TablaExpedientes: React.FC<{ items: ExpedienteConAlertas[] }> = ({ items }
             const p = e.principal;
             const conPlazo = e.alertas.filter((a) => a.plazoLimite || a.restanteTexto);
             return (
-              <tr key={e.clave} className="border-b border-b-border align-top hover:bg-bg-subtle">
-                <td className="py-[12px] px-[14px] whitespace-nowrap">
-                  <div className="font-bold text-midnight-900 tabular-nums">{e.numeroExpediente}</div>
-                  {e.pagado && (
-                    <div className="mt-[4px]">
-                      <Badge variant="success">Pagado</Badge>
-                    </div>
-                  )}
+              <tr key={e.clave} className={TABLA.fila}>
+                <td className={cn(TABLA.td, 'whitespace-nowrap align-top!')}>
+                  <div className="text-[14px] font-bold text-midnight-900 tabular-nums">{e.numeroExpediente}</div>
+                  <div className="mt-[6px] flex items-center gap-[6px]">
+                    <Badge variant={VARIANTE_GRUPO[e.grupo]}>{meta.etiqueta}</Badge>
+                    {e.pagado && <Badge variant="success">Pagado</Badge>}
+                  </div>
                 </td>
-                <td className="py-[12px] px-[14px] min-w-[170px]">
+                <td className={cn(TABLA.td, 'min-w-[180px] align-top!')}>
                   <div className="font-semibold text-text-secondary">{FASES.find((f) => f.id === e.fase)?.etiqueta ?? e.fase}</div>
                   <BarraFases fase={e.fase} />
-                  <div className="text-[11px] text-text-muted mt-[4px]">{e.faseDetalle}</div>
+                  <div className="text-[12px] text-text-muted mt-[6px]">{e.faseDetalle}</div>
                 </td>
-                <td className="py-[12px] px-[14px] min-w-[200px]">
+                <td className={cn(TABLA.td, 'min-w-[220px] align-top!')}>
                   {p.categoria === 'ESPERA' && <div className="text-[10.5px] font-bold uppercase tracking-[0.6px] text-text-light">En espera</div>}
                   <div className="font-bold text-midnight-900">{p.accion}</div>
                   {p.desdeDias !== null ? (
-                    <div className={cn('text-[11.5px] font-medium mt-[2px]', meta.texto)}>Esperando acción desde {haceDias(p.desdeDias)}</div>
+                    <div className={cn('text-[12px] font-medium mt-[3px]', meta.texto)}>Esperando acción desde {haceDias(p.desdeDias)}</div>
                   ) : (
-                    <div className="text-[11.5px] text-text-muted mt-[2px] leading-[1.35]">{p.detalle}</div>
+                    <div className="text-[12px] text-text-muted mt-[3px] leading-[1.4]">{p.detalle}</div>
                   )}
                 </td>
-                <td className="py-[12px] px-[14px] min-w-[240px]">
+                <td className={cn(TABLA.td, 'min-w-[240px] align-top!')}>
                   {conPlazo.length > 0 ? (
-                    <ul className="list-none m-0 p-0 flex flex-col gap-[6px]">
+                    <ul className="list-none m-0 p-0 flex flex-col gap-[8px]">
                       {conPlazo.map((a) => (
                         <LineaPlazo key={a.clave} a={a} />
                       ))}
@@ -263,11 +253,8 @@ const TablaExpedientes: React.FC<{ items: ExpedienteConAlertas[] }> = ({ items }
                     <span className="text-[12px] text-text-muted">Sin plazo corriendo</span>
                   )}
                 </td>
-                <td className="py-[12px] px-[14px] whitespace-nowrap">
-                  <Badge variant={VARIANTE_GRUPO[e.grupo]}>{meta.etiqueta}</Badge>
-                </td>
-                <td className="py-[12px] px-[14px] text-right whitespace-nowrap">
-                  <Button size="sm" onClick={() => navigate(`/${p.modulo}`)}>
+                <td className={cn(TABLA.td, 'text-right whitespace-nowrap align-top!')}>
+                  <Button variant="secondary" size="sm" onClick={() => navigate(`/${p.modulo}`)}>
                     Ir a {ETIQUETA_MODULO[p.modulo] ?? 'el módulo'} <ArrowRightIcon size={14} />
                   </Button>
                 </td>

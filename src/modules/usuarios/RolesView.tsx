@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
 import { Alert, Badge, Button, EmptyState, Input, Modal } from '../../components/common/Common';
-import { PlusIcon, SearchIcon, ShieldAlertIcon, UsersIcon } from '../../components/icons/Icons';
+import { AccionMenu, Buscador, MenuAcciones } from '../../components/common/PageKit';
+import { PlusIcon, ShieldAlertIcon, UsersIcon } from '../../components/icons/Icons';
 import { useConfirm } from '../../context/ConfirmContext';
 import { cn } from '../../lib/cn';
 import { RolesApi, RolResumen } from '../../api/roles';
 import { RolFormModal } from './RolFormModal';
-import { MenuAcciones, OpcionMenu } from './MenuAcciones';
+import { OpcionMenu } from './MenuAcciones';
 
 const CODIGO_VALIDO = /^[A-Z][A-Z0-9_]{2,39}$/;
 type Filtro = 'activos' | 'inactivos' | 'todos';
+
+const comoAcciones = (ops: OpcionMenu[]): AccionMenu[] =>
+  ops.map((o): AccionMenu => ({ etiqueta: o.etiqueta, onClick: o.onClick, tono: o.peligro ? 'peligro' : 'normal' }));
 
 interface Props {
   roles: RolResumen[];
@@ -85,18 +89,8 @@ export const RolesView: React.FC<Props> = ({ roles, onCambio }) => {
 
   return (
     <>
-      <div className="py-[14px] px-[20px] border-b border-border flex items-center gap-[10px] flex-wrap">
-        <div className="relative flex-1 min-w-[220px] max-w-[320px]">
-          <span className="absolute left-[11px] top-1/2 -translate-y-1/2 text-text-light flex">
-            <SearchIcon size={15} />
-          </span>
-          <input
-            className="w-full h-[38px] pl-[34px] pr-[12px] text-[13px] rounded-sm border border-border bg-white text-text-main outline-none focus:border-primary-500"
-            placeholder="Buscar rol"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-          />
-        </div>
+      <div className="py-[16px] px-[24px] border-b border-border flex items-center gap-[10px] flex-wrap">
+        <Buscador value={busqueda} onChange={setBusqueda} placeholder="Buscar rol" />
         <div className="inline-flex border border-border rounded-sm overflow-hidden h-[38px]">
           {(['activos', 'inactivos', 'todos'] as Filtro[]).map((f) => (
             <button
@@ -119,7 +113,7 @@ export const RolesView: React.FC<Props> = ({ roles, onCambio }) => {
         </div>
       </div>
 
-      <div className="p-[20px]">
+      <div className="p-[24px]">
         {mensaje && <Alert type={mensaje.tipo}>{mensaje.texto}</Alert>}
 
         {visibles.length === 0 ? (
@@ -160,10 +154,10 @@ export const RolesView: React.FC<Props> = ({ roles, onCambio }) => {
                     )}
                   </span>
                   <div className="flex items-center gap-[2px]">
-                    <Button size="sm" variant="ghost" onClick={() => setFormulario({ abierto: true, rolId: r.id })}>
+                    <Button size="sm" variant="primary" onClick={() => setFormulario({ abierto: true, rolId: r.id })}>
                       {r.esSistema ? 'Ver permisos' : 'Editar'}
                     </Button>
-                    <MenuAcciones opciones={opcionesDe(r)} />
+                    <MenuAcciones acciones={comoAcciones(opcionesDe(r))} />
                   </div>
                 </div>
               </article>

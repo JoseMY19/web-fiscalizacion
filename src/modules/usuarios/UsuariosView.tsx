@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Badge, Button, EmptyState, Spinner } from '../../components/common/Common';
-import { PlusIcon, SearchIcon, UsersIcon } from '../../components/icons/Icons';
+import { AccionMenu, Buscador, EstadoPunto, MenuAcciones, TABLA } from '../../components/common/PageKit';
+import { PlusIcon, UsersIcon } from '../../components/icons/Icons';
 import { useConfirm } from '../../context/ConfirmContext';
 import { useAuth } from '../../context/AuthContext';
 import { tieneAccion } from '../../lib/permisos';
@@ -10,13 +11,16 @@ import { RolResumen } from '../../api/roles';
 import { UsuarioFormModal } from './UsuarioFormModal';
 import { ContrasenaTemporalModal } from './ContrasenaTemporalModal';
 import { AuditoriaUsuarioPanel } from './AuditoriaUsuarioPanel';
-import { MenuAcciones, OpcionMenu } from './MenuAcciones';
+import { OpcionMenu } from './MenuAcciones';
 import { haceCuanto, fechaHora, iniciales } from './usuariosUi';
 
 const POR_PAGINA = 10;
 type Estado = 'todos' | 'activos' | 'inactivos';
 
 const CONTROL = 'h-[38px] px-[12px] text-[13px] rounded-sm border border-border bg-white text-text-main outline-none focus:border-primary-500';
+
+const comoAcciones = (ops: OpcionMenu[]): AccionMenu[] =>
+  ops.map((o): AccionMenu => ({ etiqueta: o.etiqueta, onClick: o.onClick, tono: o.peligro ? 'peligro' : 'normal' }));
 
 interface Props {
   roles: RolResumen[];
@@ -162,18 +166,8 @@ export const UsuariosView: React.FC<Props> = ({ roles, onCambio }) => {
 
   return (
     <>
-      <div className="py-[14px] px-[20px] border-b border-border flex items-center gap-[10px] flex-wrap">
-        <div className="relative flex-1 min-w-[220px] max-w-[360px]">
-          <span className="absolute left-[11px] top-1/2 -translate-y-1/2 text-text-light flex">
-            <SearchIcon size={15} />
-          </span>
-          <input
-            className={cn(CONTROL, 'w-full pl-[34px]')}
-            placeholder="Buscar por nombre o DNI"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-          />
-        </div>
+      <div className="py-[16px] px-[24px] border-b border-border flex items-center gap-[10px] flex-wrap">
+        <Buscador value={busqueda} onChange={setBusqueda} placeholder="Buscar por nombre o DNI" />
         <select
           className={cn(CONTROL, 'min-w-[190px]')}
           value={rolId}
@@ -215,7 +209,7 @@ export const UsuariosView: React.FC<Props> = ({ roles, onCambio }) => {
       </div>
 
       {mensaje && (
-        <div className="px-[20px] pt-[16px]">
+        <div className="px-[24px] pt-[16px]">
           <Alert type={mensaje.tipo} className="mb-0!">
             {mensaje.texto}
           </Alert>
@@ -227,7 +221,7 @@ export const UsuariosView: React.FC<Props> = ({ roles, onCambio }) => {
           <Spinner size={28} />
         </div>
       ) : usuarios.length === 0 ? (
-        <div className="px-[20px] pb-[8px]">
+        <div className="px-[24px] pb-[8px]">
           <EmptyState
             icon={<UsersIcon size={36} />}
             title={hayFiltros ? 'No hay usuarios con esos filtros' : 'Todavía no hay usuarios'}
@@ -236,20 +230,20 @@ export const UsuariosView: React.FC<Props> = ({ roles, onCambio }) => {
         </div>
       ) : (
         <div className={cn('overflow-x-auto', cargando && 'opacity-60')}>
-          <table className="w-full text-[13px] border-collapse">
+          <table className={TABLA.tabla}>
             <thead>
-              <tr className="text-left text-[11px] uppercase tracking-[0.5px] text-text-muted bg-bg-subtle border-b border-border">
-                <th className="py-[10px] pl-[20px] pr-[12px] font-bold">Usuario</th>
-                <th className="py-[10px] pr-[12px] font-bold">Rol</th>
-                <th className="py-[10px] pr-[12px] font-bold">Estado</th>
-                <th className="py-[10px] pr-[12px] font-bold">Último acceso</th>
-                <th className="py-[10px] pr-[20px] font-bold text-right">Acciones</th>
+              <tr className={TABLA.encabezado}>
+                <th className={TABLA.th}>Usuario</th>
+                <th className={TABLA.th}>Rol</th>
+                <th className={TABLA.th}>Estado</th>
+                <th className={TABLA.th}>Último acceso</th>
+                <th className={`${TABLA.th} text-right`}>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {usuarios.map((u) => (
-                <tr key={u.id} className={cn('border-b border-border-subtle hover:bg-bg-subtle', !u.activo && 'text-text-muted')}>
-                  <td className="py-[12px] pl-[20px] pr-[12px]">
+                <tr key={u.id} className={cn(TABLA.fila, !u.activo && 'text-text-muted')}>
+                  <td className={TABLA.td}>
                     <div className="flex items-center gap-[12px]">
                       <div
                         className={cn(
@@ -271,25 +265,25 @@ export const UsuariosView: React.FC<Props> = ({ roles, onCambio }) => {
                       </div>
                     </div>
                   </td>
-                  <td className="py-[12px] pr-[12px]">
+                  <td className={TABLA.td}>
                     <Badge variant={u.activo ? 'info' : 'neutral'}>{u.rol.nombre}</Badge>
                   </td>
-                  <td className="py-[12px] pr-[12px]">
+                  <td className={TABLA.td}>
                     <div className="flex flex-col items-start gap-[4px]">
-                      <Badge variant={u.activo ? 'success' : 'neutral'}>{u.activo ? 'Activo' : 'Inactivo'}</Badge>
+                      <EstadoPunto tono={u.activo ? 'ok' : 'neutro'}>{u.activo ? 'Activo' : 'Inactivo'}</EstadoPunto>
                       {u.activo && u.debeCambiarContrasena && <span className="text-[11px] font-semibold text-warning">Contraseña temporal</span>}
                     </div>
                   </td>
-                  <td className="py-[12px] pr-[12px] whitespace-nowrap">
+                  <td className={`${TABLA.td} whitespace-nowrap`}>
                     <span title={u.ultimoAcceso ? fechaHora(u.ultimoAcceso) : undefined}>{haceCuanto(u.ultimoAcceso)}</span>
                     {u.tieneDispositivo && <div className="text-[11px] text-text-muted">Celular vinculado</div>}
                   </td>
-                  <td className="py-[12px] pr-[20px]">
-                    <div className="flex items-center justify-end gap-[4px]">
-                      <Button size="sm" variant="ghost" onClick={() => setFormulario({ abierto: true, usuario: u })}>
+                  <td className={TABLA.td}>
+                    <div className="flex items-center justify-end gap-[8px]">
+                      <Button size="sm" variant="primary" onClick={() => setFormulario({ abierto: true, usuario: u })}>
                         Editar
                       </Button>
-                      <MenuAcciones opciones={opcionesDe(u)} />
+                      <MenuAcciones acciones={comoAcciones(opcionesDe(u))} />
                     </div>
                   </td>
                 </tr>
@@ -300,7 +294,7 @@ export const UsuariosView: React.FC<Props> = ({ roles, onCambio }) => {
       )}
 
       {total > 0 && (
-        <div className="py-[12px] px-[20px] flex items-center justify-between text-[12px] text-text-muted bg-bg-subtle border-t border-border">
+        <div className="py-[12px] px-[24px] flex items-center justify-between text-[12px] text-text-muted bg-bg-subtle border-t border-border">
           <span>
             Mostrando <strong className="text-text-main">{desde}–{hasta}</strong> de <strong className="text-text-main">{total}</strong>
           </span>

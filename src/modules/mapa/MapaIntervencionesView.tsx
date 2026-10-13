@@ -3,6 +3,7 @@ import { MapContainer, Marker, Polygon, Popup, TileLayer, Tooltip, useMap } from
 import 'leaflet/dist/leaflet.css';
 import { ConsultasApi, IntervencionMapaItem } from '../../api';
 import { Alert, Button, Spinner } from '../../components/common/Common';
+import { PageHeader } from '../../components/common/PageKit';
 import { formatearFechaHora } from '../../lib/fechas';
 import { cn } from '../../lib/cn';
 import { RefreshCwIcon, MapPinIcon } from '../../components/icons/Icons';
@@ -89,17 +90,15 @@ export const MapaIntervencionesView: React.FC = () => {
 
   return (
     <div>
-      <div className="flex items-start justify-between gap-[16px] flex-wrap mb-[18px]">
-        <div>
-          <h2 className="text-[22px] font-extrabold text-text-main tracking-[-0.3px] m-0">Mapa de Cobertura</h2>
-          <p className="text-[13px] text-text-muted mt-[4px] m-0">
-            Dónde estuvieron los fiscalizadores en San Juan de Lurigancho, con el GPS real de cada intervención sincronizada.
-          </p>
-        </div>
-        <Button variant="secondary" icon={<RefreshCwIcon size={14} />} loading={loading} onClick={cargar}>
-          Actualizar
-        </Button>
-      </div>
+      <PageHeader
+        titulo="Mapa de Cobertura"
+        descripcion="Dónde estuvieron los fiscalizadores en San Juan de Lurigancho, con el GPS real de cada intervención sincronizada."
+        acciones={
+          <Button variant="secondary" icon={<RefreshCwIcon size={14} />} loading={loading} onClick={cargar}>
+            Actualizar
+          </Button>
+        }
+      />
 
       {error && <Alert type="error">{error}</Alert>}
 

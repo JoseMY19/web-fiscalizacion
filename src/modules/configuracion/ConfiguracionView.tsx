@@ -5,14 +5,10 @@ import {
   ParametroUitItem,
 } from '../../api';
 import { Card, Button, Badge, Input, Alert, EmptyState } from '../../components/common/Common';
+import { EstadoPunto, PageHeader, PanelTabla, SegmentedTabs, TABLA } from '../../components/common/PageKit';
 import { formatearFecha } from '../../lib/fechas';
 import { useConfirm } from '../../context/ConfirmContext';
-import {
-  CalendarIcon,
-  SearchIcon,
-  RefreshCwIcon,
-  ShieldAlertIcon,
-} from '../../components/icons/Icons';
+import { CalendarIcon, RefreshCwIcon } from '../../components/icons/Icons';
 import { BasesMunicipalesConfig } from '../bases-municipales/BasesMunicipalesConfig';
 import { CatalogoCuisCrud } from '../catalogo-cuis/CatalogoCuisCrud';
 
@@ -76,68 +72,38 @@ export const ConfiguracionView: React.FC = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-[20px]">
-        <div>
-          <h2 className="text-[18px] font-extrabold text-midnight-900">
-            Motor de Plazos, Calendario, Catálogo CUIS, UIT & Seguridad
-          </h2>
-          <p className="text-[13px] text-text-muted mt-[2px]">
-            Parámetros transversales para el cómputo de plazos hábiles, tipificación de infracciones y control de sesiones.
-          </p>
-        </div>
-        <Button variant="secondary" icon={<RefreshCwIcon size={16} />} loading={loading} onClick={cargarDatos}>
-          Actualizar
-        </Button>
-      </div>
+      <PageHeader
+        titulo="Configuración y Parámetros"
+        descripcion="Parámetros transversales para el cómputo de plazos hábiles, tipificación de infracciones y control de sesiones."
+        acciones={
+          <Button variant="secondary" icon={<RefreshCwIcon size={16} />} loading={loading} onClick={cargarDatos}>
+            Actualizar
+          </Button>
+        }
+      />
 
       {message && <Alert type={message.type}>{message.text}</Alert>}
 
-      {/* Tabs */}
-      <div className="flex gap-[8px] mb-[16px] flex-wrap">
-        <button
-          onClick={() => setActiveTab('feriados')}
-          className={`py-[10px] px-[18px] text-[13px] font-bold rounded-sm cursor-pointer flex items-center gap-[8px] ${activeTab === 'feriados' ? 'border border-primary-600' : 'border border-border'} ${activeTab === 'feriados' ? 'bg-primary-50' : 'bg-[#ffffff]'} ${activeTab === 'feriados' ? 'text-primary-600' : 'text-text-secondary'}`}
-        >
-          <CalendarIcon size={16} />
-          Calendario de Feriados ({feriados.length})
-        </button>
+      <PanelTabla
+        barra={
+          <SegmentedTabs<'feriados' | 'cuis' | 'bases' | 'uit' | 'seguridad'>
+            items={[
+              { clave: 'feriados', etiqueta: 'Calendario de Feriados', contador: feriados.length },
+              { clave: 'cuis', etiqueta: 'Catálogo CUIS (Ordenanza 464)' },
+              { clave: 'bases', etiqueta: 'Licencias e ITSE' },
+              { clave: 'uit', etiqueta: 'Valores Oficiales UIT', contador: parametrosUit.length },
+              { clave: 'seguridad', etiqueta: 'Seguridad & Sesiones (Admin)' },
+            ]}
+            activa={activeTab}
+            onChange={setActiveTab}
+          />
+        }
+      >
+        <div className="p-[24px]">
+          {activeTab === 'bases' && <BasesMunicipalesConfig />}
 
-        <button
-          onClick={() => setActiveTab('cuis')}
-          className={`py-[10px] px-[18px] text-[13px] font-bold rounded-sm cursor-pointer flex items-center gap-[8px] ${activeTab === 'cuis' ? 'border border-primary-600' : 'border border-border'} ${activeTab === 'cuis' ? 'bg-primary-50' : 'bg-[#ffffff]'} ${activeTab === 'cuis' ? 'text-primary-600' : 'text-text-secondary'}`}
-        >
-          <SearchIcon size={16} />
-          Catálogo CUIS (Ordenanza 464)
-        </button>
-
-        <button
-          onClick={() => setActiveTab('bases')}
-          className={`py-[10px] px-[18px] text-[13px] font-bold rounded-sm cursor-pointer flex items-center gap-[8px] ${activeTab === 'bases' ? 'border border-primary-600 bg-primary-50 text-primary-600' : 'border border-border bg-[#ffffff] text-text-secondary'}`}
-        >
-          <SearchIcon size={16} />
-          Licencias e ITSE
-        </button>
-
-        <button
-          onClick={() => setActiveTab('uit')}
-          className={`py-[10px] px-[18px] text-[13px] font-bold rounded-sm cursor-pointer flex items-center gap-[8px] ${activeTab === 'uit' ? 'border border-primary-600' : 'border border-border'} ${activeTab === 'uit' ? 'bg-primary-50' : 'bg-[#ffffff]'} ${activeTab === 'uit' ? 'text-primary-600' : 'text-text-secondary'}`}
-        >
-          Valores Oficiales UIT ({parametrosUit.length})
-        </button>
-
-        <button
-          onClick={() => setActiveTab('seguridad')}
-          className={`py-[10px] px-[18px] text-[13px] font-bold rounded-sm cursor-pointer flex items-center gap-[8px] ${activeTab === 'seguridad' ? 'border border-primary-600' : 'border border-border'} ${activeTab === 'seguridad' ? 'bg-primary-50' : 'bg-[#ffffff]'} ${activeTab === 'seguridad' ? 'text-primary-600' : 'text-text-secondary'}`}
-        >
-          <ShieldAlertIcon size={16} />
-          Seguridad & Sesiones (Admin)
-        </button>
-      </div>
-
-      {activeTab === 'bases' && <BasesMunicipalesConfig />}
-
-      {/* Tab 2: Feriados */}
-      {activeTab === 'feriados' && (
+          {/* Tab 2: Feriados */}
+          {activeTab === 'feriados' && (
         <div className="grid grid-cols-[1fr_1fr] gap-[20px]">
           <Card title="Registrar Nuevo Día No Hábil / Feriado Municipal">
             <p className="text-[12px] text-text-muted mb-[14px]">
@@ -175,7 +141,7 @@ export const ConfiguracionView: React.FC = () => {
                     className="flex items-center justify-between py-[10px] px-[14px] bg-bg-subtle rounded-sm border border-border text-[13px]"
                   >
                     <div>
-                      <strong>{formatearFecha(f.fecha)}</strong> — {f.descripcion}
+                      <strong>{formatearFecha(f.fecha)}</strong> - {f.descripcion}
                     </div>
                     <Badge variant="neutral">No Hábil</Badge>
                   </div>
@@ -197,27 +163,27 @@ export const ConfiguracionView: React.FC = () => {
       {activeTab === 'uit' && (
         <Card title="Unidad Impositiva Tributaria (UIT) por Ejercicio Fiscal">
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-[13px] text-left">
+            <table className={TABLA.tabla}>
               <thead>
-                <tr className="bg-[#f8fafc] border-b border-b-border">
-                  <th className="py-[12px] px-[16px]">Año Fiscal</th>
-                  <th className="py-[12px] px-[16px]">Valor en Soles (S/)</th>
-                  <th className="py-[12px] px-[16px]">Vigente Desde</th>
-                  <th className="py-[12px] px-[16px]">Estado</th>
+                <tr className={TABLA.encabezado}>
+                  <th className={TABLA.th}>Año Fiscal</th>
+                  <th className={TABLA.th}>Valor en Soles (S/)</th>
+                  <th className={TABLA.th}>Vigente Desde</th>
+                  <th className={TABLA.th}>Estado</th>
                 </tr>
               </thead>
               <tbody>
                 {parametrosUit.map((p) => (
-                  <tr key={p.id || p.anio} className="border-b border-b-border">
-                    <td className="py-[14px] px-[16px] font-bold">{p.anio}</td>
-                    <td className="py-[14px] px-[16px] font-bold text-primary-600">
+                  <tr key={p.id || p.anio} className={TABLA.fila}>
+                    <td className={`${TABLA.td} font-bold`}>{p.anio}</td>
+                    <td className={`${TABLA.td} font-bold text-primary-600`}>
                       S/ {Number(p.valorSoles).toLocaleString('es-PE', { minimumFractionDigits: 2 })}
                     </td>
-                    <td className="py-[14px] px-[16px] text-text-secondary">
+                    <td className={`${TABLA.td} text-text-secondary`}>
                       {p.vigenteDesde ? p.vigenteDesde.slice(0, 10) : '---'}
                     </td>
-                    <td className="py-[14px] px-[16px]">
-                      {!p.vigenteHasta ? <Badge variant="success">Vigente</Badge> : <Badge variant="neutral">Cerrado</Badge>}
+                    <td className={TABLA.td}>
+                      {!p.vigenteHasta ? <EstadoPunto tono="ok">Vigente</EstadoPunto> : <EstadoPunto tono="neutro">Cerrado</EstadoPunto>}
                     </td>
                   </tr>
                 ))}
@@ -237,6 +203,8 @@ export const ConfiguracionView: React.FC = () => {
           </div>
         </Card>
       )}
+        </div>
+      </PanelTabla>
     </div>
   );
 };

@@ -46,7 +46,6 @@ export const AtencionRequerida: React.FC<{ onNavigate: (m: NavModule) => void }>
           Ver alertas y plazos <ArrowRightIcon size={14} />
         </button>
       }
-      className="mb-[24px]"
     >
       {!resumen && cargando ? (
         <div className="py-[24px] flex justify-center">
