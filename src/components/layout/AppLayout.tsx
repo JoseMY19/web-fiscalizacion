@@ -16,7 +16,6 @@ import {
   EyeIcon,
   BellIcon,
   MapPinIcon,
-  PenToolIcon,
   UnlockIcon,
   ClockIcon,
   XCircleIcon,
@@ -222,20 +221,19 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                               <span className={`flex items-center ${active ? 'text-[#38bdf8]' : 'text-[#94a3b8]'}`}>{item.icon}</span>
                               <span>{item.label}</span>
                             </div>
-                            <span className="inline-flex items-center gap-[4px]">
+                            {/* Cola de trabajo: número discreto, sin burbuja (con muchos expedientes no debe gritar).
+                                Urgencia: solo un punto de color; el detalle de qué vence está en Alertas y Plazos. */}
+                            <span className="inline-flex items-center gap-[8px]">
+                              {typeof count === 'number' && count > 0 && (
+                                <span className="text-[11.5px] font-semibold tabular-nums text-[#93c5fd]" title={`${count} pendiente${count === 1 ? '' : 's'}`}>
+                                  {count > 99 ? '99+' : count}
+                                </span>
+                              )}
                               {alerta && alerta.count > 0 && (
                                 <span
                                   title={alerta.title}
-                                  className="text-[11px] font-bold h-[19px] py-0 px-[6px] rounded-[10px] bg-[#f59e0b] text-[#ffffff] inline-flex items-center justify-center gap-[3px]"
-                                >
-                                  {alerta.icon ?? <PenToolIcon size={10} />}
-                                  {alerta.count}
-                                </span>
-                              )}
-                              {typeof count === 'number' && count > 0 && (
-                                <span className="text-[11px] font-bold min-w-[19px] h-[19px] py-0 px-[6px] rounded-[10px] bg-[#ef4444] text-[#ffffff] inline-flex items-center justify-center">
-                                  {count}
-                                </span>
+                                  className={`w-[8px] h-[8px] rounded-full shrink-0 ${/vencid|cr[ií]tic|por vencer/i.test(alerta.title) ? 'bg-[#ef4444]' : 'bg-[#f59e0b]'}`}
+                                />
                               )}
                             </span>
                           </button>
