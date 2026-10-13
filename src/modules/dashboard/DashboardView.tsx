@@ -41,7 +41,7 @@ const FilaBandeja: React.FC<{
   <button
     type="button"
     onClick={onClick}
-    className="group w-full flex items-center gap-[12px] py-[14px] px-[4px] bg-transparent border-0 border-b border-b-border-subtle last:border-b-0 text-left cursor-pointer [transition:background-color_120ms_ease] hover:bg-bg-subtle"
+    className="group w-full flex-1 flex items-center gap-[12px] py-[14px] px-[4px] bg-transparent border-0 border-b border-b-border-subtle last:border-b-0 text-left cursor-pointer [transition:background-color_120ms_ease] hover:bg-bg-subtle"
   >
     <span className="min-w-0 flex-1">
       <span className="block text-[13.5px] font-semibold text-text-main">{titulo}</span>
@@ -114,50 +114,56 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
       />
 
       {/* Lo urgente, ancho; al lado, el conteo de cada bandeja. */}
-      <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-[24px] items-start mb-[32px] max-lg:grid-cols-1">
+      <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-[24px] items-stretch mb-[32px] max-lg:grid-cols-1">
         {/* Centro de alertas: lo más urgente de todos los expedientes. */}
         <AtencionRequerida onNavigate={onNavigate} />
 
-        <Card title="Bandejas" subtitle="Expedientes esperando una acción">
-          <div className="-my-[6px]">
-            <FilaBandeja
-              titulo="Validación de expedientes"
-              detalle="Pendientes de revisar"
-              cantidad={stats.pendientesValidacion}
-              cargando={loading}
-              onClick={() => onNavigate('expedientes')}
-            />
-            <FilaBandeja
-              titulo="Instrucción e IFI"
-              detalle="Para descargos e informe final"
-              cantidad={stats.pendientesIfi}
-              cargando={loading}
-              onClick={() => onNavigate('ifi')}
-            />
-            <FilaBandeja
-              titulo="Resolución sancionadora"
-              detalle="Para redactar o firmar"
-              cantidad={stats.pendientesResolucion}
-              cargando={loading}
-              extra={
-                !loading && stats.porFirmar > 0 ? (
-                  <span className={cn('block text-[12px] font-medium mt-[2px]', colorFirma)}>
-                    {stats.porFirmar} por firmar (la más antigua hace {stats.maxDiasEnFirma} día{stats.maxDiasEnFirma === 1 ? '' : 's'})
-                  </span>
-                ) : undefined
-              }
-              onClick={() => onNavigate('resoluciones')}
-            />
-            <FilaBandeja
-              titulo="Alertas críticas"
-              detalle="Vencidas o por vencer pronto"
-              cantidad={alertasCriticas}
-              cargando={loading}
-              destacada={alertasCriticas > 0}
-              onClick={() => onNavigate('alertas')}
-            />
+        <section className="flex flex-col min-h-[460px] bg-bg-card rounded-md border border-border shadow-sm overflow-hidden">
+          <div className="py-[16px] px-[20px] border-b border-b-border bg-[#fafbfc]">
+            <h3 className="text-[15px] font-bold text-text-main">Bandejas</h3>
+            <p className="text-[12px] text-text-muted mt-[2px]">Expedientes esperando una acción</p>
           </div>
-        </Card>
+          <div className="flex-1 flex flex-col p-[20px]">
+            <div className="flex-1 flex flex-col -my-[6px]">
+              <FilaBandeja
+                titulo="Validación de expedientes"
+                detalle="Pendientes de revisar"
+                cantidad={stats.pendientesValidacion}
+                cargando={loading}
+                onClick={() => onNavigate('expedientes')}
+              />
+              <FilaBandeja
+                titulo="Instrucción e IFI"
+                detalle="Para descargos e informe final"
+                cantidad={stats.pendientesIfi}
+                cargando={loading}
+                onClick={() => onNavigate('ifi')}
+              />
+              <FilaBandeja
+                titulo="Resolución sancionadora"
+                detalle="Para redactar o firmar"
+                cantidad={stats.pendientesResolucion}
+                cargando={loading}
+                extra={
+                  !loading && stats.porFirmar > 0 ? (
+                    <span className={cn('block text-[12px] font-medium mt-[2px]', colorFirma)}>
+                      {stats.porFirmar} por firmar (la más antigua hace {stats.maxDiasEnFirma} día{stats.maxDiasEnFirma === 1 ? '' : 's'})
+                    </span>
+                  ) : undefined
+                }
+                onClick={() => onNavigate('resoluciones')}
+              />
+              <FilaBandeja
+                titulo="Alertas críticas"
+                detalle="Vencidas o por vencer pronto"
+                cantidad={alertasCriticas}
+                cargando={loading}
+                destacada={alertasCriticas > 0}
+                onClick={() => onNavigate('alertas')}
+              />
+            </div>
+          </div>
+        </section>
       </div>
 
       {/* Recorrido del expediente (referencia rápida; cada paso abre su módulo) */}

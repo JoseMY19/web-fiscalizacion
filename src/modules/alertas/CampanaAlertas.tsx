@@ -76,7 +76,7 @@ export const CampanaAlertas: React.FC<{ onIr: (modulo: NavModule) => void }> = (
         : 'Sin alertas urgentes';
 
   return (
-    <div ref={contenedor} className="relative border-l border-l-[#e2e8f0] pl-[16px] flex items-center">
+    <div ref={contenedor} className="relative flex items-center">
       <button
         type="button"
         onClick={abrir}

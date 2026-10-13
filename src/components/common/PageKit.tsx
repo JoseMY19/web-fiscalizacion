@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '../../lib/cn';
 import { ChevronRightIcon, MoreVerticalIcon, SearchIcon } from '../icons/Icons';
@@ -14,11 +14,45 @@ import { ChevronRightIcon, MoreVerticalIcon, SearchIcon } from '../icons/Icons';
 // ============================================================================
 // CABECERA DE PÁGINA
 // ============================================================================
+/** Descripción de una línea; si no cabe, aparece "Ver más" para leerla completa (los textos legales largos no se pierden). */
+const Descripcion: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const parrafo = useRef<HTMLParagraphElement>(null);
+  const [abierta, setAbierta] = useState(false);
+  const [desborda, setDesborda] = useState(false);
+
+  useLayoutEffect(() => {
+    const medir = () => {
+      const el = parrafo.current;
+      if (el && !abierta) setDesborda(el.scrollHeight > el.clientHeight + 1);
+    };
+    medir();
+    window.addEventListener('resize', medir);
+    return () => window.removeEventListener('resize', medir);
+  }, [children, abierta]);
+
+  return (
+    <div className="mt-[4px] flex items-baseline gap-[10px]">
+      <p ref={parrafo} className={cn('text-[13.5px] text-text-muted leading-[1.5] m-0 min-w-0', !abierta && 'line-clamp-1')}>
+        {children}
+      </p>
+      {(desborda || abierta) && (
+        <button
+          type="button"
+          onClick={() => setAbierta((v) => !v)}
+          className="shrink-0 bg-transparent border-0 p-0 text-[12.5px] font-semibold text-primary-600 cursor-pointer hover:underline"
+        >
+          {abierta ? 'Ver menos' : 'Ver más'}
+        </button>
+      )}
+    </div>
+  );
+};
+
 export const PageHeader: React.FC<{ titulo: string; descripcion?: React.ReactNode; acciones?: React.ReactNode }> = ({ titulo, descripcion, acciones }) => (
-  <div className="flex items-end justify-between gap-[16px] flex-wrap mb-[28px]">
-    <div className="max-w-[720px]">
-      <h2 className="text-[24px] font-extrabold text-midnight-900 tracking-[-0.4px] m-0">{titulo}</h2>
-      {descripcion && <p className="text-[14px] text-text-muted leading-[1.5] mt-[6px] mb-0">{descripcion}</p>}
+  <div className="flex items-start justify-between gap-[16px] flex-wrap mb-[24px]">
+    <div className="min-w-0 flex-1">
+      <h2 className="text-[24px] font-extrabold text-midnight-900 tracking-[-0.4px] leading-[1.2] m-0">{titulo}</h2>
+      {descripcion && <Descripcion>{descripcion}</Descripcion>}
     </div>
     {acciones && <div className="flex items-center gap-[10px] flex-wrap">{acciones}</div>}
   </div>

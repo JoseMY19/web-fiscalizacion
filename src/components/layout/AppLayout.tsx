@@ -294,30 +294,27 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       {/* MAIN CONTENT AREA                                                */}
       {/* ================================================================ */}
       <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
-        {/* Barra superior */}
-        <header className="h-[64px] bg-[#ffffff] border-b border-b-[#e2e8f0] flex items-center justify-between px-[32px] relative z-[20] max-md:px-[16px]">
-          <div className="flex items-center gap-[12px]">
-            <div className="flex items-center gap-[8px] text-[13px] text-[#64748b]">
+        {/* Barra superior: baja y discreta. El título de la página lo pone cada módulo. */}
+        <header className="h-[52px] bg-[#ffffff] border-b border-b-[#e2e8f0] flex items-center justify-between px-[32px] relative z-[20] max-md:px-[16px]">
+          <div className="flex items-center gap-[14px] min-w-0">
+            {/* Miga de pan: sistema / grupo / pantalla actual (resaltada), en letra pequeña para no competir con el título de la página */}
+            <nav aria-label="Ubicación" className="flex items-center gap-[10px] text-[11.5px] font-semibold uppercase tracking-[0.8px] text-[#94a3b8] min-w-0 whitespace-nowrap">
+              <span>MDSJL</span>
+              <span className="text-[#cbd5e1]">/</span>
+              <span>PAS</span>
               {grupoActual?.titulo && (
                 <>
-                  <span className="font-medium">{grupoActual.titulo}</span>
                   <span className="text-[#cbd5e1]">/</span>
+                  <span>{grupoActual.titulo}</span>
                 </>
               )}
-              <span className="text-[#0f172a] font-bold">{currentNav?.label}</span>
-            </div>
+              <span className="text-[#cbd5e1]">/</span>
+              <span className="bg-[#eff6ff] text-[#1d4ed8] py-[3px] px-[9px] rounded-[6px] border border-[#dbeafe] overflow-hidden text-ellipsis">{currentNav?.label}</span>
+            </nav>
           </div>
 
-          <div className="flex items-center gap-[16px]">
-            {/* Estado de conexión: solo el punto, el detalle va en el tooltip */}
-            <span
-              className="w-[8px] h-[8px] rounded-full bg-[#10b981] shadow-[0_0_0_3px_rgba(16,185,129,0.18)]"
-              title="Sistema en línea: conexión en vivo con el servidor"
-            />
-
-            {/* Campana: alertas vencidas, críticas y por vencer, con la fase y el plazo de cada expediente */}
-            <CampanaAlertas onIr={onSelectModule} />
-          </div>
+          {/* Campana: alertas vencidas, críticas y por vencer, con la fase y el plazo de cada expediente */}
+          <CampanaAlertas onIr={onSelectModule} />
         </header>
 
         {/* Page Body */}
