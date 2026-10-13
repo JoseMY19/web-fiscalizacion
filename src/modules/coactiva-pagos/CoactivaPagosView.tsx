@@ -1,18 +1,18 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   ActoFirmePendienteDerivacion,
   CandidatoActoFirme,
   CoactivaPagosApi,
 } from '../../api';
-import { RegistroPagoCard } from '../pagos/RegistroPagoCard';
-import { Card, Button, Input, Alert, Badge } from '../../components/common/Common';
-import { PageHeader, SegmentedTabs } from '../../components/common/PageKit';
-import { ComboboxExpediente } from '../../components/common/ComboboxExpediente';
+import { Alert, Button, EmptyState, Input, Modal, Select, Spinner } from '../../components/common/Common';
+import { Buscador, EstadoPunto, PageHeader, PanelDetalle, PanelTabla, SegmentedTabs, TABLA } from '../../components/common/PageKit';
 import { PagadoBadge } from '../../components/common/PagadoBadge';
 import { formatearFecha, hoyLocal } from '../../lib/fechas';
-import { FileTextIcon } from '../../components/icons/Icons';
+import { CheckCircleIcon, FileTextIcon, RefreshCwIcon } from '../../components/icons/Icons';
 
 type MotivoFirmeza = CandidatoActoFirme['motivo'];
+type Pestana = 'declarar' | 'derivar';
 
 const MOTIVO_CORTO: Record<MotivoFirmeza, string> = {
   VENCIMIENTO_PLAZO_RECURSOS: 'Plazo de recursos vencido',
@@ -42,35 +42,45 @@ function useLista<T>(cargarFn: () => Promise<T[]>) {
   return { datos, cargando, error, recargar };
 }
 
+/**
+ * Acto firme: dos bandejas, como el resto de los módulos.
+ *  - "Por declarar firme": resoluciones que ya no admiten recursos. Un botón por fila abre la declaratoria.
+ *  - "Por derivar a coactiva": con acto firme ya declarado; el panel lateral emite las constancias
+ *    de exigibilidad y registra la derivación al Ejecutor Coactivo.
+ */
 export const CoactivaPagosView: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'coactiva' | 'pagos'>('coactiva');
+  const navigate = useNavigate();
+  const [pestana, setPestana] = useState<Pestana>('declarar');
+  const [busqueda, setBusqueda] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const candidatos = useLista(CoactivaPagosApi.listarCandidatosActoFirme);
   const pendientesDerivacion = useLista(CoactivaPagosApi.listarPendientesDerivacion);
 
-  // Estados Acto Firme
+  // Declaratoria de acto firme (ventana)
   const [candidato, setCandidato] = useState<CandidatoActoFirme | null>(null);
-  const [actoFirme, setActoFirme] = useState<ActoFirmePendienteDerivacion | null>(null);
   const [motivoFirmeza, setMotivoFirmeza] = useState<MotivoFirmeza>('VENCIMIENTO_PLAZO_RECURSOS');
   const [fechaFirmeza, setFechaFirmeza] = useState(hoyLocal());
+  const [errorDeclarar, setErrorDeclarar] = useState<string | null>(null);
+
+  // Constancias y derivación (panel lateral)
+  const [actoFirme, setActoFirme] = useState<ActoFirmePendienteDerivacion | null>(null);
   const [fechaDerivacion, setFechaDerivacion] = useState(hoyLocal());
   const [requiereMedida, setRequiereMedida] = useState(false);
-  // Avisos de la Etapa 2: salen dentro de la tarjeta, junto a los botones (no arriba de la página).
-  const [mensajeEtapa2, setMensajeEtapa2] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [mensajePanel, setMensajePanel] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const elegirCandidato = (c: CandidatoActoFirme | null) => {
+  const abrirDeclaratoria = (c: CandidatoActoFirme) => {
     setCandidato(c);
-    if (c) setMotivoFirmeza(c.motivo);
+    setMotivoFirmeza(c.motivo);
+    setFechaFirmeza(hoyLocal());
+    setErrorDeclarar(null);
   };
 
   const handleDeclararFirme = async () => {
-    if (!candidato) {
-      setMessage({ type: 'error', text: 'Seleccione el expediente a declarar firme.' });
-      return;
-    }
+    if (!candidato) return;
     setActionLoading(true);
+    setErrorDeclarar(null);
     try {
       await CoactivaPagosApi.declararActoFirme(candidato.expedienteId, motivoFirmeza, fechaFirmeza);
       setMessage({ type: 'success', text: `Expediente ${candidato.numeroExpediente} declarado como ACTO FIRME (${MOTIVO_CORTO[motivoFirmeza]}).` });
@@ -78,273 +88,340 @@ export const CoactivaPagosView: React.FC = () => {
       candidatos.recargar();
       pendientesDerivacion.recargar();
     } catch (err: any) {
-      setMessage({ type: 'error', text: err.message || 'Error al declarar acto firme.' });
+      setErrorDeclarar(err.message || 'Error al declarar acto firme.');
     } finally {
       setActionLoading(false);
     }
   };
 
-  const exigirActoFirme = (): ActoFirmePendienteDerivacion | null => {
-    if (!actoFirme) setMensajeEtapa2({ type: 'error', text: 'Seleccione el expediente con acto firme.' });
-    return actoFirme;
+  const abrirGestion = (a: ActoFirmePendienteDerivacion) => {
+    setActoFirme(a);
+    setMensajePanel(null);
+    setFechaDerivacion(hoyLocal());
+    setRequiereMedida(false);
   };
 
   const handleConstanciaMulta = async () => {
-    const af = exigirActoFirme();
-    if (!af) return;
+    if (!actoFirme) return;
     setActionLoading(true);
     try {
-      await CoactivaPagosApi.emitirConstanciaMulta(af.expedienteId);
-      setMensajeEtapa2({ type: 'success', text: 'Constancia de Exigibilidad de Multa emitida con éxito.' });
-      setActoFirme({ ...af, constanciaMultaEmitida: true });
+      await CoactivaPagosApi.emitirConstanciaMulta(actoFirme.expedienteId);
+      setMensajePanel({ type: 'success', text: 'Constancia de Exigibilidad de Multa emitida con éxito.' });
+      setActoFirme({ ...actoFirme, constanciaMultaEmitida: true });
       pendientesDerivacion.recargar();
     } catch (err: any) {
-      setMensajeEtapa2({ type: 'error', text: err.message || 'Error al emitir constancia de multa.' });
+      setMensajePanel({ type: 'error', text: err.message || 'Error al emitir constancia de multa.' });
     } finally {
       setActionLoading(false);
     }
   };
 
   const handleConstanciaMedida = async () => {
-    const af = exigirActoFirme();
-    if (!af) return;
+    if (!actoFirme) return;
     setActionLoading(true);
     try {
-      await CoactivaPagosApi.emitirConstanciaMedida(af.expedienteId);
-      setMensajeEtapa2({ type: 'success', text: 'Constancia de Exigibilidad de Medida Complementaria emitida con éxito.' });
-      setActoFirme({ ...af, constanciaMedidaComplementariaEmitida: true });
+      await CoactivaPagosApi.emitirConstanciaMedida(actoFirme.expedienteId);
+      setMensajePanel({ type: 'success', text: 'Constancia de Exigibilidad de Medida Complementaria emitida con éxito.' });
+      setActoFirme({ ...actoFirme, constanciaMedidaComplementariaEmitida: true });
       pendientesDerivacion.recargar();
     } catch (err: any) {
-      setMensajeEtapa2({ type: 'error', text: err.message || 'Error al emitir constancia de medida complementaria.' });
+      setMensajePanel({ type: 'error', text: err.message || 'Error al emitir constancia de medida complementaria.' });
     } finally {
       setActionLoading(false);
     }
   };
 
   const handleDerivacion = async () => {
-    const af = exigirActoFirme();
-    if (!af) return;
+    if (!actoFirme) return;
     setActionLoading(true);
     try {
-      await CoactivaPagosApi.registrarDerivacionCoactiva(af.expedienteId, fechaDerivacion, requiereMedida);
-      setMensajeEtapa2({ type: 'success', text: `Derivación del expediente ${af.numeroExpediente} a la Oficina de Ejecución Coactiva registrada.` });
+      await CoactivaPagosApi.registrarDerivacionCoactiva(actoFirme.expedienteId, fechaDerivacion, requiereMedida);
+      setMessage({ type: 'success', text: `Derivación del expediente ${actoFirme.numeroExpediente} a la Oficina de Ejecución Coactiva registrada.` });
       setActoFirme(null);
       pendientesDerivacion.recargar();
     } catch (err: any) {
-      setMensajeEtapa2({ type: 'error', text: err.message || 'Error al registrar derivación coactiva.' });
+      setMensajePanel({ type: 'error', text: err.message || 'Error al registrar derivación coactiva.' });
     } finally {
       setActionLoading(false);
     }
-  };
-
-  const elegirActoFirme = (a: ActoFirmePendienteDerivacion | null) => {
-    setActoFirme(a);
-    setMensajeEtapa2(null);
   };
 
   // Qué falta antes de derivar (el backend exige las constancias; aquí se ve antes de intentarlo).
   const multaEmitida = !!actoFirme?.constanciaMultaEmitida;
   const medidaEmitida = !!actoFirme?.constanciaMedidaComplementariaEmitida;
   const puedeDerivar = !!actoFirme && multaEmitida && (!requiereMedida || medidaEmitida);
-  const pasoSiguiente = !actoFirme
-    ? 'Elige un expediente de la lista para empezar.'
-    : !multaEmitida
-      ? 'Siguiente paso: emite la constancia de multa exigible.'
-      : requiereMedida && !medidaEmitida
-        ? 'Siguiente paso: emite la constancia de la medida complementaria.'
-        : 'Todo listo: registra la derivación a coactiva.';
+  const pasoSiguiente = !multaEmitida
+    ? 'Siguiente paso: emite la constancia de multa exigible.'
+    : requiereMedida && !medidaEmitida
+      ? 'Siguiente paso: emite la constancia de la medida complementaria.'
+      : 'Todo listo: registra la derivación a coactiva.';
+
+  const termino = busqueda.trim().toLowerCase();
+  const coincide = (numero: string) => !termino || numero.toLowerCase().includes(termino);
+  const filasDeclarar = (candidatos.datos ?? []).filter((c) => coincide(c.numeroExpediente));
+  const filasDerivar = (pendientesDerivacion.datos ?? []).filter((a) => coincide(a.numeroExpediente));
+  const lista = pestana === 'declarar' ? candidatos : pendientesDerivacion;
+  const sinCargar = lista.datos === null && lista.cargando;
 
   return (
     <div>
       <PageHeader
-        titulo="Acto Firme y Cobranza"
-        descripcion="Declaratoria de firmeza para cobro coactivo forzoso y control administrativo de recaudación de multas."
+        titulo="Acto Firme"
+        descripcion="Declara la firmeza de las resoluciones que ya no admiten recursos y deriva el expediente a Ejecución Coactiva."
+        acciones={
+          <Button
+            variant="secondary"
+            icon={<RefreshCwIcon size={14} />}
+            loading={candidatos.cargando || pendientesDerivacion.cargando}
+            onClick={() => {
+              candidatos.recargar();
+              pendientesDerivacion.recargar();
+            }}
+          >
+            Actualizar
+          </Button>
+        }
       />
 
       {message && <Alert type={message.type}>{message.text}</Alert>}
 
-      <div className="mb-[24px]">
-        <SegmentedTabs<'coactiva' | 'pagos'>
-          items={[
-            { clave: 'coactiva', etiqueta: 'Acto firme y derivación' },
-            { clave: 'pagos', etiqueta: 'Pagos de multas' },
-          ]}
-          activa={activeTab}
-          onChange={setActiveTab}
-        />
-      </div>
+      <Alert type="info">
+        ¿El administrado ya pagó la multa? Registra el pago en{' '}
+        <button
+          type="button"
+          onClick={() => navigate('/pagos')}
+          className="bg-transparent border-0 p-0 font-bold text-primary-700 underline cursor-pointer"
+        >
+          Registro de Pagos
+        </button>
+        . Aquí verás la etiqueta de pagado en cada expediente.
+      </Alert>
 
-      {activeTab === 'coactiva' ? (
-        <div className="flex flex-col gap-[20px]">
-          <Card title="Etapa 1: Declaratoria de Acto Firme" className="overflow-visible! relative! z-[30]!">
-            <div className="grid grid-cols-[2fr_1fr] gap-[16px]">
-              <ComboboxExpediente<CandidatoActoFirme>
-                label="Expediente Sancionador"
-                opciones={candidatos.datos}
-                cargando={candidatos.cargando}
-                error={candidatos.error}
-                seleccionada={candidato}
-                onSeleccionar={elegirCandidato}
-                obtenerClave={(c) => c.expedienteId}
-                obtenerNumeroExpediente={(c) => c.numeroExpediente}
-                renderDetalle={(c) => (
-                  <>
-                    <PagadoBadge tienePago={c.tienePago} montoPagado={c.montoPagado} fechaPago={c.fechaPago} />
-                    <Badge variant={c.motivo === 'APELACION_INFUNDADA' ? 'danger' : 'warning'}>{MOTIVO_CORTO[c.motivo]}</Badge>
-                    {c.fechaVencimientoPlazo && (
-                      <span className="text-[11px] text-text-muted">
-                        Plazo venció {formatearFecha(c.fechaVencimientoPlazo)}
-                      </span>
-                    )}
-                  </>
-                )}
-                mensajeVacio="No hay expedientes que hoy puedan declararse firmes (resolución notificada con plazo de recursos vencido, o apelación declarada infundada)."
-              />
-              <Input
-                type="date"
-                label="Fecha de Firmeza"
-                value={fechaFirmeza}
-                onChange={(e) => setFechaFirmeza(e.target.value)}
-              />
-            </div>
-
-            {candidato?.tienePago && (
-              <Alert type="success">
-                <span className="inline-flex items-center gap-[8px] flex-wrap">
-                  <PagadoBadge tienePago montoPagado={candidato.montoPagado} fechaPago={candidato.fechaPago} size="md" />
-                  El administrado ya registró un pago.
-                </span>
-              </Alert>
-            )}
-
-            <div className="mb-[14px]">
-              <label className="block text-[13px] font-semibold mb-[6px]">
-                Causal de Firmeza Administrativa:
-              </label>
-              <select
-                value={motivoFirmeza}
-                onChange={(e) => setMotivoFirmeza(e.target.value as MotivoFirmeza)}
-                className="w-full p-[10px] rounded-[6px] border border-border text-[13px]"
-              >
-                <option value="VENCIMIENTO_PLAZO_RECURSOS">Vencimiento del Plazo Legal de Recursos (Sin Impugnación)</option>
-                <option value="APELACION_INFUNDADA">Apelación Declarada Infundada por GOP (Fin de Vía Administrativa)</option>
-              </select>
-            </div>
-
-            <div className="flex gap-[8px] flex-wrap">
-              <Button variant="danger" loading={actionLoading} onClick={handleDeclararFirme}>
-                Declarar Acto Firme
-              </Button>
-            </div>
-          </Card>
-
-          <Card title="Etapa 2: Emisión de Títulos de Ejecución y Derivación Coactiva" className="overflow-visible! relative! z-[20]!">
-            <ComboboxExpediente<ActoFirmePendienteDerivacion>
-              label="Expediente con Acto Firme (pendiente de derivación)"
-              opciones={pendientesDerivacion.datos}
-              cargando={pendientesDerivacion.cargando}
-              error={pendientesDerivacion.error}
-              seleccionada={actoFirme}
-              onSeleccionar={elegirActoFirme}
-              obtenerClave={(a) => a.expedienteId}
-              obtenerNumeroExpediente={(a) => a.numeroExpediente}
-              renderDetalle={(a) => (
-                <>
-                  <PagadoBadge tienePago={a.tienePago} montoPagado={a.montoPagado} fechaPago={a.fechaPago} />
-                  <span className="text-[11px] text-text-muted">Firme desde {formatearFecha(a.fechaFirmeza)}</span>
-                  <Badge variant={a.constanciaMultaEmitida ? 'success' : 'neutral'}>
-                    {a.constanciaMultaEmitida ? 'Constancia multa emitida' : 'Sin constancia de multa'}
-                  </Badge>
-                  {a.constanciaMedidaComplementariaEmitida && <Badge variant="success">Constancia medida emitida</Badge>}
-                </>
-              )}
-              mensajeVacio="No hay expedientes con acto firme pendientes de derivar a coactiva."
+      <PanelTabla
+        barra={
+          <>
+            <SegmentedTabs<Pestana>
+              items={[
+                { clave: 'declarar', etiqueta: 'Por declarar firme', contador: candidatos.datos?.length },
+                { clave: 'derivar', etiqueta: 'Por derivar a coactiva', contador: pendientesDerivacion.datos?.length },
+              ]}
+              activa={pestana}
+              onChange={setPestana}
             />
-            {actoFirme?.tienePago && (
-              <Alert type="success">
-                <span className="inline-flex items-center gap-[8px] flex-wrap">
-                  <PagadoBadge tienePago montoPagado={actoFirme.montoPagado} fechaPago={actoFirme.fechaPago} size="md" />
-                  Verifica el pago antes de derivar a Ejecución Coactiva.
-                </span>
-              </Alert>
-            )}
-
-            {actoFirme ? (
-              <div className="rounded-sm border border-border bg-bg-subtle p-[14px] mb-[16px]">
-                <div className="flex items-center justify-between gap-[8px] flex-wrap mb-[10px]">
-                  <span className="text-[13px] font-bold text-text-main">Expediente {actoFirme.numeroExpediente}</span>
-                  <span className="text-[12px] text-text-muted">
-                    Acto firme desde {formatearFecha(actoFirme.fechaFirmeza)} · {MOTIVO_CORTO[actoFirme.motivo]}
-                  </span>
-                </div>
-                <ul className="m-0 p-0 list-none flex flex-col gap-[6px] text-[13px]">
-                  <li className="flex items-center gap-[8px]">
-                    <Badge variant={multaEmitida ? 'success' : 'warning'}>{multaEmitida ? 'Emitida' : 'Pendiente'}</Badge>
-                    Constancia de multa exigible (obligatoria)
-                  </li>
-                  <li className="flex items-center gap-[8px]">
-                    <Badge variant={medidaEmitida ? 'success' : requiereMedida ? 'warning' : 'neutral'}>
-                      {medidaEmitida ? 'Emitida' : requiereMedida ? 'Pendiente' : 'No requerida'}
-                    </Badge>
-                    Constancia de medida complementaria (solo si hay una medida que ejecutar)
-                  </li>
-                </ul>
-                <p className="mt-[10px] mb-0 text-[13px] font-semibold text-primary-700">{pasoSiguiente}</p>
-              </div>
-            ) : (
-              <p className="text-[13px] text-text-muted mb-[16px]">
-                Elige un expediente de la lista: aquí verás qué constancias faltan antes de derivarlo.
-              </p>
-            )}
-
-            {mensajeEtapa2 && <Alert type={mensajeEtapa2.type}>{mensajeEtapa2.text}</Alert>}
-
-            <div className="flex gap-[12px] mb-[20px]">
-              <Button variant="secondary" icon={<FileTextIcon size={16} />} loading={actionLoading} disabled={!actoFirme || multaEmitida} onClick={handleConstanciaMulta}>
-                Emitir Constancia de Multa Exigible
-              </Button>
-              <Button variant="secondary" icon={<FileTextIcon size={16} />} loading={actionLoading} disabled={!actoFirme || medidaEmitida} onClick={handleConstanciaMedida}>
-                Emitir Constancia de Medida Complementaria
-              </Button>
+            <div className="flex items-center gap-[10px] flex-wrap">
+              <Buscador value={busqueda} onChange={setBusqueda} placeholder="Buscar por N° de expediente" />
             </div>
+          </>
+        }
+      >
+        {lista.error && (
+          <div className="px-[24px] pt-[16px]">
+            <Alert type="error">{lista.error}</Alert>
+          </div>
+        )}
 
-            <div className="border-t border-t-border pt-[16px]">
-              <h4 className="text-[14px] font-bold mb-[12px]">
-                Remisión Formal al Ejecutor Coactivo Municipal:
-              </h4>
-              <Input
-                type="date"
-                label="Fecha de Derivación a Coactiva"
-                value={fechaDerivacion}
-                onChange={(e) => setFechaDerivacion(e.target.value)}
-              />
-              <div className="mb-[14px]">
-                <label className="flex items-center gap-[8px] text-[13px] cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={requiereMedida}
-                    onChange={(e) => setRequiereMedida(e.target.checked)}
-                  />
-                  Requiere apoyo de fuerza pública / ejecución coactiva de medida complementaria (clausura / descerraje)
-                </label>
-              </div>
-
-              <Button variant="primary" loading={actionLoading} disabled={!puedeDerivar} onClick={handleDerivacion}>
-                Registrar Derivación a Coactiva
-              </Button>
-              {!puedeDerivar && <p className="mt-[8px] mb-0 text-[12px] text-text-muted">{pasoSiguiente}</p>}
+        {sinCargar ? (
+          <div className="py-[56px] text-center">
+            <Spinner size={32} />
+          </div>
+        ) : pestana === 'declarar' ? (
+          filasDeclarar.length === 0 ? (
+            <EmptyState
+              icon={<CheckCircleIcon size={40} color="var(--color-success)" />}
+              title="Nada por declarar"
+              description="No hay expedientes que hoy puedan declararse firmes (resolución notificada con plazo de recursos vencido, o apelación declarada infundada)."
+            />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className={TABLA.tabla}>
+                <thead>
+                  <tr className={TABLA.encabezado}>
+                    <th className={TABLA.th}>Expediente</th>
+                    <th className={TABLA.th}>Causal de firmeza</th>
+                    <th className={TABLA.th}>Plazo de recursos</th>
+                    <th className={`${TABLA.th} text-right`}>Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filasDeclarar.map((c) => (
+                    <tr key={c.expedienteId} className={TABLA.fila}>
+                      <td className={TABLA.td}>
+                        <div className="text-[14px] font-bold text-midnight-900">{c.numeroExpediente}</div>
+                        {c.tienePago && (
+                          <div className="mt-[6px]">
+                            <PagadoBadge tienePago={c.tienePago} montoPagado={c.montoPagado} fechaPago={c.fechaPago} />
+                          </div>
+                        )}
+                      </td>
+                      <td className={`${TABLA.td} text-[13px] text-text-secondary`}>{MOTIVO_CORTO[c.motivo]}</td>
+                      <td className={`${TABLA.td} text-[13px] text-text-secondary`}>
+                        {c.fechaVencimientoPlazo ? `Venció el ${formatearFecha(c.fechaVencimientoPlazo)}` : '—'}
+                      </td>
+                      <td className={`${TABLA.td} text-right`}>
+                        <Button variant="primary" size="sm" onClick={() => abrirDeclaratoria(c)}>
+                          Declarar firme
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </Card>
+          )
+        ) : filasDerivar.length === 0 ? (
+          <EmptyState
+            icon={<CheckCircleIcon size={40} color="var(--color-success)" />}
+            title="Nada por derivar"
+            description="No hay expedientes con acto firme pendientes de derivar a coactiva."
+          />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className={TABLA.tabla}>
+              <thead>
+                <tr className={TABLA.encabezado}>
+                  <th className={TABLA.th}>Expediente</th>
+                  <th className={TABLA.th}>Firme desde</th>
+                  <th className={TABLA.th}>Constancias</th>
+                  <th className={`${TABLA.th} text-right`}>Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filasDerivar.map((a) => (
+                  <tr key={a.expedienteId} className={TABLA.fila}>
+                    <td className={TABLA.td}>
+                      <div className="text-[14px] font-bold text-midnight-900">{a.numeroExpediente}</div>
+                      {a.tienePago && (
+                        <div className="mt-[6px]">
+                          <PagadoBadge tienePago={a.tienePago} montoPagado={a.montoPagado} fechaPago={a.fechaPago} />
+                        </div>
+                      )}
+                    </td>
+                    <td className={TABLA.td}>
+                      <div className="text-[13px] text-text-main">{formatearFecha(a.fechaFirmeza)}</div>
+                      <div className="text-[12px] text-text-muted mt-[3px]">{MOTIVO_CORTO[a.motivo]}</div>
+                    </td>
+                    <td className={TABLA.td}>
+                      <div className="flex flex-col gap-[6px]">
+                        <EstadoPunto tono={a.constanciaMultaEmitida ? 'ok' : 'aviso'}>
+                          Multa: {a.constanciaMultaEmitida ? 'emitida' : 'pendiente'}
+                        </EstadoPunto>
+                        <EstadoPunto tono={a.constanciaMedidaComplementariaEmitida ? 'ok' : 'neutro'}>
+                          Medida: {a.constanciaMedidaComplementariaEmitida ? 'emitida' : 'sin emitir'}
+                        </EstadoPunto>
+                      </div>
+                    </td>
+                    <td className={`${TABLA.td} text-right`}>
+                      <Button variant="primary" size="sm" onClick={() => abrirGestion(a)}>
+                        Gestionar
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </PanelTabla>
+
+      {/* Declaratoria de acto firme */}
+      <Modal
+        isOpen={candidato !== null}
+        onClose={() => setCandidato(null)}
+        title={`Declarar acto firme: ${candidato?.numeroExpediente ?? ''}`}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setCandidato(null)}>
+              Cancelar
+            </Button>
+            <Button variant="primary" loading={actionLoading} onClick={handleDeclararFirme}>
+              Declarar acto firme
+            </Button>
+          </>
+        }
+      >
+        {candidato?.tienePago && (
+          <Alert type="success">
+            <span className="inline-flex items-center gap-[8px] flex-wrap">
+              <PagadoBadge tienePago montoPagado={candidato.montoPagado} fechaPago={candidato.fechaPago} size="md" />
+              El administrado ya registró un pago.
+            </span>
+          </Alert>
+        )}
+        {errorDeclarar && <Alert type="error">{errorDeclarar}</Alert>}
+        <Input type="date" label="Fecha de firmeza" value={fechaFirmeza} onChange={(e) => setFechaFirmeza(e.target.value)} />
+        <Select label="Causal de firmeza administrativa" value={motivoFirmeza} onChange={(e) => setMotivoFirmeza(e.target.value as MotivoFirmeza)}>
+          <option value="VENCIMIENTO_PLAZO_RECURSOS">Vencimiento del plazo legal de recursos (sin impugnación)</option>
+          <option value="APELACION_INFUNDADA">Apelación declarada infundada por GOP (fin de la vía administrativa)</option>
+        </Select>
+      </Modal>
+
+      {/* Constancias de exigibilidad y derivación a coactiva */}
+      <PanelDetalle
+        abierto={actoFirme !== null}
+        onClose={() => setActoFirme(null)}
+        titulo={`Expediente ${actoFirme?.numeroExpediente ?? ''}`}
+        subtitulo={actoFirme ? `Acto firme desde ${formatearFecha(actoFirme.fechaFirmeza)} · ${MOTIVO_CORTO[actoFirme.motivo]}` : undefined}
+        pie={
+          <>
+            <Button variant="secondary" onClick={() => setActoFirme(null)}>
+              Cerrar
+            </Button>
+            <Button variant="primary" loading={actionLoading} disabled={!puedeDerivar} onClick={handleDerivacion}>
+              Registrar derivación a coactiva
+            </Button>
+          </>
+        }
+      >
+        {actoFirme?.tienePago && (
+          <Alert type="success">
+            <span className="inline-flex items-center gap-[8px] flex-wrap">
+              <PagadoBadge tienePago montoPagado={actoFirme.montoPagado} fechaPago={actoFirme.fechaPago} size="md" />
+              Verifica el pago antes de derivar a Ejecución Coactiva.
+            </span>
+          </Alert>
+        )}
+
+        <h4 className="text-[13px] font-bold uppercase tracking-[0.5px] text-text-muted mb-[6px] mt-0">Constancias de exigibilidad</h4>
+        <ul className="m-0 mb-[20px] p-0 list-none">
+          <li className="flex items-center justify-between gap-[16px] py-[14px] border-b border-border-subtle">
+            <div className="min-w-0">
+              <div className="text-[13.5px] font-semibold text-text-main">Constancia de multa exigible</div>
+              <div className="mt-[4px]">
+                <EstadoPunto tono={multaEmitida ? 'ok' : 'aviso'}>{multaEmitida ? 'Emitida' : 'Pendiente (obligatoria)'}</EstadoPunto>
+              </div>
+            </div>
+            <Button variant="secondary" size="sm" icon={<FileTextIcon size={14} />} loading={actionLoading} disabled={multaEmitida} onClick={handleConstanciaMulta}>
+              Emitir
+            </Button>
+          </li>
+          <li className="flex items-center justify-between gap-[16px] py-[14px] border-b border-border-subtle">
+            <div className="min-w-0">
+              <div className="text-[13.5px] font-semibold text-text-main">Constancia de medida complementaria</div>
+              <div className="text-[12px] text-text-muted mt-[2px]">Solo si hay una medida que ejecutar.</div>
+              <div className="mt-[4px]">
+                <EstadoPunto tono={medidaEmitida ? 'ok' : requiereMedida ? 'aviso' : 'neutro'}>
+                  {medidaEmitida ? 'Emitida' : requiereMedida ? 'Pendiente' : 'No requerida'}
+                </EstadoPunto>
+              </div>
+            </div>
+            <Button variant="secondary" size="sm" icon={<FileTextIcon size={14} />} loading={actionLoading} disabled={medidaEmitida} onClick={handleConstanciaMedida}>
+              Emitir
+            </Button>
+          </li>
+        </ul>
+
+        {mensajePanel && <Alert type={mensajePanel.type}>{mensajePanel.text}</Alert>}
+
+        <h4 className="text-[13px] font-bold uppercase tracking-[0.5px] text-text-muted mb-[12px] mt-[8px]">Derivación al Ejecutor Coactivo</h4>
+        <div className="max-w-[320px]">
+          <Input type="date" label="Fecha de derivación a coactiva" value={fechaDerivacion} onChange={(e) => setFechaDerivacion(e.target.value)} />
         </div>
-      ) : (
-        /* Tab 2: Pagos — F5: se registran por N° de NC (mismo formulario que "Registro de Pagos"). */
-        <RegistroPagoCard
-          onRegistrado={() => {
-            candidatos.recargar();
-            pendientesDerivacion.recargar();
-          }}
-        />
-      )}
+        <label className="flex items-start gap-[8px] text-[13px] text-text-secondary cursor-pointer mb-[16px]">
+          <input type="checkbox" className="mt-[3px]" checked={requiereMedida} onChange={(e) => setRequiereMedida(e.target.checked)} />
+          Requiere apoyo de fuerza pública / ejecución coactiva de medida complementaria (clausura / descerraje)
+        </label>
+        <p className="m-0 text-[13px] font-semibold text-primary-700">{pasoSiguiente}</p>
+      </PanelDetalle>
     </div>
   );
 };

@@ -81,7 +81,7 @@ const navItems: NavItemConDef[] = [
   // F2: caducidad del PAS (9 / 12 meses sin resolución final notificada).
   { id: 'caducidad', label: 'Caducidad del PAS', icon: <ClockIcon size={18} /> },
   { id: 'recursos', label: 'Recursos Impugnativos', icon: <ScaleIcon size={18} /> },
-  { id: 'coactiva-pagos', label: 'Acto Firme y Cobranza', icon: <CreditCardIcon size={18} /> },
+  { id: 'coactiva-pagos', label: 'Acto Firme', icon: <CreditCardIcon size={18} /> },
   // F4: expediente coactivo (REC, medidas cautelares, suspensiones, devolución a PAS).
   { id: 'coactiva', label: 'Ejecución Coactiva', icon: <BuildingIcon size={18} /> },
   // F3: prescripción de la exigibilidad de multas (solo a pedido de parte).
