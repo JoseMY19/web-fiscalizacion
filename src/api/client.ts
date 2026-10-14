@@ -1,6 +1,10 @@
 ﻿// Override con VITE_API_BASE_URL para probar desde otra PC en la red local
 // (ver .env) — en desarrollo cae al backend local por defecto.
-export const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000';
+// Sin barra final: si se compila con "http://servidor:3010/", las rutas saldrían como "//auth/login" y el servidor respondería 404.
+export const BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000').replace(/\/+$/, '');
+
+/** Mensajes técnicos del servidor ("Cannot POST /x", errores de red…) que el usuario no debe ver tal cual. */
+export const MENSAJE_SIN_SERVIDOR = 'No se pudo comunicar con el servidor. Intenta de nuevo o avisa al administrador del sistema.';
 
 export function getToken(): string | null {
   return localStorage.getItem('pas-oficina:token');
@@ -86,10 +90,16 @@ export async function apiClient<T = any>(
     ...((options.headers as Record<string, string>) || {}),
   };
 
-  const res = await fetch(`${BASE_URL}${path}`, {
-    ...options,
-    headers,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      ...options,
+      headers,
+    });
+  } catch {
+    // Sin red, servidor caído o dirección mal configurada: no se muestra "Failed to fetch".
+    throw new Error('No hay conexión con el servidor. Revisa tu red e intenta de nuevo.');
+  }
 
   if (!res.ok) {
     if (res.status === 401 && !reintentado) {
@@ -111,6 +121,9 @@ export async function apiClient<T = any>(
       setRefreshToken(null);
       setSavedUser(null);
     }
+
+    // "Cannot POST /ruta" es la respuesta de Nest cuando la ruta no existe: es un problema de configuración, no del usuario.
+    if (/^Cannot (GET|POST|PUT|PATCH|DELETE) /.test(errorMsg)) errorMsg = MENSAJE_SIN_SERVIDOR;
 
     throw new Error(errorMsg);
   }
