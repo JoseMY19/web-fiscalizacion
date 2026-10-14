@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Button, Input, Alert } from '../../components/common/Common';
-import { UserIcon } from '../../components/icons/Icons';
 
 export const LoginView: React.FC = () => {
   const { login } = useAuth();
-  const [dni, setDni] = useState('10000003');
-  const [contrasena, setContrasena] = useState('Admin2026!');
+  const [dni, setDni] = useState('');
+  const [contrasena, setContrasena] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,11 +20,6 @@ export const LoginView: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const setTestAccount = (testDni: string, testPass: string) => {
-    setDni(testDni);
-    setContrasena(testPass);
   };
 
   return (
@@ -116,42 +110,6 @@ export const LoginView: React.FC = () => {
               </Button>
             </div>
           </form>
-
-          {/* Cuentas de Acceso Rápido / Demo */}
-          <div
-            className="mt-[26px] pt-[20px] border-t border-dashed border-t-[#e2e8f0]"
-          >
-            <p
-              className="text-[11px] font-bold text-[#64748b] uppercase tracking-[0.5px] mb-[10px]"
-            >
-              Perfiles de Prueba (Clic para autocompletar):
-            </p>
-            <div className="flex flex-col gap-[8px]">
-              <button
-                type="button"
-                onClick={() => setTestAccount('10000003', 'Admin2026!')}
-                className="py-[9px] px-[12px] rounded-[8px] border border-[#cbd5e1] bg-[#f8fafc] text-[12px] text-left cursor-pointer text-[#0f172a] flex items-center justify-between [transition:all_150ms_ease] hover:bg-[#eff6ff] hover:border-[#93c5fd]"
-              >
-                <div className="flex items-center gap-[8px]">
-                  <span className="text-[#1d4ed8]"><UserIcon size={15} /></span>
-                  <span><strong>Carla Vega</strong> (Administrador PAS)</span>
-                </div>
-                <span className="text-[#1d4ed8] font-bold text-[11px]">10000003</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setTestAccount('10000001', 'Campo2026!')}
-                className="py-[9px] px-[12px] rounded-[8px] border border-[#cbd5e1] bg-[#f8fafc] text-[12px] text-left cursor-pointer text-[#0f172a] flex items-center justify-between [transition:all_150ms_ease] hover:bg-[#eff6ff] hover:border-[#93c5fd]"
-              >
-                <div className="flex items-center gap-[8px]">
-                  <span className="text-[#0284c7]"><UserIcon size={15} /></span>
-                  <span><strong>Ana Torres</strong> (Fiscalizadora de Campo)</span>
-                </div>
-                <span className="text-[#0284c7] font-bold text-[11px]">10000001</span>
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Pie de Página de la Tarjeta */}

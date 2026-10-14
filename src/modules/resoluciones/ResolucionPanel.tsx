@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  AuthApi,
   IfiApi,
   IfiDocumentoAdjuntoItem,
   IntervencionesApi,
@@ -10,13 +9,15 @@ import {
   TipoResolucion,
   abrirDocumento,
   abrirDocumentoIfi,
-  descargarDocumentoAmpliacion,
   descargarDocumentoIfi,
   descargarDocumentoResolucion,
   descargarDocumentoWord,
 } from '../../api';
+import { UsuariosApi } from '../../api/usuarios';
 import { Alert, Badge, Button, Input, Modal, Spinner, Textarea } from '../../components/common/Common';
 import { useConfirm } from '../../context/ConfirmContext';
+import { DescargosLista } from '../descargos/DescargosLista';
+import { CorreccionMaterialSeccion } from '../correcciones/CorreccionMaterial';
 import { CheckIcon, EyeIcon, FileTextIcon, PenToolIcon, ZapIcon } from '../../components/icons/Icons';
 import {
   EXPLICACION_TIPO,
@@ -27,8 +28,20 @@ import {
   labelEtapa,
   soloFechaIso,
   textoCaducidad,
+  varianteDiasEnFirma,
   varianteEtapa,
 } from './resolucionUi';
+import { AmpliacionPlazoCard } from './AmpliacionPlazoCard';
+import { AvisoLevantamientoMedidas } from '../levantamientos/AvisoLevantamientoMedidas';
+// F2: aviso de caducidad (caducado / vencido sin declarar → "Declarar caducidad").
+import { AvisoCaducidadExpediente } from '../caducidad/AvisoCaducidadExpediente';
+// F4: aviso si coactivo devolvió el expediente (renotificar o archivar).
+import { AvisoCoactivaExpediente } from '../coactiva/AvisoCoactivaExpediente';
+// Nulidad de GOP: qué se anuló (la resolución se rehace).
+import { AvisoRetroaccion } from '../retroaccion/AvisoRetroaccion';
+import { FichaBasesMunicipales } from '../bases-municipales/FichaBasesMunicipales';
+import { EditorTextoEnriquecido, VistaTextoEnriquecido } from '../../components/common/EditorTextoEnriquecido';
+import { PagadoBadge } from '../../components/common/PagadoBadge';
 
 /** Mismo modelo de pasos que IfiView (StepDef/stepper), más un estado para los pasos opcionales. */
 type PasoEstado = 'completado' | 'actual' | 'pendiente' | 'opcional';
@@ -127,7 +140,6 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
   const [fotos, setFotos] = useState<{ id: string; actaTipo: string | null }[]>([]);
   const [docsIfi, setDocsIfi] = useState<IfiDocumentoAdjuntoItem[]>([]);
   const [usuarios, setUsuarios] = useState<UsuarioOpcion[]>([]);
-  const [verDescargo, setVerDescargo] = useState(false);
   const [verTextoResolucion, setVerTextoResolucion] = useState(false);
   const [verAntecedentes, setVerAntecedentes] = useState(false);
 
@@ -146,13 +158,6 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
   const [motivoDiscrepancia, setMotivoDiscrepancia] = useState('');
   const [tipoInfraccion, setTipoInfraccion] = useState<TipoInfraccion | ''>('');
   const [porcentajeUit, setPorcentajeUit] = useState('');
-  const [descargoPostTexto, setDescargoPostTexto] = useState('');
-  const [descargoPostFecha, setDescargoPostFecha] = useState('');
-  // RSG de ampliación: fechas reales, nacen vacías.
-  const [ampFechaEnvio, setAmpFechaEnvio] = useState('');
-  const [ampFechaFirma, setAmpFechaFirma] = useState('');
-  const [ampNumero, setAmpNumero] = useState('');
-  const [ampFechaNotificacion, setAmpFechaNotificacion] = useState('');
   /** Pasos completados que el abogado abrió con "Editar" (el resto se muestra en solo lectura). */
   const [editando, setEditando] = useState<Set<string>>(new Set());
   const abrirEdicion = (clave: string) => setEditando((prev) => new Set(prev).add(clave));
@@ -171,8 +176,6 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
     setPorcentajeUit(r?.porcentajeUit != null ? String(r.porcentajeUit) : '');
     setDecisionSel(r ? decisionDe(r) : decisionSugerida(d));
     setMotivoDiscrepancia(r?.motivoDiscrepanciaIfi ?? '');
-    setDescargoPostTexto(r?.descargoPosteriorTexto ?? '');
-    setDescargoPostFecha(soloFechaIso(r?.descargoPosteriorFecha) ?? '');
     setMedida(r?.medidaComplementaria ?? '');
     setResponsableId(r?.tareaRetiroEstadoCuenta.responsableId ?? '');
     setRetiroConfirmado(!!r?.tareaRetiroEstadoCuenta.confirmada);
@@ -217,10 +220,6 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
       setDecisionSel(decisionDe(res));
       setMotivoDiscrepancia(res.motivoDiscrepanciaIfi ?? '');
     }
-    if (res.descargoPosteriorTexto && !editando.has('descargoPost')) {
-      setDescargoPostTexto(res.descargoPosteriorTexto);
-      setDescargoPostFecha(soloFechaIso(res.descargoPosteriorFecha) ?? '');
-    }
     if (res.medidaComplementaria && !editando.has('medida')) setMedida(res.medidaComplementaria);
     if (res.tareaRetiroEstadoCuenta.confirmada && !editando.has('retiro')) {
       setResponsableId(res.tareaRetiroEstadoCuenta.responsableId ?? '');
@@ -242,7 +241,7 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
       IfiApi.getDocumentos(expedienteId)
         .then((docs) => vigente && setDocsIfi(Array.isArray(docs) ? docs : []))
         .catch(() => undefined);
-      AuthApi.getUsuariosPorRol('ADMIN')
+      UsuariosApi.opciones('resoluciones')
         .then((u) => vigente && setUsuarios(Array.isArray(u) ? u : []))
         .catch(() => undefined);
     })();
@@ -291,6 +290,10 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
   const tipo: TipoResolucion | null = r?.tipo ?? d.tipoCorrespondiente;
   const esRsg = tipo === 'RSG';
   const editable = !!r && r.estado === 'EN_ELABORACION' && !r.fechaEnvioFirma;
+  /** RSGSA por pago: hay un pago de la NC (o ya quedó fijado al enviar a firma). */
+  const esPagada = !!r && r.tipo === 'RSGSA' && (r.fechaEnvioFirma || r.estado !== 'EN_ELABORACION' ? r.concluidaPorPago : !!d?.pago);
+  const medidasSinLevantar = d?.medidasProvisionales.filter((m) => m.vigente) ?? [];
+  const extinguirSugerido = medidasSinLevantar.length > 0;
   const enFirma = !!r && r.estado === 'EN_ELABORACION' && !!r.fechaEnvioFirma;
   const firmada = r?.estado === 'EMITIDA' || r?.estado === 'NOTIFICADA';
   const ifiNotificado = d.ifi?.estado === 'NOTIFICADO';
@@ -368,61 +371,32 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
     );
   };
 
-  const guardarDescargoPosterior = (quitar = false) => {
-    const texto = quitar ? '' : descargoPostTexto.trim();
-    if (texto && !descargoPostFecha) return error('Ingresa la fecha real en que se presentó el descargo.');
-    if (texto && descargoPostFecha > hoy) return error('La fecha del descargo no puede ser futura.');
-    return ejecutar(
-      'descargoPost',
-      () => ResolucionesApi.registrarDescargoPosterior(expedienteId, texto, texto ? descargoPostFecha : null),
-      texto ? 'Descargo posterior registrado: el Word usará la plantilla "con descargo".' : 'Descargo posterior quitado.',
-      true,
-    );
-  };
-
   const descargarResolucion = () =>
     descargarDocumentoResolucion(expedienteId, d.numeroExpediente).catch((err: any) => error(err.message || 'No se pudo generar la resolución.'));
 
-  const descargarAmpliacion = () =>
-    descargarDocumentoAmpliacion(expedienteId, d.numeroExpediente).catch((err: any) => error(err.message || 'No se pudo generar la RSG de ampliación.'));
-
-  const emitirAmpliacion = async () => {
-    const ok = await confirm({
-      title: 'Emitir RSG de ampliación',
-      message: `Se inicia la RSG de ampliación de plazo: 3 meses más contados desde el fin de los 9 meses (${fechaCorta(plazos.fechaCaducidadOriginal)}), nuevo límite ${fechaCorta(plazos.fechaCaducidadConAmpliacion)}. Solo cuenta cuando se registre la firma, y tiene que firmarse antes del ${fechaCorta(plazos.fechaCaducidadOriginal)}.`,
-      confirmLabel: 'Emitir',
-    });
-    if (!ok) return;
-    await ejecutar('ampEmitir', () => ResolucionesApi.emitirAmpliacion(expedienteId), 'RSG de ampliación iniciada. Descarga el Word y llévalo a firma.');
-  };
-
-  const enviarAmpliacion = () => {
-    if (!ampFechaEnvio) return error('Ingresa la fecha real en que se entregó la RSG de ampliación al Subgerente.');
-    if (ampFechaEnvio > hoy) return error('La fecha de envío no puede ser futura.');
-    return ejecutar('ampEnviar', () => ResolucionesApi.enviarAmpliacionAFirma(expedienteId, ampFechaEnvio), 'Envío a firma de la ampliación registrado.');
-  };
-
-  const firmarAmpliacion = async () => {
-    if (!ampFechaFirma) return error('Ingresa la fecha real en que firmó el Subgerente la ampliación.');
-    if (ampFechaFirma > hoy) return error('La fecha de firma no puede ser futura.');
-    const numero = ampNumero.trim();
-    const ok = await confirm({
-      title: 'Registrar firma de la ampliación',
-      message: `Se registrará la firma del ${fechaCorta(ampFechaFirma)}${numero ? ` — Resolución N° ${numero}` : ' (sin N°)'}. Desde ahí el plazo de caducidad pasa al ${fechaCorta(plazos.fechaCaducidadConAmpliacion)}.`,
-      confirmLabel: 'Registrar firma',
-    });
-    if (!ok) return;
-    await ejecutar('ampFirmar', () => ResolucionesApi.firmarAmpliacion(expedienteId, ampFechaFirma, numero || undefined), 'Firma de la ampliación registrada.');
-  };
-
-  const notificarAmpliacion = () => {
-    if (!ampFechaNotificacion) return error('Ingresa la fecha real de notificación de la ampliación.');
-    if (ampFechaNotificacion > hoy) return error('La fecha de notificación no puede ser futura.');
-    return ejecutar('ampNotificar', () => ResolucionesApi.notificarAmpliacion(expedienteId, ampFechaNotificacion), 'Notificación de la ampliación registrada.');
-  };
-
   const generarAntecedentes = () =>
     ejecutar('antecedentes', () => ResolucionesApi.generarSeccionAutomatica(expedienteId), 'Antecedentes generados desde el IFI.');
+
+  /** RSGSA por pago: carga el texto modelo del análisis (pide confirmar si ya hay texto). */
+  const cargarTextoModeloPago = async () => {
+    if (analisis.trim()) {
+      const ok = await confirm({
+        title: 'Reemplazar el análisis',
+        message: 'Ya hay texto escrito. ¿Reemplazarlo por el texto modelo del pago?',
+        confirmLabel: 'Reemplazar',
+      });
+      if (!ok) return;
+    }
+    try {
+      const { analisis: texto } = await ResolucionesApi.textoModeloPago(expedienteId);
+      setAnalisis(texto);
+    } catch (err: any) {
+      error(err.message || 'No se pudo cargar el texto modelo.');
+    }
+  };
+
+  const guardarDecisionPago = (imponer: boolean, extinguir: boolean | null) =>
+    ejecutar('decision-pago', () => ResolucionesApi.decisionPago(expedienteId, imponer, extinguir), 'Medidas de la resolución por pago guardadas.');
 
   const guardarAnalisis = () => {
     if (!analisis.trim()) return error(esRsg ? 'Redacta el desarrollo de la RSG antes de guardar.' : 'Redacta el análisis antes de guardar.');
@@ -621,43 +595,25 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
     });
   }
 
-  // Descargo presentado después del IFI (opcional)
+  // O3: descargos del administrado (varios, antes o después del IFI, hasta la
+  // resolución). Con alguno registrado, el Word usa la plantilla "con descargo".
   pasos.push({
-    clave: 'descargoPost',
-    titulo: 'Descargo recibido después del IFI (opcional)',
-    estado: r?.descargoPosteriorTexto ? 'completado' : editable ? 'opcional' : 'pendiente',
-    descripcion: !r ? (
-      <Muted>Disponible después de iniciar la resolución.</Muted>
-    ) : r.descargoPosteriorTexto ? (
-      <Hecho>Presentado el {fechaCorta(r.descargoPosteriorFecha)}. El Word usa la plantilla "con descargo": rebátelo en el análisis.</Hecho>
-    ) : (
-      <Muted>
-        El administrado puede presentar descargo hasta antes de la resolución; se evalúa en ella. Si llegó, regístralo (fecha real +
-        resumen) y el Word usará la plantilla "con descargo". El escrito se puede subir como adjunto en el IFI.
-      </Muted>
-    ),
-    contenido: !r ? undefined : conForm('descargoPost', !!r.descargoPosteriorTexto) ? (
-      <div>
-        <div className="w-[220px]">
-          <Input type="date" label="Fecha de presentación" value={descargoPostFecha} max={hoy} onChange={(e) => setDescargoPostFecha(e.target.value)} />
-        </div>
-        <Textarea label="Resumen del descargo" value={descargoPostTexto} onChange={(e) => setDescargoPostTexto(e.target.value)} rows={5} />
-        <Button size="sm" variant="outline" loading={accionEnCurso === 'descargoPost'} onClick={() => guardarDescargoPosterior()}>
-          Guardar descargo
-        </Button>
-        {r.descargoPosteriorTexto && (
-          <Button size="sm" variant="secondary" className="ml-[8px]!" onClick={() => guardarDescargoPosterior(true)}>
-            Quitar
-          </Button>
-        )}
-        {botonCancelar('descargoPost', !!r.descargoPosteriorTexto)}
-      </div>
-    ) : r.descargoPosteriorTexto ? (
-      <div>
-        <div className={estiloTextoLargo}>{r.descargoPosteriorTexto}</div>
-        {botonEditar('descargoPost')}
-      </div>
-    ) : undefined,
+    clave: 'descargos',
+    titulo: 'Descargos del administrado',
+    estado: d.cantidadDescargos > 0 ? 'completado' : editable ? 'opcional' : 'pendiente',
+    descripcion:
+      d.cantidadDescargos > 0 ? (
+        <Hecho>
+          {d.cantidadDescargos} descargo{d.cantidadDescargos === 1 ? '' : 's'} registrado{d.cantidadDescargos === 1 ? '' : 's'}. El Word usa la
+          plantilla "con descargo": rebátelos en el análisis.
+        </Hecho>
+      ) : (
+        <Muted>
+          El administrado puede presentar descargos hasta antes de la resolución; se evalúan en ella. Regístralos con su fecha real, resumen y el
+          PDF del SGD.
+        </Muted>
+      ),
+    contenido: <DescargosLista expedienteId={expedienteId} onCambio={() => recargar(false)} />,
   });
 
   // Análisis (RSGSA) / Desarrollo extenso (RSG)
@@ -684,10 +640,18 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
             Motivo del vicio registrado en el IFI: {d.ifi.motivoVicioTrascendente}
           </Alert>
         )}
-        <Textarea
+        {esPagada && (
+          <div className="flex items-center justify-between gap-[8px] flex-wrap mb-[6px]">
+            <span className="text-[12px] text-text-muted">Texto del modelo "RSGSA pagada" con el monto y el sistema del pago registrado.</span>
+            <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={cargarTextoModeloPago}>
+              Cargar texto modelo del pago
+            </Button>
+          </div>
+        )}
+        <EditorTextoEnriquecido
           value={analisis}
-          onChange={(e) => setAnalisis(e.target.value)}
-          rows={esRsg ? 12 : 8}
+          onChange={setAnalisis}
+          alto={esRsg ? 'lg' : 'md'}
           placeholder={esRsg ? 'Desarrollo de la RSG a favor del administrado…' : 'Análisis y fundamentación de la sanción…'}
         />
         <Button
@@ -703,7 +667,7 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
       </div>
     ) : r.analisisTexto ? (
       <div>
-        <div className={estiloTextoLargo}>{r.analisisTexto}</div>
+        <VistaTextoEnriquecido className={estiloTextoLargo} texto={r.analisisTexto} />
         {botonEditar('analisis')}
       </div>
     ) : undefined,
@@ -827,6 +791,59 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
         </div>
       ) : undefined,
     });
+    // RSGSA por pago: las medidas dependen del administrado — las decide el abogado.
+    if (esPagada && r) {
+      const imponer = r.pagoImponerMedidaComplementaria;
+      const extinguir = r.pagoExtinguirMedidaProvisional ?? extinguirSugerido;
+      pasos.push({
+        clave: 'medidas-pago',
+        titulo: 'Medidas en la resolución por pago',
+        estado: 'opcional',
+        descripcion: (
+          <Muted>
+            Dependen de lo que hizo el administrado (subsanó, retiró, regularizó…). Los modelos no imponen la medida complementaria; la medida
+            provisional se da por extinguida solo si sigue sin levantarse.
+          </Muted>
+        ),
+        contenido: (
+          <div className="flex flex-col gap-[8px]">
+            <label className={`flex items-start gap-[8px] text-[13px] ${editable && r.medidaComplementaria ? 'cursor-pointer' : 'opacity-60'}`}>
+              <input
+                type="checkbox"
+                className="mt-[3px]"
+                checked={imponer}
+                disabled={!editable || !r.medidaComplementaria || accionEnCurso === 'decision-pago'}
+                onChange={(e) => guardarDecisionPago(e.target.checked, r.pagoExtinguirMedidaProvisional)}
+              />
+              <span>
+                Imponer la medida complementaria{r.medidaComplementaria ? ` de ${r.medidaComplementaria}` : ''}
+                {!r.medidaComplementaria && <span className="text-text-muted"> (primero registra la medida complementaria)</span>}
+              </span>
+            </label>
+            <label className={`flex items-start gap-[8px] text-[13px] ${editable ? 'cursor-pointer' : 'opacity-60'}`}>
+              <input
+                type="checkbox"
+                className="mt-[3px]"
+                checked={extinguir}
+                disabled={!editable || accionEnCurso === 'decision-pago'}
+                onChange={(e) => guardarDecisionPago(imponer, e.target.checked)}
+              />
+              <span>
+                Dar por extinguida la medida provisional
+                <span className="block text-[11px] text-text-muted">
+                  {medidasSinLevantar.length > 0
+                    ? `Sin levantar: ${medidasSinLevantar.map((m) => `${m.tipoMedida} (Acta N°${m.numeroCorrelativo})`).join(', ')}.`
+                    : d.medidasProvisionales.length > 0
+                      ? 'Las medidas provisionales de este expediente ya se levantaron.'
+                      : 'Este expediente no tiene medida provisional.'}
+                  {r.pagoExtinguirMedidaProvisional === null ? ' (sugerido por el sistema)' : ''}
+                </span>
+              </span>
+            </label>
+          </div>
+        ),
+      });
+    }
   } else {
     // 3. Retiro de la multa del estado de cuenta (solo RSG)
     const retiro = r?.tareaRetiroEstadoCuenta;
@@ -1056,6 +1073,21 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
       )}
       {errorCarga && <Alert type="error">{errorCarga}</Alert>}
 
+      {/* F1: aviso si una medida provisional se levantó o tiene solicitud en evaluación (solo informa). */}
+      <AvisoLevantamientoMedidas expedienteId={expedienteId} />
+      {/* F2: expediente caducado o con el plazo de caducidad vencido. */}
+      <AvisoCaducidadExpediente expedienteId={expedienteId} />
+      {/* F4: devuelto por coactiva. */}
+      <AvisoCoactivaExpediente expedienteId={expedienteId} />
+      <AvisoRetroaccion expedienteId={expedienteId} />
+      {/* Licencia e ITSE del administrado (bases municipales): ¿subsanó? */}
+      <FichaBasesMunicipales expedienteId={expedienteId} compacta />
+
+      {/* O2: corrección de error material del administrado (trazable), hasta la firma de la resolución. */}
+      <section className="mb-[20px]">
+        <CorreccionMaterialSeccion expedienteId={expedienteId} onCorregido={() => recargar(false)} />
+      </section>
+
       {/* 1. RESUMEN */}
       <section className="mb-[20px]">
         <div className={estiloTituloSeccion}>Resumen</div>
@@ -1067,12 +1099,27 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
                 {NOMBRE_TIPO[tipo]}
               </Badge>
               <Badge variant={varianteEtapa(d)}>{labelEtapa({ ...d, resolucionId: r?.id ?? null })}</Badge>
+              <PagadoBadge tienePago={!!d.pago} montoPagado={d.pago?.montoPagado} fechaPago={d.pago?.fechaPago} />
               {d.ifi?.archivoPorVicio && <span className="text-[12px] text-[#be123c] font-semibold">Archivo por error de fondo (vicio trascendente)</span>}
             </div>
             <div className="text-[12px] text-text-secondary">
               {EXPLICACION_TIPO[tipo]} Sugerido por el IFI; el abogado puede decidir distinto escribiendo el motivo.
               {r?.enParte ? ' Decisión: sancionar en parte (sin medida complementaria).' : ''}
             </div>
+          </div>
+        )}
+
+        {esPagada && d.pago && (
+          <Alert type="success">
+            <strong>El administrado pagó {montoTexto(d.pago.montoPagado)} el {fechaCorta(d.pago.fechaPago)}.</strong> Corresponde la RSGSA por pago:
+            declara la infracción, tiene la multa por cancelada, concluye y archiva el PAS. No cabe recurso (art. 69.2 Ord. 464) y no pasa a
+            Recursos ni a Acto firme. El Word no lleva el cuadro de multa ni el descuento.
+          </Alert>
+        )}
+
+        {!tipo && d.pago && (
+          <div className="mb-[10px]">
+            <PagadoBadge tienePago montoPagado={d.pago.montoPagado} fechaPago={d.pago.fechaPago} size="md" />
           </div>
         )}
 
@@ -1141,7 +1188,15 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
                 )}
               </div>
               {plazos.diasEnFirma !== null && (
-                <div>
+                <div
+                  className={
+                    varianteDiasEnFirma(plazos.diasEnFirma) === 'danger'
+                      ? 'text-[#be123c] font-semibold'
+                      : varianteDiasEnFirma(plazos.diasEnFirma) === 'warning'
+                        ? 'text-[#b45309] font-semibold'
+                        : ''
+                  }
+                >
                   En firma hace <strong>{plazos.diasEnFirma}</strong> día{plazos.diasEnFirma === 1 ? '' : 's'} (desde el {fechaCorta(r?.fechaEnvioFirma)})
                 </div>
               )}
@@ -1152,13 +1207,17 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
 
       {/* AMPLIACIÓN DE PLAZO (RSG intermedia, opcional) */}
       {(d.ampliacion || (plazos.fechaCaducidadOriginal && r?.estado !== 'NOTIFICADA')) && (
-        <TarjetaAmpliacion
-          d={d}
-          hoy={hoy}
-          accionEnCurso={accionEnCurso}
-          fechas={{ ampFechaEnvio, ampFechaFirma, ampNumero, ampFechaNotificacion }}
-          setters={{ setAmpFechaEnvio, setAmpFechaFirma, setAmpNumero, setAmpFechaNotificacion }}
-          acciones={{ emitirAmpliacion, enviarAmpliacion, firmarAmpliacion, notificarAmpliacion, descargarAmpliacion }}
+        <AmpliacionPlazoCard
+          expedienteId={expedienteId}
+          numeroExpediente={d.numeroExpediente}
+          plazos={plazos}
+          ampliacion={d.ampliacion}
+          resolucionNotificada={r?.estado === 'NOTIFICADA'}
+          onMensaje={setMensaje}
+          onCambio={async () => {
+            await recargar(false);
+            onCambio();
+          }}
         />
       )}
 
@@ -1167,17 +1226,19 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
         <div className={estiloTituloSeccion}>Documentos del expediente</div>
         <div className="border border-border rounded-[8px] overflow-hidden">
           {d.tieneActaFiscalizacion && (
-            <FilaDocumento titulo="Acta de Fiscalización (Word)">
+            <FilaDocumento titulo="Acta de Fiscalización">
               <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={() => descargarDocumentoWord(d.intervencionId, 'FISCALIZACION')}>
                 Descargar
               </Button>
+              <BotonesVerFoto fotos={fotos} actaTipo="ACTA_FISCALIZACION" onVer={abrirDocumento} />
             </FilaDocumento>
           )}
           {d.tieneNotificacionCargo && (
-            <FilaDocumento titulo="Notificación de Cargo (Excel)">
+            <FilaDocumento titulo="Notificación de Cargo">
               <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={() => descargarDocumentoWord(d.intervencionId, 'NOTIFICACION_CARGO')}>
                 Descargar
               </Button>
+              <BotonesVerFoto fotos={fotos} actaTipo="NOTIFICACION_CARGO" onVer={abrirDocumento} />
             </FilaDocumento>
           )}
           {d.medidasProvisionales.map((m) => (
@@ -1192,7 +1253,9 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
               </Button>
             </FilaDocumento>
           ))}
-          {fotos.map((f, i) => (
+          {fotos
+            .filter((f) => !(f.actaTipo === 'ACTA_FISCALIZACION' && d.tieneActaFiscalizacion) && !(f.actaTipo === 'NOTIFICACION_CARGO' && d.tieneNotificacionCargo))
+            .map((f, i) => (
             <FilaDocumento key={f.id} titulo={f.actaTipo ? LABEL_FOTO_ACTA[f.actaTipo] ?? `Foto (${f.actaTipo})` : `Foto de la intervención ${i + 1}`}>
               <Button size="sm" variant="outline" icon={<EyeIcon size={14} />} onClick={() => abrirDocumento(f.id)}>
                 Ver
@@ -1213,17 +1276,6 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
               </Button>
             </FilaDocumento>
           ))}
-          {d.ifi?.recibioDescargo && (
-            <FilaDocumento
-              titulo="Descargo del administrado (texto)"
-              detalle={d.ifi.fechaRecepcionDescargo ? `Recibido el ${fechaCorta(d.ifi.fechaRecepcionDescargo)}` : undefined}
-              expandido={verDescargo ? <div className={estiloTextoLargo}>{d.ifi.descargoTexto?.trim() || 'Sin texto registrado.'}</div> : undefined}
-            >
-              <Button size="sm" variant="outline" icon={<EyeIcon size={14} />} onClick={() => setVerDescargo((v) => !v)}>
-                {verDescargo ? 'Ocultar' : 'Ver'}
-              </Button>
-            </FilaDocumento>
-          )}
           {r && (
             <FilaDocumento
               titulo="La resolución: antecedentes y análisis redactados (texto)"
@@ -1238,7 +1290,7 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
                     )}
                     <div>
                       <div className="font-bold text-[12px] mb-[4px]">{esRsg ? 'Desarrollo' : 'Análisis'}</div>
-                      {r.analisisTexto ? <div className={estiloTextoLargo}>{r.analisisTexto}</div> : <Muted>Todavía no redactado.</Muted>}
+                      {r.analisisTexto ? <VistaTextoEnriquecido className={estiloTextoLargo} texto={r.analisisTexto} /> : <Muted>Todavía no redactado.</Muted>}
                     </div>
                   </div>
                 ) : undefined
@@ -1269,130 +1321,6 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
 // ============================================================================
 // Piezas
 // ============================================================================
-
-const TarjetaAmpliacion: React.FC<{
-  d: ResolucionDetalle;
-  hoy: string;
-  accionEnCurso: string | null;
-  fechas: { ampFechaEnvio: string; ampFechaFirma: string; ampNumero: string; ampFechaNotificacion: string };
-  setters: {
-    setAmpFechaEnvio: (v: string) => void;
-    setAmpFechaFirma: (v: string) => void;
-    setAmpNumero: (v: string) => void;
-    setAmpFechaNotificacion: (v: string) => void;
-  };
-  acciones: {
-    emitirAmpliacion: () => void;
-    enviarAmpliacion: () => void;
-    firmarAmpliacion: () => void;
-    notificarAmpliacion: () => void;
-    descargarAmpliacion: () => void;
-  };
-}> = ({ d, hoy, accionEnCurso, fechas, setters, acciones }) => {
-  const p = d.plazos;
-  const a = d.ampliacion;
-  const finNueve = soloFechaIso(p.fechaCaducidadOriginal);
-  const nueveVencidos = !!finNueve && hoy >= finNueve;
-  const fila = 'flex gap-[12px] items-end flex-wrap mt-[8px]';
-  return (
-    <section className="mb-[20px]">
-      <div className={estiloTituloSeccion}>Ampliación de plazo (RSG)</div>
-      <div
-        className={`${estiloBloque} ${p.alertaAmpliacion ? 'bg-[#fff1f2]! border-[#fda4af]!' : ''}`}
-      >
-        <div className="text-[12px] mb-[6px]">
-          Da 3 meses más, contados desde que vencen los 9 meses ({fechaCorta(p.fechaCaducidadOriginal)}): nuevo límite{' '}
-          <strong>{fechaCorta(p.fechaCaducidadConAmpliacion)}</strong>. Es opcional y solo se puede emitir y firmar antes del{' '}
-          {fechaCorta(p.fechaCaducidadOriginal)}. Cuenta desde que se registra la firma.
-        </div>
-        {p.alertaAmpliacion && (
-          <div className="text-[#be123c] font-bold text-[12px] mb-[6px]">
-            Faltan {p.diasParaCaducidad} días para caducar y no hay resolución final firmada. El Subgerente tarda 12 a 15 días en firmar.
-          </div>
-        )}
-        {!a ? (
-          nueveVencidos ? (
-            <Muted>Ya vencieron los 9 meses: no se puede ampliar.</Muted>
-          ) : (
-            <Button size="sm" variant={p.alertaAmpliacion ? 'danger' : 'outline'} loading={accionEnCurso === 'ampEmitir'} onClick={acciones.emitirAmpliacion}>
-              Emitir RSG de ampliación
-            </Button>
-          )
-        ) : (
-          <div className="text-[12px]">
-            <div className="flex gap-[8px] items-center flex-wrap">
-              <Badge variant={a.estado === 'NOTIFICADA' ? 'neutral' : a.estado === 'EMITIDA' ? 'success' : a.fechaEnvioFirma ? 'purple' : 'info'}>
-                {a.estado === 'NOTIFICADA' ? 'Notificada' : a.estado === 'EMITIDA' ? 'Firmada, falta notificar' : a.fechaEnvioFirma ? 'En firma' : 'En elaboración'}
-              </Badge>
-              <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={acciones.descargarAmpliacion}>
-                Descargar RSG de ampliación (Word)
-              </Button>
-            </div>
-            {a.fechaEnvioFirma && <div className="mt-[6px]">Entregada al Subgerente el {fechaCorta(a.fechaEnvioFirma)}.</div>}
-            {a.fechaFirma && (
-              <div>
-                Firmada el {fechaCorta(a.fechaFirma)}
-                {a.numeroResolucion ? ` — Resolución N° ${a.numeroResolucion}` : ' (sin N° registrado)'}.
-              </div>
-            )}
-            {a.fechaNotificacion && <div>Notificada el {fechaCorta(a.fechaNotificacion)}.</div>}
-
-            {a.estado === 'EN_ELABORACION' && !a.fechaEnvioFirma && !nueveVencidos && (
-              <div className={fila}>
-                <div className="w-[220px]">
-                  <Input type="date" label="Fecha de entrega al Subgerente" value={fechas.ampFechaEnvio} max={hoy} onChange={(e) => setters.setAmpFechaEnvio(e.target.value)} />
-                </div>
-                <Button size="sm" icon={<PenToolIcon size={14} />} loading={accionEnCurso === 'ampEnviar'} onClick={acciones.enviarAmpliacion} className="mb-[14px]!">
-                  Registrar envío a firma
-                </Button>
-              </div>
-            )}
-            {a.estado === 'EN_ELABORACION' && a.fechaEnvioFirma && !nueveVencidos && (
-              <div className={fila}>
-                <div className="w-[200px]">
-                  <Input
-                    type="date"
-                    label="Fecha de firma"
-                    value={fechas.ampFechaFirma}
-                    min={soloFechaIso(a.fechaEnvioFirma)}
-                    max={hoy}
-                    onChange={(e) => setters.setAmpFechaFirma(e.target.value)}
-                  />
-                </div>
-                <div className="flex-1 min-w-[200px]">
-                  <Input label="N° de resolución (opcional)" placeholder="Tal como figura en el papel" value={fechas.ampNumero} onChange={(e) => setters.setAmpNumero(e.target.value)} />
-                </div>
-                <Button size="sm" variant="success" loading={accionEnCurso === 'ampFirmar'} onClick={acciones.firmarAmpliacion} className="mb-[14px]!">
-                  Registrar firma
-                </Button>
-              </div>
-            )}
-            {a.estado === 'EN_ELABORACION' && nueveVencidos && (
-              <div className="text-[#be123c] mt-[6px]">Vencieron los 9 meses sin firmarse la ampliación: ya no se puede registrar.</div>
-            )}
-            {a.estado === 'EMITIDA' && (
-              <div className={fila}>
-                <div className="w-[220px]">
-                  <Input
-                    type="date"
-                    label="Fecha de notificación"
-                    value={fechas.ampFechaNotificacion}
-                    min={soloFechaIso(a.fechaFirma)}
-                    max={hoy}
-                    onChange={(e) => setters.setAmpFechaNotificacion(e.target.value)}
-                  />
-                </div>
-                <Button size="sm" variant="success" loading={accionEnCurso === 'ampNotificar'} onClick={acciones.notificarAmpliacion} className="mb-[14px]!">
-                  Registrar notificación
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </section>
-  );
-};
 
 const FilaDocumento: React.FC<{ titulo: string; detalle?: string; expandido?: React.ReactNode; children: React.ReactNode }> = ({
   titulo,
@@ -1474,4 +1402,17 @@ const Stepper: React.FC<{ pasos: StepDef[] }> = ({ pasos }) => (
       </div>
     ))}
   </div>
+);
+
+/** "Ver" de la foto del acta física, en la misma fila que su documento. */
+const BotonesVerFoto: React.FC<{ fotos: { id: string; actaTipo: string | null }[]; actaTipo: string; onVer: (id: string) => void }> = ({ fotos, actaTipo, onVer }) => (
+  <>
+    {fotos
+      .filter((f) => f.actaTipo === actaTipo)
+      .map((f) => (
+        <Button key={f.id} size="sm" variant="outline" icon={<EyeIcon size={14} />} onClick={() => onVer(f.id)} className="ml-[6px]!">
+          Ver
+        </Button>
+      ))}
+  </>
 );
