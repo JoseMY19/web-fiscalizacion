@@ -38,7 +38,6 @@ export const EntradasTab: React.FC = () => {
   const navigate = useNavigate();
   const [busqueda, setBusqueda] = useState('');
   const [items, setItems] = useState<DocumentoControl[] | null>(null);
-  const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mensaje, setMensaje] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -54,15 +53,12 @@ export const EntradasTab: React.FC = () => {
 
   const cargar = useCallback(async (q: string) => {
     const pedido = ++pedidoActual.current;
-    setCargando(true);
     setError(null);
     try {
       const res = await ControlDocumentarioApi.entradas(q);
       if (pedido === pedidoActual.current) setItems(Array.isArray(res) ? res : []);
     } catch (err: any) {
       if (pedido === pedidoActual.current) setError(err.message || 'No se pudieron cargar los documentos de entrada.');
-    } finally {
-      if (pedido === pedidoActual.current) setCargando(false);
     }
   }, []);
 
