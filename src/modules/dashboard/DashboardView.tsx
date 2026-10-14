@@ -3,48 +3,92 @@ import {
   ExpedientesApi,
   IfiApi,
   ResolucionesApi,
-  ConfiguracionApi,
 } from '../../api';
 import { Card, Button, Spinner } from '../../components/common/Common';
-import {
-  ExpedienteIcon,
-  FileTextIcon,
-  GavelIcon,
-  ClockIcon,
-  ArrowRightIcon,
-  RefreshCwIcon,
-} from '../../components/icons/Icons';
+import { PageHeader } from '../../components/common/PageKit';
+import { ChevronRightIcon, RefreshCwIcon } from '../../components/icons/Icons';
 import { NavModule } from '../../components/layout/AppLayout';
+import { varianteDiasEnFirma } from '../resoluciones/resolucionUi';
+import { AtencionRequerida } from '../alertas/AtencionRequerida';
+import { useAlertas } from '../alertas/AlertasContext';
+import { cn } from '../../lib/cn';
 
 interface DashboardViewProps {
   onNavigate: (module: NavModule) => void;
 }
 
+/** Recorrido del expediente; cada paso lleva a su módulo (Campo es la app móvil, sin pantalla aquí). */
+const RECORRIDO: { paso: string; titulo: string; detalle: string; modulo?: NavModule }[] = [
+  { paso: '1', titulo: 'Campo', detalle: 'Actas y notificación de cargo' },
+  { paso: '2', titulo: 'Validación', detalle: 'Revisión de que esté completo', modulo: 'expedientes' },
+  { paso: '3', titulo: 'Notificación', detalle: 'Cédulas domiciliarias', modulo: 'notificaciones' },
+  { paso: '4', titulo: 'Instrucción', detalle: 'Descargos e informe final', modulo: 'ifi' },
+  { paso: '5', titulo: 'Resolución', detalle: 'RSG / RSGSA', modulo: 'resoluciones' },
+  { paso: '6', titulo: 'Recursos', detalle: 'Reconsideración y apelación', modulo: 'recursos' },
+  { paso: '7', titulo: 'Cobranza', detalle: 'Acto firme y coactiva', modulo: 'coactiva-pagos' },
+];
+
+/** Una fila de la lista de bandejas: nombre, qué espera y cuántos hay. */
+const FilaBandeja: React.FC<{
+  titulo: string;
+  detalle: string;
+  cantidad: number;
+  cargando: boolean;
+  destacada?: boolean;
+  extra?: React.ReactNode;
+  onClick: () => void;
+}> = ({ titulo, detalle, cantidad, cargando, destacada, extra, onClick }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="group w-full flex-1 flex items-center gap-[12px] py-[14px] px-[4px] bg-transparent border-0 border-b border-b-border-subtle last:border-b-0 text-left cursor-pointer [transition:background-color_120ms_ease] hover:bg-bg-subtle"
+  >
+    <span className="min-w-0 flex-1">
+      <span className="block text-[13.5px] font-semibold text-text-main">{titulo}</span>
+      <span className="block text-[12px] text-text-muted mt-[2px]">{detalle}</span>
+      {extra}
+    </span>
+    <span className={cn('text-[24px] font-extrabold tabular-nums leading-none', destacada ? 'text-danger' : 'text-midnight-900')}>
+      {cargando ? <Spinner size={20} /> : cantidad}
+    </span>
+    <span className="text-text-light [transition:transform_120ms_ease] group-hover:translate-x-[2px] group-hover:text-text-muted">
+      <ChevronRightIcon size={18} />
+    </span>
+  </button>
+);
+
 export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
   const [loading, setLoading] = useState(true);
+  // Alertas vencidas o críticas (centro de alertas, mismo origen que la campana).
+  const { resumen } = useAlertas();
+  const alertasCriticas = resumen?.criticas ?? 0;
   const [stats, setStats] = useState({
     pendientesValidacion: 0,
     pendientesIfi: 0,
     pendientesResolucion: 0,
-    enRiesgo: 0,
+    // O5: resoluciones entregadas al Subgerente y la más antigua en firma.
+    porFirmar: 0,
+    maxDiasEnFirma: 0,
   });
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [exp, ifi, res, riesgo] = await Promise.allSettled([
+      const [exp, ifi, res] = await Promise.allSettled([
         ExpedientesApi.getPendientes(),
         IfiApi.getPendientes(),
-        ResolucionesApi.getPendientes(),
-        ConfiguracionApi.getExpedientesEnRiesgo(),
+        ResolucionesApi.getBandeja(),
       ]);
+      const porFirmar = res.status === 'fulfilled' ? (res.value?.porFirmar ?? []) : [];
 
       setStats({
         pendientesValidacion: exp.status === 'fulfilled' && Array.isArray(exp.value) ? exp.value.length : 0,
         pendientesIfi:
           ifi.status === 'fulfilled' && ifi.value?.pendientes ? ifi.value.pendientes.length : 0,
-        pendientesResolucion: res.status === 'fulfilled' && Array.isArray(res.value) ? res.value.length : 0,
-        enRiesgo: riesgo.status === 'fulfilled' && Array.isArray(riesgo.value) ? riesgo.value.length : 0,
+        pendientesResolucion:
+          res.status === 'fulfilled' && res.value ? (res.value.enRedaccion?.length ?? 0) + (res.value.porFirmar?.length ?? 0) : 0,
+        porFirmar: porFirmar.length,
+        maxDiasEnFirma: porFirmar.reduce((m, f) => Math.max(m, f.plazos?.diasEnFirma ?? 0), 0),
       });
     } finally {
       setLoading(false);
@@ -55,214 +99,103 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
     loadData();
   }, []);
 
+  const colorFirma = varianteDiasEnFirma(stats.maxDiasEnFirma) === 'danger' ? 'text-danger' : varianteDiasEnFirma(stats.maxDiasEnFirma) === 'warning' ? 'text-warning' : 'text-text-muted';
+
   return (
     <div>
-      {/* Welcome Banner in Midnight Blue */}
-      <div
-        className="bg-[linear-gradient(135deg,#163666_0%,#0f264c_100%)] rounded-lg p-[32px] text-[#ffffff] mb-[28px] flex items-center justify-between shadow-[0_10px_25px_-5px_rgba(22,54,102,0.25)] border border-[rgba(255,255,255,0.08)]"
-      >
-        <div className="max-w-[650px]">
-          <div className="flex items-center gap-[12px] mb-[12px]">
-            <img
-              src="/logo-sjl-white.png"
-              alt="MDSJL"
-              className="h-[34px] w-auto object-contain"
-            />
-            <span
-              className="text-[11px] font-bold uppercase tracking-[1px] text-[#38bdf8] bg-[rgba(56,189,248,0.12)] py-[2px] px-[8px] rounded-[4px]"
-            >
-              Control Operativo PAS
-            </span>
-          </div>
-          <h2 className="text-[24px] font-extrabold mb-[8px] text-[#ffffff]">
-            Procedimiento Administrativo Sancionador
-          </h2>
-          <p className="text-[13px] text-[#cbd5e1] leading-[1.5]">
-            Monitoreo en tiempo real del ciclo sancionador municipal: validación formal de actas,
-            cédulas de notificación, fase instructora, emisión de resoluciones, impugnaciones y cobranza coactiva.
-          </p>
-        </div>
-        <div>
-          <Button
-            variant="secondary"
-            icon={<RefreshCwIcon size={16} />}
-            loading={loading}
-            onClick={loadData}
-            className="bg-[rgba(255,255,255,0.1)]! text-[#ffffff]! border! border-[rgba(255,255,255,0.2)]!"
-          >
-            Actualizar Datos
+      <PageHeader
+        titulo="Panel Principal"
+        descripcion="Procedimiento Administrativo Sancionador: lo que requiere tu atención hoy y cuántos expedientes esperan en cada bandeja."
+        acciones={
+          <Button variant="secondary" icon={<RefreshCwIcon size={14} />} loading={loading} onClick={loadData}>
+            Actualizar
           </Button>
-        </div>
+        }
+      />
+
+      {/* Lo urgente, ancho; al lado, el conteo de cada bandeja. */}
+      <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-[24px] items-stretch mb-[32px] max-lg:grid-cols-1">
+        {/* Centro de alertas: lo más urgente de todos los expedientes. */}
+        <AtencionRequerida onNavigate={onNavigate} />
+
+        <section className="flex flex-col min-h-[460px] bg-bg-card rounded-md border border-border shadow-sm overflow-hidden">
+          <div className="py-[16px] px-[20px] border-b border-b-border bg-[#fafbfc]">
+            <h3 className="text-[15px] font-bold text-text-main">Bandejas</h3>
+            <p className="text-[12px] text-text-muted mt-[2px]">Expedientes esperando una acción</p>
+          </div>
+          <div className="flex-1 flex flex-col p-[20px]">
+            <div className="flex-1 flex flex-col -my-[6px]">
+              <FilaBandeja
+                titulo="Validación de expedientes"
+                detalle="Pendientes de revisar"
+                cantidad={stats.pendientesValidacion}
+                cargando={loading}
+                onClick={() => onNavigate('expedientes')}
+              />
+              <FilaBandeja
+                titulo="Instrucción e IFI"
+                detalle="Para descargos e informe final"
+                cantidad={stats.pendientesIfi}
+                cargando={loading}
+                onClick={() => onNavigate('ifi')}
+              />
+              <FilaBandeja
+                titulo="Resolución sancionadora"
+                detalle="Para redactar o firmar"
+                cantidad={stats.pendientesResolucion}
+                cargando={loading}
+                extra={
+                  !loading && stats.porFirmar > 0 ? (
+                    <span className={cn('block text-[12px] font-medium mt-[2px]', colorFirma)}>
+                      {stats.porFirmar} por firmar (la más antigua hace {stats.maxDiasEnFirma} día{stats.maxDiasEnFirma === 1 ? '' : 's'})
+                    </span>
+                  ) : undefined
+                }
+                onClick={() => onNavigate('resoluciones')}
+              />
+              <FilaBandeja
+                titulo="Alertas críticas"
+                detalle="Vencidas o por vencer pronto"
+                cantidad={alertasCriticas}
+                cargando={loading}
+                destacada={alertasCriticas > 0}
+                onClick={() => onNavigate('alertas')}
+              />
+            </div>
+          </div>
+        </section>
       </div>
 
-      {/* KPI Cards Grid */}
-      <div
-        className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-[20px] mb-[32px]"
-      >
-        {/* KPI 1 */}
-        <Card className="relative! overflow-hidden!">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-[13px] font-semibold text-text-muted">
-                Validación de Expedientes
-              </p>
-              <h3 className="text-[32px] font-extrabold text-midnight-900 mt-[4px]">
-                {loading ? <Spinner size={24} /> : stats.pendientesValidacion}
-              </h3>
-              <p className="text-[12px] text-warning font-semibold mt-[4px]">
-                Pendientes de mesa de control
-              </p>
-            </div>
-            <div
-              className="w-[46px] h-[46px] rounded-[12px] bg-primary-50 text-primary-600 flex items-center justify-center"
-            >
-              <ExpedienteIcon size={24} />
-            </div>
-          </div>
-          <div className="mt-[16px] pt-[12px] border-t border-t-border">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onNavigate('expedientes')}
-              className="p-0! text-primary-600! text-[12px]!"
-            >
-              Ver expedientes pendientes <ArrowRightIcon size={14} />
-            </Button>
-          </div>
-        </Card>
-
-        {/* KPI 2 */}
-        <Card>
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-[13px] font-semibold text-text-muted">
-                En Fase de Instrucción
-              </p>
-              <h3 className="text-[32px] font-extrabold text-midnight-900 mt-[4px]">
-                {loading ? <Spinner size={24} /> : stats.pendientesIfi}
-              </h3>
-              <p className="text-[12px] text-info font-semibold mt-[4px]">
-                Para IFI / Descargos
-              </p>
-            </div>
-            <div
-              className="w-[46px] h-[46px] rounded-[12px] bg-info-bg text-info flex items-center justify-center"
-            >
-              <FileTextIcon size={24} />
-            </div>
-          </div>
-          <div className="mt-[16px] pt-[12px] border-t border-t-border">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onNavigate('ifi')}
-              className="p-0! text-info! text-[12px]!"
-            >
-              Ir a bandeja IFI <ArrowRightIcon size={14} />
-            </Button>
-          </div>
-        </Card>
-
-        {/* KPI 3 */}
-        <Card>
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-[13px] font-semibold text-text-muted">
-                Pendientes de Resolución
-              </p>
-              <h3 className="text-[32px] font-extrabold text-midnight-900 mt-[4px]">
-                {loading ? <Spinner size={24} /> : stats.pendientesResolucion}
-              </h3>
-              <p className="text-[12px] text-purple font-semibold mt-[4px]">
-                Emisión de RSG / RSGSA
-              </p>
-            </div>
-            <div
-              className="w-[46px] h-[46px] rounded-[12px] bg-purple-bg text-purple flex items-center justify-center"
-            >
-              <GavelIcon size={24} />
-            </div>
-          </div>
-          <div className="mt-[16px] pt-[12px] border-t border-t-border">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onNavigate('resoluciones')}
-              className="p-0! text-purple! text-[12px]!"
-            >
-              Ir a Resoluciones <ArrowRightIcon size={14} />
-            </Button>
-          </div>
-        </Card>
-
-        {/* KPI 4 */}
-        <Card>
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-[13px] font-semibold text-text-muted">
-                Expedientes en Riesgo
-              </p>
-              <h3 className={`text-[32px] font-extrabold mt-[4px] ${stats.enRiesgo > 0 ? 'text-danger' : 'text-success'}`}>
-                {loading ? <Spinner size={24} /> : stats.enRiesgo}
-              </h3>
-              <p className="text-[12px] text-text-muted font-semibold mt-[4px]">
-                Alerta de plazos / caducidad
-              </p>
-            </div>
-            <div
-              className={`w-[46px] h-[46px] rounded-[12px] flex items-center justify-center ${stats.enRiesgo > 0 ? 'bg-danger-bg' : 'bg-success-bg'} ${stats.enRiesgo > 0 ? 'text-danger' : 'text-success'}`}
-            >
-              <ClockIcon size={24} />
-            </div>
-          </div>
-          <div className="mt-[16px] pt-[12px] border-t border-t-border">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onNavigate('configuracion')}
-              className="p-0! text-danger! text-[12px]!"
-            >
-              Ver monitor de plazos <ArrowRightIcon size={14} />
-            </Button>
-          </div>
-        </Card>
-      </div>
-
-      {/* BPMN Pipeline Process Diagram */}
-      <Card
-        title="Flujo Operativo del Procedimiento Sancionador (BPMN 2.0)"
-        subtitle="Ruta crítica de los expedientes administrativos según la normativa vigente de San Juan de Lurigancho"
-      >
-        <div className="flex gap-[12px] overflow-x-auto pt-[8px] px-0 pb-[16px]">
-          {[
-            { step: 'SP1', title: 'Campo', desc: 'Actas y Notificación de Cargo', active: false },
-            { step: 'SP2', title: 'Validación', desc: 'Revisión formal y aprobación', active: true, mod: 'expedientes' as NavModule },
-            { step: 'SP3', title: 'Notificación', desc: 'Cédulas domiciliarias', active: false, mod: 'notificaciones' as NavModule },
-            { step: 'SP4', title: 'Instrucción', desc: 'Descargos y Planchazo IFI', active: true, mod: 'ifi' as NavModule },
-            { step: 'SP5', title: 'Resolución', desc: 'Emisión de RSG / RSGSA', active: true, mod: 'resoluciones' as NavModule },
-            { step: 'SP6/7', title: 'Recursos', desc: 'Reconsideración / Apelación GOP', active: false, mod: 'recursos' as NavModule },
-            { step: 'SP8', title: 'Coactiva', desc: 'Acto firme y cobranza de multas', active: false, mod: 'coactiva-pagos' as NavModule },
-          ].map((item, idx, arr) => (
-            <div
-              key={item.step}
-              onClick={() => item.mod && onNavigate(item.mod)}
-              className={`flex-[1_0_160px] p-[16px] rounded-md [transition:all_var(--transition-fast)] ${item.active ? 'bg-primary-50' : 'bg-[#f8fafc]'} ${item.active ? 'border border-primary-100' : 'border border-border'} ${item.mod ? 'cursor-pointer hover:-translate-y-[2px]' : 'cursor-default'}`}
-            >
-              <div className="flex items-center justify-between mb-[8px]">
-                <span
-                  className={`text-[11px] font-bold py-[2px] px-[8px] rounded-[4px] text-[#ffffff] ${item.active ? 'bg-primary-600' : 'bg-[#cbd5e1]'}`}
-                >
-                  {item.step}
+      {/* Recorrido del expediente (referencia rápida; cada paso abre su módulo) */}
+      <Card title="Recorrido del expediente" subtitle="De la intervención en campo hasta la cobranza">
+        <ol className="list-none m-0 p-0 grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-[8px]">
+          {RECORRIDO.map((p) => {
+            const contenido = (
+              <>
+                <span className="flex items-center gap-[8px]">
+                  <span className="w-[22px] h-[22px] rounded-full bg-bg-hover text-text-muted text-[11px] font-bold flex items-center justify-center shrink-0">{p.paso}</span>
+                  <span className="text-[13.5px] font-bold text-text-main">{p.titulo}</span>
                 </span>
-                {idx < arr.length - 1 && <span className="text-[#cbd5e1] text-[14px]">→</span>}
-              </div>
-              <h4 className="text-[14px] font-bold text-text-main mb-[4px]">
-                {item.title}
-              </h4>
-              <p className="text-[11px] text-text-muted">{item.desc}</p>
-            </div>
-          ))}
-        </div>
+                <span className="block text-[12px] text-text-muted mt-[6px] leading-[1.35]">{p.detalle}</span>
+              </>
+            );
+            return (
+              <li key={p.paso}>
+                {p.modulo ? (
+                  <button
+                    type="button"
+                    onClick={() => onNavigate(p.modulo as NavModule)}
+                    className="w-full h-full text-left rounded-sm border border-border bg-white p-[14px] cursor-pointer [transition:background-color_120ms_ease,border-color_120ms_ease] hover:bg-bg-subtle hover:border-border-dark"
+                  >
+                    {contenido}
+                  </button>
+                ) : (
+                  <div className="h-full rounded-sm border border-dashed border-border p-[14px]">{contenido}</div>
+                )}
+              </li>
+            );
+          })}
+        </ol>
       </Card>
     </div>
   );

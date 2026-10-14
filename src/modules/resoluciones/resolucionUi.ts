@@ -30,6 +30,10 @@ export const LABEL_FOTO_ACTA: Record<string, string> = {
   NOTIFICACION_CARGO: 'Foto de la Notificación de Cargo',
   ACTA_EXHORTACION: 'Foto del Acta de Exhortación',
   MEDIDA_PROVISIONAL: 'Foto del Acta de Medida Provisional',
+  ACTA_MEDIDA_PROVISIONAL: 'Foto del Acta de Medida Provisional',
+  ACTA_ADICIONAL: 'Foto del Acta Adicional',
+  ACTA_VALORIZACION_OBRA: 'Foto del Acta de Valorización de Obra',
+  MEDIDA_PROVISIONAL_EJECUCION: 'Foto de la medida provisional ejecutada',
 };
 
 /** Texto de la etapa para la fila de la bandeja / buscador. */
@@ -54,14 +58,17 @@ export function labelEtapa(e: Pick<ExpedienteResolucionItem, 'etapa' | 'plazos' 
   }
 }
 
-export function varianteEtapa(e: Pick<ExpedienteResolucionItem, 'etapa'>): 'warning' | 'info' | 'purple' | 'success' | 'neutral' {
+/** EN_FIRMA se pinta según los días en firma (O5): morado → ámbar (>5) → rojo (>10). */
+export function varianteEtapa(
+  e: Pick<ExpedienteResolucionItem, 'etapa'> & { plazos?: { diasEnFirma: number | null } },
+): 'warning' | 'info' | 'purple' | 'success' | 'neutral' | 'danger' {
   switch (e.etapa) {
     case 'ESPERANDO_DESCARGO_IFI':
       return 'warning';
     case 'EN_REDACCION':
       return 'info';
     case 'EN_FIRMA':
-      return 'purple';
+      return varianteDiasEnFirma(e.plazos?.diasEnFirma);
     case 'FIRMADA':
       return 'success';
     default:
@@ -74,4 +81,24 @@ export function textoCaducidad(dias: number | null): { texto: string; urgente: b
   if (dias === null) return null;
   if (dias < 0) return { texto: `Caducó hace ${-dias} día${dias === -1 ? '' : 's'}`, urgente: true };
   return { texto: `Caduca en ${dias} día${dias === 1 ? '' : 's'}`, urgente: dias < 30 };
+}
+
+/** O5: días en firma desde los que la fila se pinta ámbar / roja. */
+export const DIAS_FIRMA_AMBAR = 5;
+export const DIAS_FIRMA_ROJO = 10;
+
+/** O5: color del "En firma hace N días": morado normal, ámbar pasados 5 días, rojo pasados 10. */
+export function varianteDiasEnFirma(dias: number | null | undefined): 'purple' | 'warning' | 'danger' {
+  if (dias == null) return 'purple';
+  if (dias > DIAS_FIRMA_ROJO) return 'danger';
+  if (dias > DIAS_FIRMA_AMBAR) return 'warning';
+  return 'purple';
+}
+
+/** Días calendario desde una fecha de calendario (ej. fechaEnvioFirma) hasta hoy (Lima). null si no hay fecha. */
+export function diasDesde(iso: string | null | undefined): number | null {
+  if (!iso) return null;
+  const [a, m, d] = iso.slice(0, 10).split('-').map(Number);
+  const [ha, hm, hd] = hoyLocal().split('-').map(Number);
+  return Math.max(0, Math.round((Date.UTC(ha, hm - 1, hd) - Date.UTC(a, m - 1, d)) / 86_400_000));
 }

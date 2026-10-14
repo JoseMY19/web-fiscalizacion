@@ -1,4 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { puedeVerModulo as puedeVerModuloPermisos, puedeEditarModulo, PermisosUsuario } from '../../lib/permisos';
+import { AvisoSoloLectura } from '../common/AvisoSoloLectura';
+import { CampanaAlertas } from '../../modules/alertas/CampanaAlertas';
 import {
   DashboardIcon,
   ExpedienteIcon,
@@ -13,29 +16,44 @@ import {
   EyeIcon,
   BellIcon,
   MapPinIcon,
+  UnlockIcon,
+  ClockIcon,
+  XCircleIcon,
+  BuildingIcon,
+  ChevronRightIcon,
 } from '../icons/Icons';
 
 export type NavModule =
   | 'dashboard'
+  | 'alertas'
   | 'documentos'
   | 'expedientes'
   | 'consulta-campo'
   | 'notificaciones'
   | 'ifi'
   | 'resoluciones'
+  | 'caducidad'
   | 'recursos'
   | 'coactiva-pagos'
+  | 'coactiva'
+  | 'prescripcion'
+  | 'pagos'
   | 'cautelares'
+  | 'levantamientos'
   | 'mapa'
-  | 'configuracion';
+  | 'configuracion'
+  | 'usuarios';
 
 interface AppLayoutProps {
   currentModule: NavModule;
   onSelectModule: (mod: NavModule) => void;
-  user: { nombres: string; dni: string; rol: string } | null;
+  user: { nombres: string; dni: string; rol: string; rolNombre?: string; permisos?: PermisosUsuario } | null;
   onLogout: () => void;
+  onChangePassword?: () => void;
   children: React.ReactNode;
   badgeCounts?: Partial<Record<NavModule, number>>;
+  /** Contador secundario ámbar por módulo (ej. O5: resoluciones esperando la firma del Subgerente). */
+  badgeAlertas?: Partial<Record<NavModule, { count: number; title: string; icon?: React.ReactNode }>>;
 }
 
 interface NavItem {
@@ -54,54 +72,58 @@ interface NavItemConDef extends NavItem {
 // lo transversal (cautelares, consultas, documentos, mapa, configuración).
 const navItems: NavItemConDef[] = [
   { id: 'dashboard', label: 'Panel Principal', icon: <DashboardIcon size={18} /> },
+  // Centro de alertas: qué vence, en qué fase está cada expediente y el riesgo. Visible para todos (se filtra por permisos).
+  { id: 'alertas', label: 'Alertas y Plazos', icon: <BellIcon size={18} /> },
   { id: 'expedientes', label: 'Validación de Expedientes', icon: <ExpedienteIcon size={18} /> },
   { id: 'notificaciones', label: 'Notificación de Cédulas', icon: <MailIcon size={18} /> },
   { id: 'ifi', label: 'Instrucción e IFI', icon: <FileTextIcon size={18} /> },
   { id: 'resoluciones', label: 'Resolución Sancionadora', icon: <GavelIcon size={18} /> },
+  // F2: caducidad del PAS (9 / 12 meses sin resolución final notificada).
+  { id: 'caducidad', label: 'Caducidad del PAS', icon: <ClockIcon size={18} /> },
   { id: 'recursos', label: 'Recursos Impugnativos', icon: <ScaleIcon size={18} /> },
-  { id: 'coactiva-pagos', label: 'Acto Firme y Cobranza', icon: <CreditCardIcon size={18} /> },
+  { id: 'coactiva-pagos', label: 'Acto Firme', icon: <CreditCardIcon size={18} /> },
+  // F4: expediente coactivo (REC, medidas cautelares, suspensiones, devolución a PAS).
+  { id: 'coactiva', label: 'Ejecución Coactiva', icon: <BuildingIcon size={18} /> },
+  // F3: prescripción de la exigibilidad de multas (solo a pedido de parte).
+  { id: 'prescripcion', label: 'Prescripción de Multas', icon: <XCircleIcon size={18} /> },
+  { id: 'pagos', label: 'Registro de Pagos', icon: <CreditCardIcon size={18} /> },
   { id: 'cautelares', label: 'Medidas Cautelares', icon: <ShieldAlertIcon size={18} /> },
+  { id: 'levantamientos', label: 'Levantamiento de Medidas', icon: <UnlockIcon size={18} /> },
   { id: 'consulta-campo', label: 'Exhortación y Consulta', icon: <EyeIcon size={18} /> },
   { id: 'documentos', label: 'Control Documentario', icon: <FileTextIcon size={18} /> },
   { id: 'mapa', label: 'Mapa de Cobertura', icon: <MapPinIcon size={18} /> },
   { id: 'configuracion', label: 'Configuración y Parámetros', icon: <CalendarIcon size={18} /> },
+  { id: 'usuarios', label: 'Usuarios y Roles', icon: <ShieldAlertIcon size={18} /> },
 ];
 
 /**
- * `RolUsuario` (backend) hoy solo tiene FISCALIZADOR/NOTIFICADOR/ADMIN —
- * no existe todavía un rol "validador"/"instructor"/"resolutor" propio de
- * oficina. Decisión tomada acá (cosmética, sin impacto legal ni de
- * dinero): mientras no exista ese rol, el único filtro real es
- * NOTIFICADOR → solo ve lo suyo (SP3). El resto de roles ve todo el menú,
- * igual que hoy no hay ningún RolesGuard en el backend que lo impida. Si
- * agregan roles de oficina reales, este mapa se actualiza junto con los
- * guards del backend, no antes.
+ * Grupos del menú, en el orden del recorrido del expediente. Cada módulo
+ * pertenece a un solo grupo; un grupo sin módulos visibles para el usuario
+ * no se muestra. El primero ("Inicio") va sin título.
  */
-/**
- * Rol TEMPORAL de pruebas (usuario para que los abogados prueben el
- * sistema). Ve solo los módulos que ya están avanzados y funcionan; en
- * ellos puede hacer todo. Al terminar/mejorar otro módulo, agrégalo aquí.
- * No es el sistema de roles definitivo (fase posterior).
- */
-export const MODULOS_ROL_PRUEBA: NavModule[] = [
-  'dashboard',
-  'expedientes',
-  'notificaciones',
-  'ifi',
-  'resoluciones',
-  'consulta-campo',
-  'cautelares',
+const GRUPOS_NAV: { id: string; titulo: string | null; modulos: NavModule[] }[] = [
+  { id: 'inicio', titulo: null, modulos: ['dashboard', 'alertas'] },
+  { id: 'procedimiento', titulo: 'Procedimiento sancionador', modulos: ['expedientes', 'notificaciones', 'ifi', 'resoluciones', 'recursos'] },
+  { id: 'cobranza', titulo: 'Cobranza', modulos: ['coactiva-pagos', 'coactiva', 'pagos'] },
+  { id: 'incidentes', titulo: 'Incidentes y plazos', modulos: ['levantamientos', 'cautelares', 'caducidad', 'prescripcion'] },
+  { id: 'consulta', titulo: 'Consulta', modulos: ['consulta-campo', 'documentos', 'mapa'] },
+  { id: 'administracion', titulo: 'Administración', modulos: ['configuracion', 'usuarios'] },
 ];
 
-/** Si el rol puede entrar a ese módulo (menú y rutas usan la misma regla). */
-export function puedeVerModulo(modulo: NavModule, rol: string | undefined): boolean {
-  if (rol === 'PRUEBA') return MODULOS_ROL_PRUEBA.includes(modulo);
-  if (rol === 'NOTIFICADOR') return modulo === 'dashboard' || modulo === 'notificaciones';
-  return true;
+const CLAVE_GRUPOS_CERRADOS = 'pas.menu.gruposCerrados';
+
+function leerGruposCerrados(): string[] {
+  try {
+    const guardado = JSON.parse(localStorage.getItem(CLAVE_GRUPOS_CERRADOS) ?? '[]');
+    return Array.isArray(guardado) ? guardado.filter((x): x is string => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
 }
 
-function esVisibleParaRol(item: NavItemConDef, rol: string | undefined): boolean {
-  return puedeVerModulo(item.id, rol);
+/** Si el usuario puede entrar a ese módulo (menú y rutas usan la misma regla). */
+export function puedeVerModulo(modulo: NavModule, permisos: PermisosUsuario | undefined): boolean {
+  return modulo === 'dashboard' || modulo === 'alertas' || puedeVerModuloPermisos(modulo, permisos);
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({
@@ -109,17 +131,27 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   onSelectModule,
   user,
   onLogout,
+  onChangePassword,
   children,
   badgeCounts = {},
+  badgeAlertas = {},
 }) => {
   const currentNav = navItems.find((n) => n.id === currentModule);
-  const totalPendientes = Object.values(badgeCounts).reduce<number>(
-    (acc, val) => (typeof val === 'number' ? acc + val : acc),
-    0
-  );
+  const grupoActual = GRUPOS_NAV.find((g) => g.modulos.includes(currentModule));
+  // Grupos plegados por el usuario (se recuerdan en el navegador). El grupo del módulo abierto siempre se ve.
+  const [gruposCerrados, setGruposCerrados] = useState<string[]>(leerGruposCerrados);
+  const alternarGrupo = (id: string) => {
+    const nuevos = gruposCerrados.includes(id) ? gruposCerrados.filter((g) => g !== id) : [...gruposCerrados, id];
+    setGruposCerrados(nuevos);
+    try {
+      localStorage.setItem(CLAVE_GRUPOS_CERRADOS, JSON.stringify(nuevos));
+    } catch {
+      // sin almacenamiento disponible: el menú funciona igual, solo no recuerda la preferencia
+    }
+  };
 
   const cleanName = (user?.nombres || 'Carla Vega').replace(/\s*\(admin\s*dev\)/gi, '').trim();
-  const cleanRole = user?.rol === 'ADMIN' ? 'Administrador' : user?.rol === 'FISCALIZADOR' ? 'Inspector de Campo' : user?.rol === 'PRUEBA' ? 'Usuario de Prueba' : user?.rol ?? 'Oficina';
+  const cleanRole = user?.rolNombre ?? 'Oficina';
 
   return (
     <div className="flex min-h-screen bg-bg-app">
@@ -127,61 +159,89 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       {/* SIDEBAR INSTITUCIONAL - AZUL NAVY INSTITUCIONAL                   */}
       {/* ================================================================ */}
       <aside
-        className="w-[280px] bg-[linear-gradient(180deg,#163666_0%,#10264a_100%)] text-[#ffffff] flex flex-col shrink-0 border-r border-r-[rgba(255,255,255,0.1)] shadow-[4px_0_20px_rgba(16,38,74,0.25)] z-[100]"
+        className="w-[280px] sticky top-0 h-screen overflow-hidden bg-[linear-gradient(180deg,#163666_0%,#10264a_100%)] text-[#ffffff] flex flex-col shrink-0 border-r border-r-[rgba(255,255,255,0.1)] shadow-[4px_0_20px_rgba(16,38,74,0.25)] z-[100]"
       >
         {/* Brand Header con Logo Oficial SJL */}
         <div
-          className="pt-[24px] px-[20px] pb-[20px] border-b border-b-[rgba(255,255,255,0.1)] flex flex-col items-center justify-center text-center gap-[14px] bg-[rgba(255,255,255,0.02)]"
+          className="shrink-0 pt-[20px] px-[20px] pb-[10px] border-b border-b-[rgba(255,255,255,0.1)] flex flex-col items-center justify-center text-center gap-[4px] bg-[rgba(255,255,255,0.02)]"
         >
           <div className="flex items-center justify-center w-full">
             <img
               src="/logo-sjl-white.png"
               alt="Municipalidad de San Juan de Lurigancho"
-              className="h-[66px] w-auto max-w-[220px] object-contain"
+              className="h-[60px] w-auto max-w-[200px] object-contain scale-[1.25]"
             />
           </div>
-          <div className="text-center">
-            <div className="text-[13px] font-bold text-[#ffffff] tracking-[0.2px]">
-              Fiscalización Administrativa
-            </div>
-            <div className="text-[11px] text-[#bfdbfe] mt-[3px]">
-              MDSJL • Sistema Sancionador PAS
-            </div>
-          </div>
+          <div className="text-[13.5px] font-semibold uppercase tracking-[1.4px] text-[#93c5fd]">Sistema Sancionador PAS</div>
         </div>
 
-        {/* Navigation Section */}
-        <div className="py-[16px] px-[12px] flex-1 overflow-y-auto">
-          <div
-            className="text-[11px] font-semibold uppercase tracking-[0.8px] text-[#93c5fd] pt-[4px] px-[12px] pb-[8px] opacity-[0.75]"
-          >
-            Módulos del Sistema
-          </div>
+        {/* Navegación por grupos */}
+        <div className="py-[12px] px-[12px] flex-1 min-h-0 overflow-y-auto [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.12)_transparent]">
+          <nav className="flex flex-col gap-[14px]">
+            {GRUPOS_NAV.map((grupo) => {
+              const items = grupo.modulos
+                .map((id) => navItems.find((n) => n.id === id))
+                .filter((item): item is NavItemConDef => !!item && puedeVerModulo(item.id, user?.permisos));
+              if (items.length === 0) return null;
 
-          <nav className="flex flex-col gap-[2px]">
-            {navItems.filter((item) => esVisibleParaRol(item, user?.rol)).map((item) => {
-              const active = currentModule === item.id;
-              const count = badgeCounts[item.id];
+              const contieneActivo = grupo.modulos.includes(currentModule);
+              const abierto = !grupo.titulo || contieneActivo || !gruposCerrados.includes(grupo.id);
+              // Plegado, el grupo avisa igual si adentro hay algo pendiente.
+              const pendiente = items.some((i) => (badgeCounts[i.id] ?? 0) > 0 || (badgeAlertas[i.id]?.count ?? 0) > 0);
+
               return (
-                <button
-                  key={item.id}
-                  onClick={() => onSelectModule(item.id)}
-                  className={`flex items-center justify-between py-[9px] px-[12px] rounded-[6px] border-0 cursor-pointer text-[13px] [transition:background-color_150ms_ease,color_150ms_ease] text-left w-full shadow-none ${active ? 'bg-[rgba(255,255,255,0.12)]' : 'bg-transparent'} ${active ? 'text-[#ffffff]' : 'text-[#cbd5e1] hover:bg-[rgba(255,255,255,0.06)] hover:text-[#ffffff]'} ${active ? 'font-semibold' : 'font-normal'}`}
-                >
-                  <div className="flex items-center gap-[10px]">
-                    <span className={`flex items-center ${active ? 'text-[#38bdf8]' : 'text-[#94a3b8]'}`}>
-                      {item.icon}
-                    </span>
-                    <span>{item.label}</span>
-                  </div>
-                  {typeof count === 'number' && count > 0 && (
-                    <span
-                      className="text-[11px] font-bold min-w-[19px] h-[19px] py-0 px-[6px] rounded-[10px] bg-[#ef4444] text-[#ffffff] inline-flex items-center justify-center"
+                <div key={grupo.id}>
+                  {grupo.titulo && (
+                    <button
+                      type="button"
+                      onClick={() => alternarGrupo(grupo.id)}
+                      aria-expanded={abierto}
+                      className="w-full flex items-center gap-[6px] py-[4px] px-[12px] mb-[4px] bg-transparent border-0 cursor-pointer text-left text-[10.5px] font-semibold uppercase tracking-[1px] text-[#93c5fd] opacity-[0.8] [transition:opacity_150ms_ease] hover:opacity-100"
                     >
-                      {count}
-                    </span>
+                      <span className={`inline-flex [transition:transform_150ms_ease] ${abierto ? 'rotate-90' : ''}`}>
+                        <ChevronRightIcon size={12} />
+                      </span>
+                      <span className="flex-1">{grupo.titulo}</span>
+                      {!abierto && pendiente && <span className="w-[6px] h-[6px] rounded-full bg-[#ef4444]" title="Hay pendientes en este grupo" />}
+                    </button>
                   )}
-                </button>
+                  {abierto && (
+                    <div className="flex flex-col gap-[2px]">
+                      {items.map((item) => {
+                        const active = currentModule === item.id;
+                        const count = badgeCounts[item.id];
+                        const alerta = badgeAlertas[item.id];
+                        return (
+                          <button
+                            key={item.id}
+                            onClick={() => onSelectModule(item.id)}
+                            className={`flex items-center justify-between py-[8px] px-[12px] rounded-[6px] border-0 cursor-pointer text-[13px] [transition:background-color_150ms_ease,color_150ms_ease] text-left w-full shadow-none ${active ? 'bg-[rgba(255,255,255,0.12)]' : 'bg-transparent'} ${active ? 'text-[#ffffff]' : 'text-[#cbd5e1] hover:bg-[rgba(255,255,255,0.06)] hover:text-[#ffffff]'} ${active ? 'font-semibold' : 'font-normal'}`}
+                          >
+                            <div className="flex items-center gap-[10px]">
+                              <span className={`flex items-center ${active ? 'text-[#38bdf8]' : 'text-[#94a3b8]'}`}>{item.icon}</span>
+                              <span>{item.label}</span>
+                            </div>
+                            {/* Cola de trabajo: número discreto, sin burbuja (con muchos expedientes no debe gritar).
+                                Urgencia: solo un punto de color; el detalle de qué vence está en Alertas y Plazos. */}
+                            <span className="inline-flex items-center gap-[8px]">
+                              {typeof count === 'number' && count > 0 && (
+                                <span className="text-[11.5px] font-semibold tabular-nums text-[#93c5fd]" title={`${count} pendiente${count === 1 ? '' : 's'}`}>
+                                  {count > 99 ? '99+' : count}
+                                </span>
+                              )}
+                              {alerta && alerta.count > 0 && (
+                                <span
+                                  title={alerta.title}
+                                  className={`w-[8px] h-[8px] rounded-full shrink-0 ${/vencid|cr[ií]tic|por vencer/i.test(alerta.title) ? 'bg-[#ef4444]' : 'bg-[#f59e0b]'}`}
+                                />
+                              )}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               );
             })}
           </nav>
@@ -189,10 +249,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
         {/* User Profile & Logout in Azul Navy */}
         <div
-          className="p-[16px] border-t border-t-[rgba(255,255,255,0.1)] bg-[#0c1f3c]"
+          className="shrink-0 py-[14px] px-[16px] border-t border-t-[rgba(255,255,255,0.1)] bg-[#0c1f3c]"
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-[10px] min-w-0">
+            <div className="flex items-center gap-[10px] min-w-0" title={`DNI ${user?.dni ?? ''}`}>
               <div
                 className="w-[36px] h-[36px] rounded-full bg-[#1d4ed8] text-[#ffffff] flex items-center justify-center font-bold text-[13px] shrink-0 border border-[rgba(255,255,255,0.2)]"
               >
@@ -205,18 +265,27 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                 >
                   {cleanName}
                 </div>
-                <div className="text-[11px] text-[#93c5fd]">
-                  {cleanRole} • DNI: {user?.dni ?? '---'}
-                </div>
+                <div className="text-[11px] text-[#93c5fd] whitespace-nowrap overflow-hidden text-ellipsis">{cleanRole}</div>
               </div>
             </div>
-            <button
-              onClick={onLogout}
-              title="Cerrar sesión"
-              className="bg-transparent border-0 text-[#bfdbfe] cursor-pointer p-[6px] rounded-[6px] flex items-center justify-center [transition:color_150ms] hover:text-[#f87171]"
-            >
-              <LogOutIcon size={18} />
-            </button>
+            <div className="flex items-center gap-[6px]">
+              {onChangePassword && (
+                <button
+                  onClick={onChangePassword}
+                  title="Cambiar contraseña"
+                  className="bg-transparent border-0 text-[#bfdbfe] cursor-pointer p-[6px] rounded-[6px] flex items-center justify-center [transition:color_150ms] hover:text-[#38bdf8]"
+                >
+                  <UnlockIcon size={18} />
+                </button>
+              )}
+              <button
+                onClick={onLogout}
+                title="Cerrar sesión"
+                className="bg-transparent border-0 text-[#bfdbfe] cursor-pointer p-[6px] rounded-[6px] flex items-center justify-center [transition:color_150ms] hover:text-[#f87171]"
+              >
+                <LogOutIcon size={18} />
+              </button>
+            </div>
           </div>
         </div>
       </aside>
@@ -225,76 +294,36 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       {/* MAIN CONTENT AREA                                                */}
       {/* ================================================================ */}
       <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
-        {/* Topbar Header */}
-        <header className="h-[64px] bg-[#ffffff] border-b border-b-[#e2e8f0] flex items-center justify-between px-[32px] relative z-[20] max-md:px-[16px]">
-          <div className="flex items-center gap-[12px]">
-            <div className="flex items-center gap-[8px] text-[13px] text-[#64748b]">
-              <span className="font-medium">Fiscalización</span>
+        {/* Barra superior: baja y discreta. El título de la página lo pone cada módulo. */}
+        <header className="h-[52px] bg-[#ffffff] border-b border-b-[#e2e8f0] flex items-center justify-between px-[32px] relative z-[20] max-md:px-[16px]">
+          <div className="flex items-center gap-[14px] min-w-0">
+            {/* Miga de pan: sistema / grupo / pantalla actual (resaltada), en letra pequeña para no competir con el título de la página */}
+            <nav aria-label="Ubicación" className="flex items-center gap-[10px] text-[11.5px] font-semibold uppercase tracking-[0.8px] text-[#94a3b8] min-w-0 whitespace-nowrap">
+              <span>MDSJL</span>
               <span className="text-[#cbd5e1]">/</span>
-              <span className="text-[#0f172a] font-bold">{currentNav?.label}</span>
-            </div>
-            <span
-              className="text-[11px] font-semibold text-[#0369a1] bg-[#e0f2fe] py-[2px] px-[8px] rounded-[6px]"
-            >
-              MDSJL
-            </span>
+              <span>PAS</span>
+              {grupoActual?.titulo && (
+                <>
+                  <span className="text-[#cbd5e1]">/</span>
+                  <span>{grupoActual.titulo}</span>
+                </>
+              )}
+              <span className="text-[#cbd5e1]">/</span>
+              <span className="bg-[#eff6ff] text-[#1d4ed8] py-[3px] px-[9px] rounded-[6px] border border-[#dbeafe] overflow-hidden text-ellipsis">{currentNav?.label}</span>
+            </nav>
           </div>
 
-          <div className="flex items-center gap-[20px]">
-            {/* Estado de conexión */}
-            <div
-              className="flex items-center gap-[7px] text-[12px] font-medium text-[#059669]"
-              title="Conexión en vivo con el servidor"
-            >
-              <span
-                className="w-[7px] h-[7px] rounded-full bg-[#10b981] shadow-[0_0_0_2px_rgba(16,185,129,0.2)]"
-              />
-              <span>Sistema en línea</span>
-            </div>
-
-            {/* Fecha oficial */}
-            <div
-              className="flex items-center gap-[7px] text-[13px] text-[#64748b] border-l border-l-[#e2e8f0] pl-[16px]"
-            >
-              <CalendarIcon size={15} color="#94a3b8" />
-              <span className="capitalize">
-                {new Date().toLocaleDateString('es-PE', {
-                  weekday: 'long',
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                })}
-              </span>
-            </div>
-
-            {/* Botón de Notificaciones con contador */}
-            <div
-              className="border-l border-l-[#e2e8f0] pl-[16px] flex items-center"
-            >
-              <button
-                onClick={() => onSelectModule('expedientes')}
-                title={
-                  totalPendientes > 0
-                    ? `${totalPendientes} expedientes pendientes de validación`
-                    : 'Sin notificaciones pendientes'
-                }
-                className="relative bg-[#f8fafc] border border-[#e2e8f0] rounded-[8px] w-[36px] h-[36px] flex items-center justify-center cursor-pointer text-[#64748b] [transition:all_150ms_ease] hover:bg-[#f1f5f9] hover:text-[#0f172a]"
-              >
-                <BellIcon size={17} />
-                {totalPendientes > 0 && (
-                  <span
-                    className="absolute -top-[4px] -right-[4px] min-w-[18px] h-[18px] py-0 px-[4px] rounded-[9px] bg-[#ef4444] text-[#ffffff] text-[10px] font-bold flex items-center justify-center border-2 border-[#ffffff]"
-                  >
-                    {totalPendientes}
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
+          {/* Campana: alertas vencidas, críticas y por vencer, con la fase y el plazo de cada expediente */}
+          <CampanaAlertas onIr={onSelectModule} />
         </header>
 
         {/* Page Body */}
-        <main className="flex-1 w-full max-w-[1600px] mx-auto pt-[24px] px-[32px] pb-[48px] max-md:p-[16px]">{children}</main>
+        <main className="flex-1 w-full max-w-[1600px] mx-auto pt-[24px] px-[32px] pb-[48px] max-md:p-[16px]">
+          {currentModule !== 'dashboard' && currentModule !== 'alertas' && currentModule !== 'usuarios' && !puedeEditarModulo(currentModule, user?.permisos) && (
+            <AvisoSoloLectura rolNombre={user?.rolNombre} />
+          )}
+          {children}
+        </main>
       </div>
     </div>
   );
