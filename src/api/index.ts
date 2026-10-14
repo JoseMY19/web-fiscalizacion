@@ -1,4 +1,4 @@
-import { apiClient, setToken, setRefreshToken, setSavedUser, getToken, getSavedUser, BASE_URL } from './client';
+import { apiClient, setToken, setRefreshToken, setSavedUser, getToken, getSavedUser, BASE_URL, nombreDeDescarga } from './client';
 
 export * from './client';
 
@@ -387,7 +387,7 @@ export async function descargarDocumentoIfi(expedienteId: string, numeroExpedien
   const url = URL.createObjectURL(blob);
   const enlace = document.createElement('a');
   enlace.href = url;
-  enlace.download = `ifi-${numeroExpediente}.docx`;
+  enlace.download = nombreDeDescarga(res, `ifi-${numeroExpediente}.docx`);
   enlace.click();
   URL.revokeObjectURL(url);
 }
@@ -565,7 +565,7 @@ async function descargarWord(ruta: string, nombre: string): Promise<void> {
   const url = URL.createObjectURL(await res.blob());
   const enlace = document.createElement('a');
   enlace.href = url;
-  enlace.download = nombre;
+  enlace.download = nombreDeDescarga(res, nombre);
   enlace.click();
   URL.revokeObjectURL(url);
 }
@@ -881,7 +881,7 @@ export async function descargarDocumentoMedidaCautelar(id: string): Promise<void
   const url = URL.createObjectURL(blob);
   const enlace = document.createElement('a');
   enlace.href = url;
-  enlace.download = `medida-cautelar-${id}.docx`;
+  enlace.download = nombreDeDescarga(res, `medida-cautelar-${id}.docx`);
   enlace.click();
   URL.revokeObjectURL(url);
 }
@@ -1192,7 +1192,7 @@ export async function descargarDocumentoWord(
   const extension = tipoActa === 'NOTIFICACION_CARGO' ? 'xlsx' : 'docx';
   const enlace = document.createElement('a');
   enlace.href = url;
-  enlace.download = `${tipoActa.toLowerCase()}-${intervencionId}.${extension}`;
+  enlace.download = nombreDeDescarga(res, `${tipoActa.toLowerCase()}-${intervencionId}.${extension}`);
   enlace.click();
   URL.revokeObjectURL(url);
 }

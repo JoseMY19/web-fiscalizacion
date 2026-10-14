@@ -3,8 +3,9 @@ import { PageHeader, PanelTabla, SegmentedTabs } from '../../components/common/P
 import { EntradasTab } from './EntradasTab';
 import { SalidasTab } from './SalidasTab';
 import { ExpedienteFoliadoTab } from './ExpedienteFoliadoTab';
+import { GeneradosTab } from './GeneradosTab';
 
-type Pestana = 'entrada' | 'salida' | 'expediente';
+type Pestana = 'entrada' | 'salida' | 'generados' | 'expediente';
 
 /**
  * Control Documentario: lo que entra a la subgerencia, lo que sale y el
@@ -20,7 +21,7 @@ export const DocumentosView: React.FC = () => {
     <div>
       <PageHeader
         titulo="Control Documentario"
-        descripcion="Lo que entra, lo que sale (incluidas las actas de campo con su número) y el expediente foliado, con los datos reales del sistema."
+        descripcion="Lo que entra, lo que sale (incluidas las actas de campo con su número), cada documento generado con sus versiones y el expediente foliado."
       />
 
       <PanelTabla
@@ -29,6 +30,7 @@ export const DocumentosView: React.FC = () => {
             items={[
               { clave: 'entrada', etiqueta: 'Entrada' },
               { clave: 'salida', etiqueta: 'Salida' },
+              { clave: 'generados', etiqueta: 'Generados' },
               { clave: 'expediente', etiqueta: 'Expediente foliado' },
             ]}
             activa={pestana}
@@ -38,6 +40,7 @@ export const DocumentosView: React.FC = () => {
       >
         {pestana === 'entrada' && <EntradasTab />}
         {pestana === 'salida' && <SalidasTab />}
+        {pestana === 'generados' && <GeneradosTab />}
         {pestana === 'expediente' && <ExpedienteFoliadoTab />}
       </PanelTabla>
     </div>

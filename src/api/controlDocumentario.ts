@@ -1,4 +1,4 @@
-import { apiClient } from './client';
+import { apiClient, BASE_URL, getToken, nombreDeDescarga } from './client';
 
 // ============================================================================
 // CONTROL DOCUMENTARIO — lo que entra, lo que sale y el expediente foliado
@@ -80,3 +80,62 @@ export const ControlDocumentarioApi = {
       body: JSON.stringify({ numeroSgd, fechaSubida }),
     }),
 };
+
+// ---------------------------------------------------------------------------
+// Documentos generados y guardados (cada Word/Excel que arma el sistema, por versión)
+// ---------------------------------------------------------------------------
+
+/** Forma real de cada fila de GET /documentos-guardados. */
+export interface DocumentoGuardado {
+  id: string;
+  tipo: string;
+  referenciaId: string;
+  expedienteId: string | null;
+  numeroExpediente: string | null;
+  nombreArchivo: string;
+  tamanoBytes: number;
+  version: number;
+  generadoPor: string;
+  fecha: string;
+}
+
+export const LABEL_TIPO_GUARDADO: Record<string, string> = {
+  ACTA_FISCALIZACION: 'Acta de fiscalización',
+  ACTA_EXHORTACION: 'Acta de exhortación',
+  ACTA_MEDIDA_PROVISIONAL: 'Acta de medida provisional',
+  NOTIFICACION_CARGO: 'Notificación de Cargo',
+  IFI: 'Informe Final de Instrucción (IFI)',
+  RESOLUCION: 'Resolución (RSGSA / RSG)',
+  RSG_AMPLIACION: 'RSG de ampliación de plazo',
+  RSG_RECONSIDERACION: 'RSG de reconsideración',
+  INFORME_GOP: 'Informe a GOP (apelación)',
+  CARTA_LEVANTAMIENTO: 'Carta de levantamiento',
+  RSG_CADUCIDAD: 'RSG de caducidad',
+  RSG_PRESCRIPCION: 'RSG de prescripción',
+  MEDIDA_CAUTELAR: 'Medida cautelar',
+};
+
+export const DocumentosGuardadosApi = {
+  listar: (q: string, tipo: string) =>
+    apiClient<DocumentoGuardado[]>(`/documentos-guardados?q=${encodeURIComponent(q)}${tipo ? `&tipo=${encodeURIComponent(tipo)}` : ''}`),
+};
+
+/** Descarga de nuevo una versión guardada, tal como se generó entonces. */
+export async function descargarDocumentoGuardado(id: string, nombre: string): Promise<void> {
+  const res = await fetch(`${BASE_URL}/documentos-guardados/${id}/archivo`, { headers: { Authorization: `Bearer ${getToken()}` } });
+  if (!res.ok) {
+    let mensaje = `Error ${res.status}: ${res.statusText}`;
+    try {
+      mensaje = (await res.json()).message || mensaje;
+    } catch {
+      // sin body JSON
+    }
+    throw new Error(mensaje);
+  }
+  const url = URL.createObjectURL(await res.blob());
+  const enlace = document.createElement('a');
+  enlace.href = url;
+  enlace.download = nombreDeDescarga(res, nombre);
+  enlace.click();
+  URL.revokeObjectURL(url);
+}

@@ -1,4 +1,4 @@
-import { apiClient, BASE_URL, getToken } from './client';
+import { apiClient, BASE_URL, getToken, nombreDeDescarga } from './client';
 
 // ============================================================================
 // F3 — PRESCRIPCIÓN DE LA EXIGIBILIDAD DE MULTAS (art. 233-A Ley 27444)
@@ -179,7 +179,7 @@ export async function descargarRsgPrescripcion(id: string, nombre: string): Prom
   const url = URL.createObjectURL(await res.blob());
   const a = document.createElement('a');
   a.href = url;
-  a.download = nombre;
+  a.download = nombreDeDescarga(res, nombre);
   a.click();
   URL.revokeObjectURL(url);
 }

@@ -118,3 +118,20 @@ export async function apiClient<T = any>(
   if (res.status === 204) return null as unknown as T;
   return res.json();
 }
+
+/**
+ * Nombre que el servidor le puso al archivo (cabecera Content-Disposition), para
+ * que el que se descarga lleve el N° de acta, el tipo de resolución, etc. Si la
+ * cabecera no llega, se usa el de respaldo.
+ */
+export function nombreDeDescarga(res: Response, respaldo: string): string {
+  const cabecera = res.headers.get('Content-Disposition') ?? '';
+  const m = /filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i.exec(cabecera);
+  const bruto = m?.[1] ?? m?.[2];
+  if (!bruto) return respaldo;
+  try {
+    return decodeURIComponent(bruto);
+  } catch {
+    return bruto;
+  }
+}

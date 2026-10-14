@@ -1,4 +1,4 @@
-import { apiClient, BASE_URL, getToken } from './client';
+import { apiClient, BASE_URL, getToken, nombreDeDescarga } from './client';
 
 // ============================================================================
 // F2 — CADUCIDAD DEL PAS (art. 237-A Ley 27444)
@@ -110,7 +110,7 @@ export async function descargarRsgCaducidad(expedienteId: string, nombre: string
   const url = URL.createObjectURL(await res.blob());
   const a = document.createElement('a');
   a.href = url;
-  a.download = nombre;
+  a.download = nombreDeDescarga(res, nombre);
   a.click();
   URL.revokeObjectURL(url);
 }

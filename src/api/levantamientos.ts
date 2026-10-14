@@ -1,4 +1,4 @@
-import { apiClient, BASE_URL, getToken } from './client';
+import { apiClient, BASE_URL, getToken, nombreDeDescarga } from './client';
 
 // ============================================================================
 // F1 — LEVANTAMIENTO DE MEDIDAS PROVISIONALES (expediente incidental)
@@ -149,8 +149,7 @@ export const LevantamientosApi = {
 
 /**
  * Descarga el Word de la carta que corresponde; relanza el mensaje del
- * backend si lo rechaza. `nombre`: el Content-Disposition no llega al
- * navegador en peticiones de otro origen (CORS), así que la UI lo arma.
+ * backend si lo rechaza. `nombre` es el de respaldo; el servidor manda el suyo.
  */
 export async function descargarCartaLevantamiento(id: string, nombre: string): Promise<void> {
   const res = await fetch(`${BASE_URL}/levantamientos/${id}/carta`, { headers: { Authorization: `Bearer ${getToken()}` } });
@@ -158,7 +157,7 @@ export async function descargarCartaLevantamiento(id: string, nombre: string): P
   const url = URL.createObjectURL(await res.blob());
   const enlace = document.createElement('a');
   enlace.href = url;
-  enlace.download = nombre;
+  enlace.download = nombreDeDescarga(res, nombre);
   enlace.click();
   URL.revokeObjectURL(url);
 }
