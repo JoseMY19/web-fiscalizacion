@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { ControlDocumentarioApi, DocumentoFoliado, ExpedienteFoliado } from '../../api/controlDocumentario';
+import {
+  ControlDocumentarioApi,
+  DocumentoFoliado,
+  DocumentoGuardado,
+  DocumentosGuardadosApi,
+  ExpedienteFoliado,
+  LABEL_TIPO_GUARDADO,
+  descargarDocumentoGuardado,
+} from '../../api/controlDocumentario';
 import { Alert, Button, EmptyState, Spinner } from '../../components/common/Common';
 import { Buscador, EstadoPunto, TABLA, type TonoEstado } from '../../components/common/PageKit';
 import { FileTextIcon, SearchIcon } from '../../components/icons/Icons';
@@ -21,6 +29,9 @@ export const ExpedienteFoliadoTab: React.FC = () => {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resultado, setResultado] = useState<ExpedienteFoliado | null>(null);
+  // Los Word/Excel que el sistema generó para este expediente, con todas sus versiones.
+  const [generados, setGenerados] = useState<DocumentoGuardado[]>([]);
+  const [descargando, setDescargando] = useState<string | null>(null);
 
   const buscar = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,12 +40,27 @@ export const ExpedienteFoliadoTab: React.FC = () => {
     setCargando(true);
     setError(null);
     try {
-      setResultado(await ControlDocumentarioApi.expediente(q));
+      const expediente = await ControlDocumentarioApi.expediente(q);
+      setResultado(expediente);
+      setGenerados(await DocumentosGuardadosApi.listar('', '', expediente.expediente.id).catch(() => []));
     } catch (err: any) {
       setResultado(null);
+      setGenerados([]);
       setError(err.message || 'No se pudo cargar el expediente.');
     } finally {
       setCargando(false);
+    }
+  };
+
+  const descargar = async (d: DocumentoGuardado) => {
+    setDescargando(d.id);
+    setError(null);
+    try {
+      await descargarDocumentoGuardado(d.id, d.nombreArchivo);
+    } catch (err: any) {
+      setError(err.message || 'No se pudo descargar el documento.');
+    } finally {
+      setDescargando(null);
     }
   };
 
@@ -112,6 +138,32 @@ export const ExpedienteFoliadoTab: React.FC = () => {
               </tbody>
             </table>
           </div>
+
+          <div className="py-[18px] px-[24px] border-t border-border">
+            <div className="text-[14px] font-bold text-midnight-900">Documentos generados</div>
+            <div className="text-[12px] text-text-muted mt-[2px]">Cada versión del Word o Excel que el sistema armó para este expediente.</div>
+          </div>
+          {generados.length === 0 ? (
+            <p className="px-[24px] pb-[24px] text-[13px] text-text-muted m-0">Todavía no se generó ningún documento de este expediente.</p>
+          ) : (
+            <ul className="list-none m-0 px-[24px] pb-[12px]">
+              {generados.map((g) => (
+                <li key={g.id} className="flex items-center justify-between gap-[12px] py-[12px] border-t border-border-subtle first:border-t-0">
+                  <div className="min-w-0">
+                    <div className="text-[13.5px] font-semibold text-text-main">
+                      {LABEL_TIPO_GUARDADO[g.tipo] ?? g.tipo} <span className="text-text-muted font-normal">· v{g.version}</span>
+                    </div>
+                    <div className="text-[12px] text-text-muted mt-[2px] break-all">
+                      {g.nombreArchivo} · {formatearFechaHora(g.fecha)} · {g.generadoPor}
+                    </div>
+                  </div>
+                  <Button variant="secondary" size="sm" loading={descargando === g.id} onClick={() => descargar(g)}>
+                    Descargar
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
         </>
       )}
     </div>

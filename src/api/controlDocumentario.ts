@@ -116,8 +116,10 @@ export const LABEL_TIPO_GUARDADO: Record<string, string> = {
 };
 
 export const DocumentosGuardadosApi = {
-  listar: (q: string, tipo: string) =>
-    apiClient<DocumentoGuardado[]>(`/documentos-guardados?q=${encodeURIComponent(q)}${tipo ? `&tipo=${encodeURIComponent(tipo)}` : ''}`),
+  listar: (q: string, tipo: string, expedienteId?: string) =>
+    apiClient<DocumentoGuardado[]>(
+      `/documentos-guardados?q=${encodeURIComponent(q)}${tipo ? `&tipo=${encodeURIComponent(tipo)}` : ''}${expedienteId ? `&expedienteId=${encodeURIComponent(expedienteId)}` : ''}`,
+    ),
 };
 
 /** Descarga de nuevo una versión guardada, tal como se generó entonces. */
