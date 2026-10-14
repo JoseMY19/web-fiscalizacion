@@ -7,13 +7,11 @@ import {
 import { Card, Button, Badge, Input, Alert, EmptyState } from '../../components/common/Common';
 import { EstadoPunto, PageHeader, PanelTabla, SegmentedTabs, TABLA } from '../../components/common/PageKit';
 import { formatearFecha } from '../../lib/fechas';
-import { useConfirm } from '../../context/ConfirmContext';
 import { CalendarIcon, RefreshCwIcon } from '../../components/icons/Icons';
 import { BasesMunicipalesConfig } from '../bases-municipales/BasesMunicipalesConfig';
 import { CatalogoCuisCrud } from '../catalogo-cuis/CatalogoCuisCrud';
 
 export const ConfiguracionView: React.FC = () => {
-  const confirm = useConfirm();
   const [activeTab, setActiveTab] = useState<'feriados' | 'cuis' | 'uit' | 'seguridad' | 'bases'>('feriados');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
