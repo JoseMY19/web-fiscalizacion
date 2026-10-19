@@ -52,6 +52,7 @@ export const PrescripcionView: React.FC = () => {
   return (
     <div>
       <PageHeader
+        etiqueta="Incidentes y plazos"
         titulo="Prescripción de Multas"
         descripcion={
           <>

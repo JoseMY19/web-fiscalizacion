@@ -6,16 +6,18 @@ import {
   ActasApi,
 } from '../../api';
 import { ExpedientesObservadosApi, ExpedienteObservadoItem } from '../../api/expedientesObservados';
-import { Button, Modal, Input, Textarea, Alert, EmptyState, Spinner } from '../../components/common/Common';
-import { Buscador, EstadoPunto, MenuAcciones, PageHeader, PanelTabla, SegmentedTabs, TABLA } from '../../components/common/PageKit';
-import { formatearFecha, formatearHora, hoyLocal } from '../../lib/fechas';
+import { Button, Modal, Input, Textarea, Alert } from '../../components/common/Common';
+import { Buscador, PageHeader, SegmentedTabs } from '../../components/common/PageKit';
+import { TodoAlDia } from '../../components/common/TodoAlDia';
+import { EsqueletoTarjetas } from '../../components/common/EsqueletoTarjetas';
+import { hoyLocal } from '../../lib/fechas';
 import { useConfirm } from '../../context/ConfirmContext';
 import { ChecklistValidacionApi } from '../../api';
 import { generarUuid } from '../../lib/uuid';
-import { CheckCircleIcon, RefreshCwIcon, EyeIcon, PlusIcon } from '../../components/icons/Icons';
+import { RefreshCwIcon, PlusIcon } from '../../components/icons/Icons';
 import { ExpedienteDetallePanel } from './ExpedienteDetallePanel';
 import { socket } from '../../lib/socket';
-import { BotonCorregirDato } from '../correcciones/CorreccionMaterial';
+import { TarjetaObservada, TarjetaPorValidar } from './TarjetasBandeja';
 
 type Pestana = 'validar' | 'observadas' | 'digitalizar';
 
@@ -249,6 +251,7 @@ export const ExpedientesView: React.FC = () => {
   return (
     <div>
       <PageHeader
+        etiqueta="Procedimiento sancionador · Paso 2"
         titulo="Validación de Expedientes"
         descripcion="Revisa que cada expediente de campo esté completo antes de pasar a Instrucción."
         acciones={
@@ -268,15 +271,15 @@ export const ExpedientesView: React.FC = () => {
       {message && <Alert type={message.type}>{message.text}</Alert>}
 
       {digitalizando ? (
-        <div className="bg-bg-card rounded-md border border-border shadow-xs py-[32px] px-[36px] max-w-[920px]">
+        <div className="bg-bg-card rounded-lg border border-border shadow-xs py-[32px] px-[36px] max-w-[920px] animate-aparecer">
           <button
             type="button"
             onClick={() => setActiveTab('validar')}
-            className="bg-transparent border-0 p-0 mb-[20px] text-[13px] font-semibold text-primary-600 cursor-pointer hover:underline"
+            className="group inline-flex items-center gap-[6px] bg-transparent border-0 p-0 mb-[20px] text-[13px] font-bold text-blue-800 cursor-pointer"
           >
-            ← Volver a la bandeja
+            <span className="[transition:transform_200ms] group-hover:-translate-x-[3px]">←</span> Volver a la bandeja
           </button>
-          <h3 className="text-[18px] font-extrabold text-midnight-900 m-0">Digitalizar acta física</h3>
+          <h3 className="text-[20px] font-bold text-text-main m-0">Digitalizar acta física</h3>
           <p className="text-[13px] text-text-muted mt-[6px] mb-[28px]">
             Para actas levantadas en papel con formato preimpreso. El sistema verifica que la serie no esté repetida.
           </p>
@@ -296,7 +299,7 @@ export const ExpedientesView: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => handleValidarCorrelativo('NOTIFICACION_CARGO', digitalizarForm.numeroNotificacionCargo)}
-                    className="text-[12px] text-primary-600 bg-transparent border-0 p-0 cursor-pointer hover:underline"
+                    className="text-[12px] font-semibold text-blue-800 bg-transparent border-0 p-0 cursor-pointer hover:underline"
                   >
                     Verificar serie en el sistema
                   </button>
@@ -311,7 +314,7 @@ export const ExpedientesView: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => handleValidarCorrelativo('ACTA_FISCALIZACION', digitalizarForm.numeroActaFiscalizacion)}
-                    className="text-[12px] text-primary-600 bg-transparent border-0 p-0 cursor-pointer hover:underline"
+                    className="text-[12px] font-semibold text-blue-800 bg-transparent border-0 p-0 cursor-pointer hover:underline"
                   >
                     Verificar serie en el sistema
                   </button>
@@ -389,162 +392,98 @@ export const ExpedientesView: React.FC = () => {
           </form>
         </div>
       ) : (
-        <PanelTabla
-          barra={
-            <>
-              <SegmentedTabs<Pestana>
-                items={[
-                  { clave: 'validar', etiqueta: 'Por validar', contador: expedientes.length },
-                  { clave: 'observadas', etiqueta: 'Observadas', contador: observadas.length > 0 ? observadas.length : undefined, tono: 'danger' },
-                ]}
-                activa={activeTab}
-                onChange={setActiveTab}
-              />
-              {activeTab === 'validar' && <Buscador value={searchTerm} onChange={setSearchTerm} placeholder="Buscar por N° de expediente o fiscalizador" />}
-            </>
-          }
-        >
+        <div className="flex flex-col gap-[16px]">
+          {/* Pestañas de la bandeja, con su contador */}
+          <div className="animate-aparecer [animation-delay:80ms]">
+            <SegmentedTabs<Pestana>
+              items={[
+                { clave: 'validar', etiqueta: 'Por validar', contador: loading ? undefined : expedientes.length },
+                { clave: 'observadas', etiqueta: 'Observadas', contador: observadas.length > 0 ? observadas.length : undefined, tono: 'danger' },
+              ]}
+              activa={activeTab}
+              onChange={setActiveTab}
+            />
+          </div>
+
+          {/* Qué se está viendo y búsqueda */}
+          <div className="flex items-center justify-between gap-[12px] flex-wrap py-[12px] px-[16px] rounded-lg bg-bg-card border border-border shadow-xs animate-aparecer [animation-delay:150ms]">
+            <p key={activeTab} className="text-[13px] text-text-muted m-0 animate-aparecer [animation-duration:300ms]">
+              {activeTab === 'observadas' ? (
+                <>
+                  <span className="font-bold text-text-main">Observadas:</span> corrige los datos y envíalas de nuevo a validación.
+                </>
+              ) : (
+                <>
+                  <span className="font-bold text-text-main">Por validar:</span> revisa el expediente completo y apruébalo u obsérvalo.
+                </>
+              )}
+            </p>
+            {activeTab === 'validar' && <Buscador value={searchTerm} onChange={setSearchTerm} placeholder="Buscar por N° de expediente o fiscalizador" />}
+          </div>
+
           {/* BANDEJA DE VALIDACIÓN */}
           {activeTab === 'validar' &&
             (loading ? (
-              <div className="py-[56px] text-center">
-                <Spinner size={32} />
-                <p className="text-[13px] text-text-muted mt-[12px]">Cargando expedientes pendientes de validación...</p>
-              </div>
+              <EsqueletoTarjetas />
             ) : filteredExpedientes.length === 0 ? (
-              <EmptyState
-                icon={<CheckCircleIcon size={40} color="var(--color-success)" />}
-                title="Bandeja al día"
-                description="No hay expedientes pendientes de validación en este momento."
-              />
+              <div className="rounded-lg bg-bg-card border border-dashed border-border-dark py-[24px]">
+                <TodoAlDia
+                  titulo={searchTerm ? 'Sin resultados' : 'Bandeja al día'}
+                  descripcion={
+                    searchTerm
+                      ? 'Ningún expediente coincide con este filtro.'
+                      : 'No hay expedientes pendientes de validación en este momento.'
+                  }
+                />
+              </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className={TABLA.tabla}>
-                  <thead>
-                    <tr className={TABLA.encabezado}>
-                      <th className={TABLA.th}>Expediente</th>
-                      <th className={TABLA.th}>Fiscalizador</th>
-                      <th className={TABLA.th}>Documento físico</th>
-                      <th className={`${TABLA.th} text-right`}>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredExpedientes.map((exp) => {
-                      const fiscalizadorLimpio = (exp.fiscalizadorNombre || 'No asignado').replace(/\s*\(admin\s*dev\)/gi, '').trim();
-                      const abrirDetalle = () =>
-                        setDetalle({ intervencionId: exp.intervencionId, expedienteId: exp.id, numeroExpediente: exp.numeroExpediente, decidir: true });
-                      return (
-                        <tr key={exp.id} className={TABLA.fila}>
-                          <td className={TABLA.td}>
-                            <button
-                              type="button"
-                              onClick={abrirDetalle}
-                              className="bg-transparent border-0 p-0 text-[14px] font-bold text-primary-700 cursor-pointer hover:underline"
-                            >
-                              {exp.numeroExpediente}
-                            </button>
-                            <div className="text-[12px] text-text-muted mt-[3px]">
-                              {exp.fechaHoraInicioIntervencion
-                                ? `${formatearFecha(exp.fechaHoraInicioIntervencion)} · ${formatearHora(exp.fechaHoraInicioIntervencion)} hrs`
-                                : 'Sin fecha'}
-                            </div>
-                          </td>
-                          <td className={TABLA.td}>
-                            <div className="flex items-center gap-[10px]">
-                              <span className="w-[30px] h-[30px] rounded-full bg-info-bg text-info font-bold text-[12px] flex items-center justify-center shrink-0">
-                                {fiscalizadorLimpio.charAt(0)}
-                              </span>
-                              <span className="text-[13.5px] text-text-main">{fiscalizadorLimpio}</span>
-                            </div>
-                          </td>
-                          <td className={TABLA.td}>
-                            {exp.fechaIngresoFisico ? (
-                              <EstadoPunto tono="ok">Recibido el {formatearFecha(exp.fechaIngresoFisico)}</EstadoPunto>
-                            ) : (
-                              <EstadoPunto tono="aviso">Pendiente de ingreso</EstadoPunto>
-                            )}
-                          </td>
-                          <td className={`${TABLA.td} text-right`}>
-                            <div className="inline-flex items-center gap-[8px]">
-                              <Button variant="primary" size="sm" icon={<EyeIcon size={14} />} onClick={abrirDetalle}>
-                                Revisar
-                              </Button>
-                              <MenuAcciones
-                                acciones={[
-                                  { etiqueta: 'Aprobar', tono: 'ok', deshabilitada: actionLoading, onClick: () => handleAprobar(exp.id, exp.numeroExpediente) },
-                                  {
-                                    etiqueta: 'Observar',
-                                    tono: 'peligro',
-                                    deshabilitada: actionLoading,
-                                    onClick: () => setObservarModal({ isOpen: true, id: exp.id, numero: exp.numeroExpediente }),
-                                  },
-                                  ...(!exp.fechaIngresoFisico
-                                    ? [{ etiqueta: 'Registrar ingreso físico', deshabilitada: actionLoading, onClick: () => handleIngresoFisico(exp.id, exp.numeroExpediente) }]
-                                    : []),
-                                ]}
-                              />
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+              <div className="flex flex-col gap-[12px]">
+                {filteredExpedientes.map((exp, i) => (
+                  <TarjetaPorValidar
+                    key={exp.id}
+                    expediente={exp}
+                    indice={i}
+                    onRevisar={() =>
+                      setDetalle({ intervencionId: exp.intervencionId, expedienteId: exp.id, numeroExpediente: exp.numeroExpediente, decidir: true })
+                    }
+                    acciones={[
+                      { etiqueta: 'Aprobar', tono: 'ok', deshabilitada: actionLoading, onClick: () => handleAprobar(exp.id, exp.numeroExpediente) },
+                      {
+                        etiqueta: 'Observar',
+                        tono: 'peligro',
+                        deshabilitada: actionLoading,
+                        onClick: () => setObservarModal({ isOpen: true, id: exp.id, numero: exp.numeroExpediente }),
+                      },
+                      ...(!exp.fechaIngresoFisico
+                        ? [{ etiqueta: 'Registrar ingreso físico', deshabilitada: actionLoading, onClick: () => handleIngresoFisico(exp.id, exp.numeroExpediente) }]
+                        : []),
+                    ]}
+                  />
+                ))}
               </div>
             ))}
 
           {/* EXPEDIENTES OBSERVADOS */}
           {activeTab === 'observadas' &&
             (observadas.length === 0 ? (
-              <EmptyState
-                icon={<CheckCircleIcon size={40} color="var(--color-success)" />}
-                title="Sin expedientes observados"
-                description="No hay expedientes observados pendientes de corrección."
-              />
+              <div className="rounded-lg bg-bg-card border border-dashed border-border-dark py-[24px]">
+                <TodoAlDia titulo="Sin expedientes observados" descripcion="No hay expedientes observados pendientes de corrección." />
+              </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className={TABLA.tabla}>
-                  <thead>
-                    <tr className={TABLA.encabezado}>
-                      <th className={TABLA.th}>Expediente</th>
-                      <th className={TABLA.th}>Motivo de la observación</th>
-                      <th className={`${TABLA.th} text-right`}>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {observadas.map((obs) => (
-                      <tr key={obs.id} className={TABLA.fila}>
-                        <td className={TABLA.td}>
-                          <div className="text-[14px] font-bold text-midnight-900">{obs.numeroExpediente}</div>
-                          <div className="text-[12px] text-text-muted mt-[3px]">{obs.fechaObservacion ? `Observado el ${formatearFecha(obs.fechaObservacion)}` : 'Observado recientemente'}</div>
-                        </td>
-                        <td className={TABLA.td}>
-                          <div className="flex items-start gap-[10px] max-w-[480px]">
-                            <span className="mt-[7px] w-[7px] h-[7px] rounded-full bg-danger shrink-0" />
-                            <span className="text-[13px] text-text-secondary leading-[1.5]">{obs.motivo}</span>
-                          </div>
-                        </td>
-                        <td className={`${TABLA.td} text-right`}>
-                          <div className="inline-flex items-center gap-[8px]">
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              icon={<EyeIcon size={14} />}
-                              onClick={() => setDetalle({ intervencionId: obs.intervencionId, expedienteId: obs.id, numeroExpediente: obs.numeroExpediente, decidir: false })}
-                            >
-                              Revisar
-                            </Button>
-                            <BotonCorregirDato expedienteId={obs.id} etiqueta="Corregir" variante="primary" onCorregido={cargar} />
-                            <MenuAcciones acciones={[{ etiqueta: 'Enviar a validación', deshabilitada: actionLoading, onClick: () => handleReenviarValidacion(obs) }]} />
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="flex flex-col gap-[12px]">
+                {observadas.map((obs, i) => (
+                  <TarjetaObservada
+                    key={obs.id}
+                    observada={obs}
+                    indice={i}
+                    onRevisar={() => setDetalle({ intervencionId: obs.intervencionId, expedienteId: obs.id, numeroExpediente: obs.numeroExpediente, decidir: false })}
+                    onCorregido={cargar}
+                    acciones={[{ etiqueta: 'Enviar a validación', deshabilitada: actionLoading, onClick: () => handleReenviarValidacion(obs) }]}
+                  />
+                ))}
               </div>
             ))}
-        </PanelTabla>
+        </div>
       )}
 
       {/* Modal para Observar (SP2) */}

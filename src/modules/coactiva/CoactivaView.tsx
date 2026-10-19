@@ -71,6 +71,7 @@ export const CoactivaView: React.FC = () => {
   return (
     <div>
       <PageHeader
+        etiqueta="Cobranza"
         titulo="Ejecución Coactiva"
         descripcion={
           <>

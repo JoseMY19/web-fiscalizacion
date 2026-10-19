@@ -1,17 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { NotificacionesApi, NotificacionItem, AuthApi } from '../../api';
-import { Button, Modal, Input, Textarea, Alert, EmptyState, Spinner } from '../../components/common/Common';
-import { EstadoPunto, MenuAcciones, PageHeader, PanelTabla, SegmentedTabs, TABLA } from '../../components/common/PageKit';
+import { Button, Modal, Input, Textarea, Alert } from '../../components/common/Common';
+import { PageHeader, SegmentedTabs } from '../../components/common/PageKit';
+import { TodoAlDia } from '../../components/common/TodoAlDia';
+import { EsqueletoTarjetas } from '../../components/common/EsqueletoTarjetas';
 import { VisitasNotificacionModal } from './VisitasNotificacionModal';
 import { hoyLocal } from '../../lib/fechas';
-import { MailIcon, RefreshCwIcon, UserIcon, CheckCircleIcon } from '../../components/icons/Icons';
+import { CheckCircleIcon, RefreshCwIcon, UserIcon } from '../../components/icons/Icons';
 import { socket } from '../../lib/socket';
-
-type Tab = 'pendientes' | 'asignadas';
+import { TarjetaCedula } from './TarjetaCedula';
+import type { BandejaCedulas } from './notificacionesUi';
 
 export const NotificacionesView: React.FC = () => {
-  const [tab, setTab] = useState<Tab>('pendientes');
-  const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
+  const [tab, setTab] = useState<BandejaCedulas>('pendientes');
+  // Las dos bandejas se cargan juntas para cambiar de pestaña sin esperar.
+  const [pendientes, setPendientes] = useState<NotificacionItem[]>([]);
+  const [asignadas, setAsignadas] = useState<NotificacionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -34,30 +38,26 @@ export const NotificacionesView: React.FC = () => {
   const [fechaEntregaEfectiva, setFechaEntregaEfectiva] = useState(hoyLocal());
   const [archivoEvidencia, setArchivoEvidencia] = useState<File | null>(null);
 
-  const cargar = async (tabActual: Tab = tab) => {
+  const cargar = async () => {
     setLoading(true);
     setMessage(null);
-    try {
-      const data =
-        tabActual === 'pendientes'
-          ? await NotificacionesApi.getPendientesAsignacion()
-          : await NotificacionesApi.getAsignadas();
-      setNotificaciones(Array.isArray(data) ? data : []);
-    } catch (err: any) {
-      setMessage({ type: 'error', text: err.message || 'Error al cargar notificaciones domiciliarias.' });
-    } finally {
-      setLoading(false);
-    }
+    const [pend, asig] = await Promise.allSettled([NotificacionesApi.getPendientesAsignacion(), NotificacionesApi.getAsignadas()]);
+    if (pend.status === 'fulfilled') setPendientes(Array.isArray(pend.value) ? pend.value : []);
+    if (asig.status === 'fulfilled') setAsignadas(Array.isArray(asig.value) ? asig.value : []);
+    const fallo = [pend, asig].find((r): r is PromiseRejectedResult => r.status === 'rejected');
+    if (fallo) setMessage({ type: 'error', text: fallo.reason?.message || 'Error al cargar notificaciones domiciliarias.' });
+    setLoading(false);
   };
 
   useEffect(() => {
-    const recargar = () => cargar(tab);
-    cargar(tab);
-    socket.on('notificacion-domiciliaria:pendiente', recargar);
+    cargar();
+    socket.on('notificacion-domiciliaria:pendiente', cargar);
     return () => {
-      socket.off('notificacion-domiciliaria:pendiente', recargar);
+      socket.off('notificacion-domiciliaria:pendiente', cargar);
     };
-  }, [tab]);
+  }, []);
+
+  const cedulas = tab === 'pendientes' ? pendientes : asignadas;
 
   useEffect(() => {
     if (!asignarModal.isOpen) return;
@@ -78,7 +78,7 @@ export const NotificacionesView: React.FC = () => {
       setAsignarModal({ isOpen: false, id: '' });
       setNotificadorId('');
       setTab('asignadas');
-      cargar('asignadas');
+      cargar();
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message || 'Error al asignar notificador.' });
     } finally {
@@ -132,6 +132,7 @@ export const NotificacionesView: React.FC = () => {
   return (
     <div>
       <PageHeader
+        etiqueta="Procedimiento sancionador · Paso 3"
         titulo="Notificación de Cédulas"
         descripcion="Asignación de cédulas de notificación de cargo (NC) no entregadas in situ para diligencia en domicilio."
         acciones={
@@ -143,9 +144,10 @@ export const NotificacionesView: React.FC = () => {
 
       {message && <Alert type={message.type}>{message.text}</Alert>}
 
-      <PanelTabla
-        barra={
-          <SegmentedTabs<Tab>
+      <div className="flex flex-col gap-[16px]">
+        {/* Pestañas de la bandeja */}
+        <div className="animate-aparecer [animation-delay:80ms]">
+          <SegmentedTabs<BandejaCedulas>
             items={[
               { clave: 'pendientes', etiqueta: 'Pendientes de Asignación' },
               { clave: 'asignadas', etiqueta: 'Asignadas - Esperando Visita/Entrega' },
@@ -153,111 +155,76 @@ export const NotificacionesView: React.FC = () => {
             activa={tab}
             onChange={setTab}
           />
-        }
-      >
+        </div>
+
+        {/* Qué se está viendo */}
+        <div className="py-[12px] px-[16px] rounded-lg bg-bg-card border border-border shadow-xs animate-aparecer [animation-delay:150ms]">
+          <p key={tab} className="text-[13px] text-text-muted m-0 animate-aparecer [animation-duration:300ms]">
+            {tab === 'pendientes' ? (
+              <>
+                <span className="font-bold text-text-main">Pendientes de asignación:</span> elige el notificador que hará la diligencia en el domicilio.
+              </>
+            ) : (
+              <>
+                <span className="font-bold text-text-main">Asignadas:</span> registra la entrega con el cargo firmado, o reprograma la visita si no se pudo notificar.
+              </>
+            )}
+          </p>
+        </div>
+
+        {/* Cédulas */}
         {loading ? (
-          <div className="py-[56px] text-center">
-            <Spinner size={32} />
-            <p className="text-[13px] text-text-muted mt-[12px]">
-              Cargando cédulas de notificación...
-            </p>
+          <EsqueletoTarjetas />
+        ) : cedulas.length === 0 ? (
+          <div className="rounded-lg bg-bg-card border border-dashed border-border-dark py-[24px]">
+            <TodoAlDia
+              titulo={tab === 'pendientes' ? 'Sin notificaciones domiciliarias pendientes' : 'Sin notificaciones asignadas'}
+              descripcion={
+                tab === 'pendientes'
+                  ? 'Todas las notificaciones de cargo han sido asignadas o entregadas exitosamente.'
+                  : 'No hay cédulas asignadas a un notificador esperando visita o entrega en este momento.'
+              }
+            />
           </div>
-        ) : notificaciones.length === 0 ? (
-          <EmptyState
-            icon={<CheckCircleIcon size={40} color="var(--color-success)" />}
-            title={tab === 'pendientes' ? 'Sin notificaciones domiciliarias pendientes' : 'Sin notificaciones asignadas'}
-            description={
-              tab === 'pendientes'
-                ? 'Todas las notificaciones de cargo han sido asignadas o entregadas exitosamente.'
-                : 'No hay cédulas asignadas a un notificador esperando visita o entrega en este momento.'
-            }
-          />
         ) : (
-          <div className="overflow-x-auto">
-            <table className={TABLA.tabla}>
-              <thead>
-                <tr className={TABLA.encabezado}>
-                  <th className={TABLA.th}>ID Cédula</th>
-                  <th className={TABLA.th}>NC Asociada</th>
-                  <th className={TABLA.th}>Notificador</th>
-                  <th className={TABLA.th}>Estado</th>
-                  <th className={`${TABLA.th} text-right`}>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {notificaciones.map((notif) => (
-                  <tr key={notif.id} className={TABLA.fila}>
-                    <td className={`${TABLA.td} font-mono font-semibold`}>
-                      <div className="flex items-center gap-[8px]">
-                        <MailIcon size={16} color="var(--color-primary-600)" />
-                        {notif.id.slice(0, 8)}...
-                      </div>
-                    </td>
-                    <td className={`${TABLA.td} text-text-secondary`}>
-                      {notif.notificacionCargoId || '---'}
-                    </td>
-                    <td className={`${TABLA.td} text-text-secondary`}>
-                      {notif.notificadorId ? (
-                        <span className="flex items-center gap-[6px]">
-                          <UserIcon size={14} />
-                          {notif.notificadorNombre || notif.notificadorId}
-                        </span>
-                      ) : (
-                        <EstadoPunto tono="aviso">Sin asignar</EstadoPunto>
-                      )}
-                    </td>
-                    <td className={TABLA.td}>
-                      <EstadoPunto tono={notif.estado === 'PENDIENTE_ASIGNACION' ? 'aviso' : 'info'}>
-                        {notif.estado}
-                      </EstadoPunto>
-                    </td>
-                    <td className={`${TABLA.td} text-right`}>
-                      <div className="inline-flex items-center gap-[8px]">
-                        {tab === 'pendientes' ? (
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={() => {
-                              setAsignarModal({ isOpen: true, id: notif.id });
-                              setNotificadorId('');
-                            }}
-                          >
-                            Asignar
-                          </Button>
-                        ) : (
-                          <>
-                            <Button
-                              variant="primary"
-                              size="sm"
-                              onClick={() => {
-                                setEntregaModal({ isOpen: true, id: notif.id });
-                              }}
-                            >
-                              Registrar Entrega
-                            </Button>
-                            <MenuAcciones
-                              acciones={[
-                                {
-                                  etiqueta: 'Reprogramar',
-                                  onClick: () => {
-                                    setReprogramarModal({ isOpen: true, id: notif.id });
-                                    setMotivoReprogramacion('');
-                                  },
-                                },
-                                { etiqueta: 'Visitas / bajo puerta', onClick: () => setVisitasId(notif.id) },
-                              ]}
-                            />
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="flex flex-col gap-[12px]">
+            {cedulas.map((notif, i) =>
+              tab === 'pendientes' ? (
+                <TarjetaCedula
+                  key={notif.id}
+                  cedula={notif}
+                  indice={i}
+                  accion={{
+                    etiqueta: 'Asignar',
+                    icono: <UserIcon size={14} />,
+                    onClick: () => {
+                      setAsignarModal({ isOpen: true, id: notif.id });
+                      setNotificadorId('');
+                    },
+                  }}
+                />
+              ) : (
+                <TarjetaCedula
+                  key={notif.id}
+                  cedula={notif}
+                  indice={i}
+                  accion={{ etiqueta: 'Registrar entrega', icono: <CheckCircleIcon size={14} />, onClick: () => setEntregaModal({ isOpen: true, id: notif.id }) }}
+                  acciones={[
+                    {
+                      etiqueta: 'Reprogramar',
+                      onClick: () => {
+                        setReprogramarModal({ isOpen: true, id: notif.id });
+                        setMotivoReprogramacion('');
+                      },
+                    },
+                    { etiqueta: 'Visitas / bajo puerta', onClick: () => setVisitasId(notif.id) },
+                  ]}
+                />
+              ),
+            )}
           </div>
         )}
-      </PanelTabla>
+      </div>
 
       {visitasId && <VisitasNotificacionModal id={visitasId} onClose={() => setVisitasId(null)} onCambio={() => cargar()} />}
 
@@ -287,11 +254,11 @@ export const NotificacionesView: React.FC = () => {
         }
       >
         <div>
-          <label className="block mb-[0.375rem] text-[0.875rem] font-semibold">
+          <label className="block text-[13px] font-semibold text-text-secondary mb-[6px]">
             Notificador
           </label>
           <select
-            className="w-full py-[0.625rem] px-[0.875rem] rounded-sm border border-border text-[0.9375rem]"
+            className="w-full py-[10px] px-[14px] rounded-sm border border-border bg-white text-[14px] text-text-main outline-none [transition:border-color_150ms,box-shadow_150ms] focus:border-blue-700 focus:ring-4 focus:ring-blue-100"
             value={notificadorId}
             onChange={(e) => setNotificadorId(e.target.value)}
           >
@@ -303,7 +270,7 @@ export const NotificacionesView: React.FC = () => {
             ))}
           </select>
           {notificadores.length === 0 && (
-            <p className="text-[0.75rem] text-text-muted mt-[0.375rem]">
+            <p className="text-[12px] text-text-muted mt-[6px]">
               No hay usuarios con rol NOTIFICADOR registrados.
             </p>
           )}

@@ -91,6 +91,7 @@ export const MapaIntervencionesView: React.FC = () => {
   return (
     <div>
       <PageHeader
+        etiqueta="Consulta"
         titulo="Mapa de Cobertura"
         descripcion="Dónde estuvieron los fiscalizadores en San Juan de Lurigancho, con el GPS real de cada intervención sincronizada."
         acciones={

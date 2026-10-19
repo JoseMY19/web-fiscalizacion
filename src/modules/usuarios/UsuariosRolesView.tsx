@@ -33,6 +33,7 @@ export const UsuariosRolesView: React.FC = () => {
   return (
     <div>
       <PageHeader
+        etiqueta="Administración"
         titulo="Usuarios y Roles"
         descripcion="Quién entra al sistema y qué puede hacer en cada módulo. Los usuarios no se borran: se desactivan, para conservar su historial."
       />

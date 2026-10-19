@@ -7,6 +7,7 @@ import {
 import { Card, Button, Badge, Input, Alert, EmptyState } from '../../components/common/Common';
 import { EstadoPunto, PageHeader, PanelTabla, SegmentedTabs, TABLA } from '../../components/common/PageKit';
 import { formatearFecha } from '../../lib/fechas';
+import { SelectorFecha } from '../../components/common/SelectorFecha';
 import { CalendarIcon, RefreshCwIcon } from '../../components/icons/Icons';
 import { BasesMunicipalesConfig } from '../bases-municipales/BasesMunicipalesConfig';
 import { CatalogoCuisCrud } from '../catalogo-cuis/CatalogoCuisCrud';
@@ -71,6 +72,7 @@ export const ConfiguracionView: React.FC = () => {
   return (
     <div>
       <PageHeader
+        etiqueta="Administración"
         titulo="Configuración y Parámetros"
         descripcion="Parámetros transversales para el cómputo de plazos hábiles, tipificación de infracciones y control de sesiones."
         acciones={
@@ -107,12 +109,7 @@ export const ConfiguracionView: React.FC = () => {
             <p className="text-[12px] text-text-muted mb-[14px]">
               Los feriados registrados se excluyen automáticamente en la función de cómputo de días hábiles del PAS.
             </p>
-            <Input
-              type="date"
-              label="Fecha del Feriado"
-              value={fechaFeriado}
-              onChange={(e) => setFechaFeriado(e.target.value)}
-            />
+            <SelectorFecha etiqueta="Fecha del Feriado" valor={fechaFeriado} onCambio={setFechaFeriado} />
             <Input
               label="Motivo o Festividad"
               placeholder="Ej. Aniversario de San Juan de Lurigancho / Jueves Santo"

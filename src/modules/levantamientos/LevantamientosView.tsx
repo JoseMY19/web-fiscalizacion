@@ -100,6 +100,7 @@ export const LevantamientosView: React.FC = () => {
   return (
     <div>
       <PageHeader
+        etiqueta="Incidentes y plazos"
         titulo="Levantamiento de Medidas"
         descripcion={
           <>
