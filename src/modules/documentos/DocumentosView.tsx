@@ -20,6 +20,7 @@ export const DocumentosView: React.FC = () => {
   return (
     <div>
       <PageHeader
+        etiqueta="Consulta"
         titulo="Control Documentario"
         descripcion="Lo que entra, lo que sale (incluidas las actas de campo con su número), cada documento generado con sus versiones y el expediente foliado."
       />

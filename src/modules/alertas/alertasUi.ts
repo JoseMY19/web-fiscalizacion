@@ -1,4 +1,5 @@
 import type { Alerta, CategoriaAlerta, FaseExpediente, GrupoAlerta, NivelAlerta } from '../../api/alertas';
+import type { TonoContador } from '../../components/common/PageKit';
 
 /** Leyenda de riesgo: los mismos 4 niveles y colores en la campana, el panel y la página. */
 export const NIVELES: NivelAlerta[] = ['VENCIDO', 'CRITICO', 'POR_VENCER', 'EN_PLAZO'];
@@ -7,9 +8,9 @@ export const NIVEL_META: Record<NivelAlerta, { etiqueta: string; descripcion: st
   VENCIDO: {
     etiqueta: 'Vencido',
     descripcion: 'El plazo ya pasó y no se actuó',
-    chip: 'bg-[#991b1b] text-white border-[#991b1b]',
-    barra: 'bg-[#991b1b]',
-    texto: 'text-[#991b1b]',
+    chip: 'bg-red-800 text-white border-red-800',
+    barra: 'bg-red-800',
+    texto: 'text-red-800',
   },
   CRITICO: {
     etiqueta: 'Crítico',
@@ -56,7 +57,7 @@ export const FASES: { id: FaseExpediente; etiqueta: string }[] = [
  * están "en plazo": se dice "Para actuar" o "En espera", y el riesgo solo se muestra cuando lo hay.
  */
 export function chipDe(a: Pick<Alerta, 'nivel' | 'categoria'>): { etiqueta: string; clase: string } {
-  if (a.nivel === 'EN_PLAZO' && a.categoria === 'ACCION') return { etiqueta: 'Para actuar', clase: 'bg-primary-50 text-primary-700 border-primary-100' };
+  if (a.nivel === 'EN_PLAZO' && a.categoria === 'ACCION') return { etiqueta: 'Para actuar', clase: 'bg-blue-50 text-blue-800 border-blue-100' };
   if (a.nivel === 'EN_PLAZO' && a.categoria === 'ESPERA') return { etiqueta: 'En espera', clase: 'bg-bg-subtle text-text-muted border-border' };
   return { etiqueta: NIVEL_META[a.nivel].etiqueta, clase: NIVEL_META[a.nivel].chip };
 }
@@ -82,9 +83,9 @@ export const GRUPO_META: Record<GrupoAlerta, { etiqueta: string; descripcion: st
   ACTUAR: {
     etiqueta: 'Para actuar',
     descripcion: 'Ya puedes dar el siguiente paso',
-    barra: 'bg-primary-600',
-    texto: 'text-primary-700',
-    chip: 'bg-primary-50 text-primary-700 border-primary-100',
+    barra: 'bg-blue-800',
+    texto: 'text-blue-800',
+    chip: 'bg-blue-50 text-blue-800 border-blue-100',
   },
   SEGUIMIENTO: {
     etiqueta: 'En seguimiento',
@@ -93,6 +94,18 @@ export const GRUPO_META: Record<GrupoAlerta, { etiqueta: string; descripcion: st
     texto: 'text-text-muted',
     chip: 'bg-bg-subtle text-text-muted border-border',
   },
+};
+
+/** Pestañas de la página de alertas: lo que pide atención (por defecto) o un grupo puntual. */
+export type VistaAlertas = GrupoAlerta | 'ATENCION';
+
+/** Pestañas de filtro de la página de alertas: nombre y color del contador cuando hay expedientes. */
+export const VISTA_META: Record<VistaAlertas, { etiqueta: string; tono?: TonoContador }> = {
+  ATENCION: { etiqueta: 'Requieren atención' },
+  URGENTE: { etiqueta: GRUPO_META.URGENTE.etiqueta, tono: 'danger' },
+  POR_VENCER: { etiqueta: GRUPO_META.POR_VENCER.etiqueta, tono: 'warning' },
+  ACTUAR: { etiqueta: GRUPO_META.ACTUAR.etiqueta },
+  SEGUIMIENTO: { etiqueta: GRUPO_META.SEGUIMIENTO.etiqueta },
 };
 
 /** Línea de fases del expediente (de izquierda a derecha, como avanza el trámite). */

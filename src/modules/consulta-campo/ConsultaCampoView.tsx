@@ -36,6 +36,7 @@ export const ConsultaCampoView: React.FC = () => {
   return (
     <div>
       <PageHeader
+        etiqueta="Consulta"
         titulo="Exhortación y Consulta"
         descripcion="Solo consulta - estos caminos cierran en campo y no generan expediente ni pasan por validación."
         acciones={

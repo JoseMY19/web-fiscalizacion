@@ -28,12 +28,16 @@ import { BotonCorregirDato, CorreccionMaterialSeccion } from '../correcciones/Co
 import { cn } from '../../lib/cn';
 import { textoCaducidad } from '../resoluciones/resolucionUi';
 import { socket } from '../../lib/socket';
-import { Button, Badge, Modal, Input, Textarea, Alert, EmptyState, Spinner } from '../../components/common/Common';
-import { EstadoPunto, PageHeader, PanelTabla, SegmentedTabs, TABLA } from '../../components/common/PageKit';
+import { Button, Badge, Modal, Input, Textarea, Alert, Spinner } from '../../components/common/Common';
+import { Buscador, PageHeader, SegmentedTabs } from '../../components/common/PageKit';
+import { TodoAlDia } from '../../components/common/TodoAlDia';
+import { EsqueletoTarjetas } from '../../components/common/EsqueletoTarjetas';
+import { calcularPaso, resumenPorPaso, type FiltroIfi } from './ifiUi';
+import { TarjetaEsperandoNc, TarjetaIfi } from './TarjetasIfi';
 import { useConfirm } from '../../context/ConfirmContext';
 import { formatearFecha, formatearFechaHora, hoyLocal } from '../../lib/fechas';
 import { LABEL_FOTO_ACTA } from '../resoluciones/resolucionUi';
-import { FileTextIcon, RefreshCwIcon, CheckCircleIcon, EyeIcon, PenToolIcon, CheckIcon, PrinterIcon } from '../../components/icons/Icons';
+import { FileTextIcon, RefreshCwIcon, EyeIcon, PenToolIcon, CheckIcon, PrinterIcon } from '../../components/icons/Icons';
 
 /**
  * Secuencia real de pasos SP4, derivada de leer los use-cases del backend
@@ -43,52 +47,6 @@ import { FileTextIcon, RefreshCwIcon, CheckCircleIcon, EyeIcon, PenToolIcon, Che
  * — no se tocó el vocabulario interno, solo el texto visible.
  */
 type PasoEstado = 'completado' | 'actual' | 'pendiente' | 'no-aplica';
-
-function labelEstadoIfi(e: ExpedienteIfiItem): string {
-  if (!e.ifiEstado) return 'Sin iniciar';
-  if (e.ifiEstado === 'EN_ELABORACION') return 'En elaboración';
-  if (e.ifiEstado === 'EMITIDO') return 'Emitido';
-  return 'Notificado';
-}
-
-/**
- * Calcula en qué paso está el expediente, para el indicador compacto de la
- * tabla y para decidir qué paso queda habilitado en el panel de detalle.
- * Ramas:
- *  - imputacionCorrecta === false (vicio trascendente insubsanable): la
- *    recomendación ya quedó fijada en ARCHIVAR desde SanearImputacionUseCase.
- *    No hay "Hechos y Base Legal" que generar (no hay hechos válidos que
- *    redactar), así que este camino salta directo a Análisis (la
- *    fundamentación del archivo) → Firmar → Notificar, 5 pasos en vez de 7.
- */
-function calcularPaso(e: ExpedienteIfiItem): { pasoActualLabel: string; totalPasos: number; pasoNumero: number } {
-  if (e.imputacionCorrecta === false) {
-    if (!e.tieneAnalisis) return { pasoActualLabel: 'Análisis (fundamentar archivo)', totalPasos: 5, pasoNumero: 3 };
-    if (e.ifiEstado === 'EN_ELABORACION') return { pasoActualLabel: 'Firmar', totalPasos: 5, pasoNumero: 4 };
-    if (e.ifiEstado === 'EMITIDO') return { pasoActualLabel: 'Notificar', totalPasos: 5, pasoNumero: 5 };
-    return { pasoActualLabel: 'Completado (archivado por vicio)', totalPasos: 5, pasoNumero: 5 };
-  }
-  if (!e.ifiEstado) return { pasoActualLabel: 'Descargo / Sanear Imputación', totalPasos: 7, pasoNumero: 1 };
-  if (e.imputacionCorrecta !== true) return { pasoActualLabel: 'Sanear Imputación', totalPasos: 7, pasoNumero: 2 };
-  if (!e.tieneSeccionAutomatica) return { pasoActualLabel: 'Hechos y Base Legal', totalPasos: 7, pasoNumero: 3 };
-  if (!e.tieneAnalisis) return { pasoActualLabel: 'Análisis', totalPasos: 7, pasoNumero: 4 };
-  if (!e.recomendacion) return { pasoActualLabel: 'Recomendación', totalPasos: 7, pasoNumero: 5 };
-  if (e.ifiEstado === 'EN_ELABORACION') return { pasoActualLabel: 'Firmar', totalPasos: 7, pasoNumero: 6 };
-  if (e.ifiEstado === 'EMITIDO') return { pasoActualLabel: 'Notificar', totalPasos: 7, pasoNumero: 7 };
-  return { pasoActualLabel: 'Completado', totalPasos: 7, pasoNumero: 7 };
-}
-
-/** Puntos de progreso compactos para la fila de la tabla — sin abrir el panel. */
-const StepDots: React.FC<{ pasoNumero: number; totalPasos: number; truncado?: boolean }> = ({ pasoNumero, totalPasos, truncado }) => (
-  <div className="flex items-center gap-[3px]">
-    {Array.from({ length: totalPasos }).map((_, i) => (
-      <span
-        key={i}
-        className={`w-[7px] h-[7px] rounded-full ${truncado ? 'bg-[#be123c]' : i < pasoNumero ? 'bg-primary-600' : 'bg-[#e2e8f0]'}`}
-      />
-    ))}
-  </div>
-);
 
 // ============================================================================
 // Sanear Imputación (SP4-T01) — evidencia + checklist de apoyo
@@ -164,7 +122,10 @@ export const IfiView: React.FC = () => {
   const confirm = useConfirm();
   const [pendientes, setPendientes] = useState<ExpedienteIfiItem[]>([]);
   const [esperando, setEsperando] = useState<ExpedienteIfiItem[]>([]);
-  const [activeTab, setActiveTab] = useState<'pendientes' | 'esperando'>('pendientes');
+  const [filtro, setFiltro] = useState<FiltroIfi>('pendientes');
+  // Chips "Por paso": muestra solo los expedientes en ese paso (null = todos).
+  const [pasoFiltro, setPasoFiltro] = useState<string | null>(null);
+  const [busqueda, setBusqueda] = useState('');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -534,9 +495,23 @@ export const IfiView: React.FC = () => {
     }
   };
 
+  const pasos = resumenPorPaso(pendientes);
+  const texto = busqueda.trim().toLowerCase();
+  const visibles = (filtro === 'esperando' ? esperando : pendientes).filter(
+    (e) =>
+      e.numeroExpediente.toLowerCase().includes(texto) &&
+      (filtro === 'esperando' || !pasoFiltro || calcularPaso(e).pasoActualLabel === pasoFiltro),
+  );
+
+  const elegirFiltro = (f: FiltroIfi) => {
+    setFiltro(f);
+    setPasoFiltro(null);
+  };
+
   return (
     <div>
       <PageHeader
+        etiqueta="Procedimiento sancionador · Paso 4"
         titulo="Instrucción e IFI"
         descripcion="Control de descargos, hechos y base legal, análisis fáctico y propuesta instructora."
         acciones={
@@ -548,139 +523,77 @@ export const IfiView: React.FC = () => {
 
       {message && <Alert type={message.type}>{message.text}</Alert>}
 
-      <PanelTabla
-        barra={
-          <SegmentedTabs<'pendientes' | 'esperando'>
+      <div className="flex flex-col gap-[16px]">
+        {/* Pestañas de la bandeja, con su contador */}
+        <div className="animate-aparecer [animation-delay:80ms]">
+          <SegmentedTabs<FiltroIfi>
             items={[
-              { clave: 'pendientes', etiqueta: 'En instrucción', contador: pendientes.length },
-              { clave: 'esperando', etiqueta: 'Esperando notificación de la NC', contador: esperando.length },
+              { clave: 'pendientes', etiqueta: 'En instrucción', contador: loading ? undefined : pendientes.length },
+              { clave: 'esperando', etiqueta: 'Esperando notificación de la NC', contador: loading ? undefined : esperando.length },
             ]}
-            activa={activeTab}
-            onChange={setActiveTab}
+            activa={filtro}
+            onChange={elegirFiltro}
           />
-        }
-      >
-        {loading ? (
-          <div className="p-[40px] text-center">
-            <Spinner size={32} />
-            <p className="text-[13px] text-text-muted mt-[12px]">
-              Cargando expedientes de instrucción...
+        </div>
+
+        {/* Por paso (solo en instrucción) y búsqueda */}
+        <div className="flex items-center justify-between gap-[12px] flex-wrap py-[12px] px-[16px] rounded-lg bg-bg-card border border-border shadow-xs animate-aparecer [animation-delay:150ms]">
+          {filtro === 'esperando' ? (
+            <p className="text-[13px] text-text-muted m-0">
+              <span className="font-bold text-text-main">Esperando la NC:</span> la instrucción empieza cuando la Notificación de Cargo queda diligenciada.
             </p>
-          </div>
-        ) : activeTab === 'esperando' ? (
-          esperando.length === 0 ? (
-            <EmptyState title="No hay expedientes en espera de notificación" />
           ) : (
-            <div className="overflow-x-auto">
-              <table className={TABLA.tabla}>
-                <thead>
-                  <tr className={TABLA.encabezado}>
-                    <th className={TABLA.th}>Expediente</th>
-                    <th className={TABLA.th}>Condición legal</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {esperando.map((e) => (
-                    <tr key={e.expedienteId} className={TABLA.fila}>
-                      <td className={`${TABLA.td} font-bold text-midnight-900 align-top!`}>
-                        {e.numeroExpediente}
-                        {e.tienePago && (
-                          <div className="mt-[4px]">
-                            <PagadoBadge tienePago montoPagado={e.montoPagado} fechaPago={e.fechaPago} />
-                          </div>
-                        )}
-                      </td>
-                      <td className={`${TABLA.td} text-text-muted text-[12px]`}>
-                        Bloqueado por regla de negocio hasta que la Notificación de Cargo sea efectivamente diligenciada.
-                        <div className="mt-[8px] text-text-main text-[13px]">
-                          <AvisoRetroaccion expedienteId={e.expedienteId} onCambio={cargar} />
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="flex items-center gap-[8px] flex-wrap min-w-0">
+              <span className="text-[12px] font-bold uppercase tracking-[1px] text-text-light mr-[2px]">Por paso</span>
+              {pasos.length === 0 ? (
+                <span className="text-[13px] text-text-muted">Sin expedientes</span>
+              ) : (
+                // Volver a tocar el paso activo lo desmarca y se ven todos.
+                <SegmentedTabs<string>
+                  items={pasos.map((p) => ({ clave: p.etiqueta, etiqueta: p.etiqueta, contador: p.cantidad }))}
+                  activa={pasoFiltro}
+                  onChange={(paso) => setPasoFiltro(paso === pasoFiltro ? null : paso)}
+                />
+              )}
             </div>
-          )
-        ) : pendientes.length === 0 ? (
-          <EmptyState
-            icon={<CheckCircleIcon size={40} color="var(--color-success)" />}
-            title="Bandeja IFI despejada"
-            description="No hay expedientes pendientes de instrucción en este momento."
-          />
+          )}
+          <Buscador value={busqueda} onChange={setBusqueda} placeholder="Buscar N° de expediente" />
+        </div>
+
+        {/* Expedientes */}
+        {loading ? (
+          <EsqueletoTarjetas alto={104} />
+        ) : visibles.length === 0 ? (
+          <div className="rounded-lg bg-bg-card border border-dashed border-border-dark py-[24px]">
+            <TodoAlDia
+              titulo={
+                texto || pasoFiltro
+                  ? 'Sin resultados'
+                  : filtro === 'esperando'
+                    ? 'No hay expedientes en espera de notificación'
+                    : 'Bandeja IFI despejada'
+              }
+              descripcion={
+                texto || pasoFiltro
+                  ? 'Ningún expediente coincide con este filtro.'
+                  : filtro === 'esperando'
+                    ? 'Todas las Notificaciones de Cargo de la bandeja ya fueron diligenciadas.'
+                    : 'No hay expedientes pendientes de instrucción en este momento.'
+              }
+            />
+          </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className={TABLA.tabla}>
-              <thead>
-                <tr className={TABLA.encabezado}>
-                  <th className={TABLA.th}>Expediente</th>
-                  <th className={TABLA.th}>Estado IFI</th>
-                  <th className={TABLA.th}>Avance</th>
-                  <th className={TABLA.th}>Plazo</th>
-                  <th className={`${TABLA.th} text-right`}></th>
-                </tr>
-              </thead>
-              <tbody>
-                {pendientes.map((e) => {
-                  const { pasoActualLabel, totalPasos, pasoNumero } = calcularPaso(e);
-                  const esCaminoVicio = e.imputacionCorrecta === false;
-                  const caducidad = textoCaducidad(e.diasParaCaducidad);
-                  return (
-                    <tr key={e.expedienteId} className={cn(TABLA.fila, e.alertaAmpliacion && 'bg-danger-bg')}>
-                      <td className={`${TABLA.td} font-bold text-midnight-900`}>
-                        <div className="text-[14px]">{e.numeroExpediente}</div>
-                        {e.tienePago && (
-                          <div className="mt-[4px]">
-                            <PagadoBadge tienePago montoPagado={e.montoPagado} fechaPago={e.fechaPago} />
-                          </div>
-                        )}
-                      </td>
-
-                      <td className={TABLA.td}>
-                        <EstadoPunto tono={e.ifiEstado === 'NOTIFICADO' ? 'ok' : e.ifiEstado === 'EMITIDO' ? 'info' : 'neutro'}>{labelEstadoIfi(e)}</EstadoPunto>
-                      </td>
-
-                      <td className={TABLA.td}>
-                        <div className="flex flex-col gap-[6px]">
-                          <span className={`text-[12px] font-semibold ${esCaminoVicio ? 'text-[#be123c]' : 'text-text-secondary'}`}>
-                            {`Paso ${pasoNumero} de ${totalPasos}: ${pasoActualLabel}`}
-                          </span>
-                          <StepDots pasoNumero={pasoNumero} totalPasos={totalPasos} truncado={false} />
-                        </div>
-                      </td>
-
-                      <td className={`${TABLA.td} whitespace-nowrap`}>
-                        {caducidad ? (
-                          <span className={`font-semibold text-[12px] ${caducidad.urgente ? 'text-[#be123c]' : 'text-text-secondary'}`}>{caducidad.texto}</span>
-                        ) : (
-                          <span className="text-text-muted">—</span>
-                        )}
-                        {(e.ampliacionEstado === 'EMITIDA' || e.ampliacionEstado === 'NOTIFICADA') && (
-                          <div className="text-[11px] text-text-muted mt-[3px]">plazo ampliado (+3 meses)</div>
-                        )}
-                        {e.alertaAmpliacion && (
-                          <div className="text-[11px] text-[#be123c] font-semibold mt-[3px]">emitir RSG de ampliación</div>
-                        )}
-                      </td>
-
-                      <td className={`${TABLA.td} whitespace-nowrap text-right`}>
-                        {e.alertaAmpliacion && (
-                          <Button variant="danger" size="sm" className="mr-[8px]!" onClick={() => setDetalleExp(e)}>
-                            {e.ampliacionEstado ? 'Ver RSG de ampliación' : 'Emitir RSG de ampliación'}
-                          </Button>
-                        )}
-                        <Button variant="primary" size="sm" icon={<EyeIcon size={14} />} onClick={() => setDetalleExp(e)}>
-                          Ver expediente
-                        </Button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="flex flex-col gap-[12px]">
+            {visibles.map((e, i) =>
+              filtro === 'esperando' ? (
+                <TarjetaEsperandoNc key={e.expedienteId} expediente={e} indice={i} onCambio={cargar} />
+              ) : (
+                <TarjetaIfi key={e.expedienteId} expediente={e} indice={i} onVer={() => setDetalleExp(e)} />
+              ),
+            )}
           </div>
         )}
-      </PanelTabla>
+      </div>
 
       {/* ============================================================ */}
       {/* PANEL DE DETALLE EN PASOS                                     */}

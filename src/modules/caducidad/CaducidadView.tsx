@@ -69,6 +69,7 @@ export const CaducidadView: React.FC = () => {
   return (
     <div>
       <PageHeader
+        etiqueta="Incidentes y plazos"
         titulo="Caducidad del PAS"
         descripcion={
           <>

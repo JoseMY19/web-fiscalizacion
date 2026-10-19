@@ -166,6 +166,7 @@ export const CoactivaPagosView: React.FC = () => {
   return (
     <div>
       <PageHeader
+        etiqueta="Cobranza"
         titulo="Acto Firme"
         descripcion="Declara la firmeza de las resoluciones que ya no admiten recursos y deriva el expediente a Ejecución Coactiva."
         acciones={

@@ -1,21 +1,18 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ResolucionesApi, ExpedienteResolucionItem, BandejaResoluciones } from '../../api';
+import React, { useCallback, useEffect, useState } from 'react';
+import { ResolucionesApi, BandejaResoluciones } from '../../api';
 import { socket } from '../../lib/socket';
-import { Card, Button, Badge, Alert, EmptyState, Spinner } from '../../components/common/Common';
-import { EstadoPunto, PageHeader, PanelTabla, SegmentedTabs, TABLA, TonoEstado } from '../../components/common/PageKit';
-import { GavelIcon, RefreshCwIcon, CheckCircleIcon, SearchIcon, EyeIcon } from '../../components/icons/Icons';
+import { Button, Alert } from '../../components/common/Common';
+import { PageHeader, SegmentedTabs } from '../../components/common/PageKit';
+import { TodoAlDia } from '../../components/common/TodoAlDia';
+import { EsqueletoTarjetas } from '../../components/common/EsqueletoTarjetas';
+import { CHIP_ESTADO, CHIP_POR_VARIANTE } from '../../components/common/estilosBandeja';
+import { BuscadorDesplegable, useBuscadorDesplegable } from '../../components/common/BuscadorDesplegable';
+import { cn } from '../../lib/cn';
+import { GavelIcon, RefreshCwIcon } from '../../components/icons/Icons';
 import { ResolucionPanel } from './ResolucionPanel';
-import { NOMBRE_TIPO, diasDesde, labelEtapa, textoCaducidad, varianteDiasEnFirma, varianteEtapa } from './resolucionUi';
+import { CHIP_TIPO, labelEtapa, varianteDiasEnFirma, varianteEtapa } from './resolucionUi';
+import { TarjetaResolucion } from './TarjetaResolucion';
 import { PagadoBadge } from '../../components/common/PagadoBadge';
-
-/** Clase de texto para el "en firma hace N días" (O5): ámbar >5, rojo >10. */
-function claseDiasEnFirma(dias: number | null): string {
-  const v = varianteDiasEnFirma(dias);
-  return v === 'danger' ? 'text-[#be123c] font-semibold' : v === 'warning' ? 'text-[#b45309] font-semibold' : 'text-text-muted';
-}
-
-/** Punto de estado de la etapa (EstadoPunto) según la variante que ya calcula varianteEtapa. */
-const TONO_ETAPA: Record<string, TonoEstado> = { success: 'ok', warning: 'aviso', danger: 'peligro', info: 'info', purple: 'info', neutral: 'neutro' };
 
 type Pestana = 'enRedaccion' | 'porFirmar' | 'firmadas';
 
@@ -50,10 +47,7 @@ export const ResolucionesView: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [pestana, setPestana] = useState<Pestana>('enRedaccion');
 
-  const [busqueda, setBusqueda] = useState('');
-  const [resultados, setResultados] = useState<ExpedienteResolucionItem[] | null>(null);
-  const [buscando, setBuscando] = useState(false);
-  const [errorBusqueda, setErrorBusqueda] = useState<string | null>(null);
+  const buscador = useBuscadorDesplegable(ResolucionesApi.buscar);
 
   const [abierto, setAbierto] = useState<{ expedienteId: string; numeroExpediente: string } | null>(null);
 
@@ -74,76 +68,11 @@ export const ResolucionesView: React.FC = () => {
     }
   }, []);
 
-  const busquedaRef = useRef(busqueda);
-  busquedaRef.current = busqueda;
-  // Lista desplegable del buscador: se abre al hacer clic (muestra los más
-  // recientes sin escribir nada) y se filtra mientras se escribe.
-  const [listaAbierta, setListaAbierta] = useState(false);
-  const listaAbiertaRef = useRef(listaAbierta);
-  listaAbiertaRef.current = listaAbierta;
-  const [indiceActivo, setIndiceActivo] = useState(-1);
-  const buscadorRef = useRef<HTMLDivElement>(null);
-
-  const ejecutarBusqueda = useCallback(async (q: string) => {
-    const termino = q.trim();
-    setBuscando(true);
-    setErrorBusqueda(null);
-    try {
-      const data = await ResolucionesApi.buscar(termino);
-      // Descarta respuestas de una búsqueda anterior que llegaron tarde.
-      if (busquedaRef.current.trim() === termino) {
-        setResultados(Array.isArray(data) ? data : []);
-        setIndiceActivo(-1);
-      }
-    } catch (err: any) {
-      setErrorBusqueda(err.message || 'Error al buscar.');
-    } finally {
-      setBuscando(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!listaAbierta) return;
-    const t = setTimeout(() => ejecutarBusqueda(busqueda), 250);
-    return () => clearTimeout(t);
-  }, [busqueda, listaAbierta, ejecutarBusqueda]);
-
-  // Cerrar la lista al hacer clic fuera del buscador.
-  useEffect(() => {
-    if (!listaAbierta) return;
-    const alClicFuera = (ev: MouseEvent) => {
-      if (buscadorRef.current && !buscadorRef.current.contains(ev.target as Node)) setListaAbierta(false);
-    };
-    document.addEventListener('mousedown', alClicFuera);
-    return () => document.removeEventListener('mousedown', alClicFuera);
-  }, [listaAbierta]);
-
-  const elegirResultado = (f: ExpedienteResolucionItem) => {
-    setAbierto({ expedienteId: f.expedienteId, numeroExpediente: f.numeroExpediente });
-    setListaAbierta(false);
-  };
-
-  const alTeclear = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-    const lista = resultados ?? [];
-    if (ev.key === 'ArrowDown') {
-      ev.preventDefault();
-      setListaAbierta(true);
-      setIndiceActivo((i) => Math.min(i + 1, lista.length - 1));
-    } else if (ev.key === 'ArrowUp') {
-      ev.preventDefault();
-      setIndiceActivo((i) => Math.max(i - 1, 0));
-    } else if (ev.key === 'Enter' && listaAbierta && indiceActivo >= 0 && lista[indiceActivo]) {
-      ev.preventDefault();
-      elegirResultado(lista[indiceActivo]);
-    } else if (ev.key === 'Escape') {
-      setListaAbierta(false);
-    }
-  };
-
+  const { refrescarSiAbierta } = buscador;
   const refrescarTodo = useCallback(() => {
     cargar();
-    if (listaAbiertaRef.current) ejecutarBusqueda(busquedaRef.current);
-  }, [cargar, ejecutarBusqueda]);
+    refrescarSiAbierta();
+  }, [cargar, refrescarSiAbierta]);
 
   useEffect(() => {
     cargar();
@@ -163,6 +92,7 @@ export const ResolucionesView: React.FC = () => {
   return (
     <div>
       <PageHeader
+        etiqueta="Procedimiento sancionador · Paso 5"
         titulo="Resolución Sancionadora"
         descripcion={
           <>
@@ -180,143 +110,101 @@ export const ResolucionesView: React.FC = () => {
 
       {error && <Alert type="error">{error}</Alert>}
 
-      {/* Buscador por N° de expediente: clic → lista de expedientes; escribir → filtra */}
-      <Card className="mb-[20px]! overflow-visible! relative! z-[20]!">
-        <label className="block text-[13px] font-bold mb-[8px] text-midnight-900">
-          Buscar por N° de expediente
-        </label>
-        <div ref={buscadorRef} className="relative">
-          <span className="absolute left-[12px] top-[21px] [transform:translateY(-50%)] text-text-muted flex pointer-events-none">
-            <SearchIcon size={16} />
-          </span>
-          <input
-            type="text"
-            placeholder="Haz clic para ver los expedientes, o escribe el número (ej. 000007 o EXP-2026-000007)"
-            value={busqueda}
-            onChange={(e) => {
-              setBusqueda(e.target.value);
-              setListaAbierta(true);
-            }}
-            onFocus={() => {
-              setListaAbierta(true);
-              ejecutarBusqueda(busqueda);
-            }}
-            onClick={() => setListaAbierta(true)}
-            onKeyDown={alTeclear}
-            role="combobox"
-            aria-expanded={listaAbierta}
-            aria-autocomplete="list"
-            className={`w-full py-[10px] pr-[14px] pl-[36px] text-[14px] rounded-sm outline-none border ${listaAbierta ? 'border-primary-600' : 'border-border'}`}
-          />
-
-          {listaAbierta && (
-            <div
-              role="listbox"
-              className="absolute top-[calc(100%_+_6px)] left-0 right-0 z-[50] bg-white border border-border rounded-sm shadow-xl max-h-[340px] overflow-y-auto"
-            >
-              {errorBusqueda ? (
-                <div className="p-[12px]">
-                  <Alert type="error">{errorBusqueda}</Alert>
-                </div>
-              ) : buscando && resultados === null ? (
-                <div className="flex items-center gap-[8px] p-[14px] text-[13px] text-text-muted">
-                  <Spinner size={16} /> Buscando…
-                </div>
-              ) : resultados && resultados.length === 0 ? (
-                <p className="p-[14px] text-[13px] text-text-muted">
-                  {busqueda.trim()
-                    ? `Ningún expediente con IFI notificado coincide con "${busqueda.trim()}". Si el IFI todavía no se notifica, el expediente está en la bandeja de IFI.`
-                    : 'Todavía no hay expedientes con IFI notificado.'}
-                </p>
-              ) : resultados ? (
-                <>
-                  <div className="py-[8px] px-[14px] text-[11px] font-semibold text-text-muted border-b border-b-border bg-bg-subtle">
-                    {busqueda.trim()
-                      ? `${resultados.length} resultado${resultados.length === 1 ? '' : 's'}`
-                      : `Todos los expedientes disponibles (${resultados.length}) - escribe para filtrar`}
-                    {buscando && ' · actualizando…'}
-                  </div>
-                  {resultados.map((f, i) => {
-                    const tipo = f.tipo ?? f.tipoCorrespondiente;
-                    const activo = i === indiceActivo;
-                    return (
-                      <button
-                        key={f.expedienteId}
-                        type="button"
-                        role="option"
-                        aria-selected={activo}
-                        onMouseEnter={() => setIndiceActivo(i)}
-                        onClick={() => elegirResultado(f)}
-                        className={`flex items-center justify-between gap-[12px] w-full py-[10px] px-[14px] border-0 border-b border-b-border cursor-pointer text-left text-[13px] ${activo ? 'bg-primary-50' : 'bg-white'}`}
-                      >
-                        <span className="flex items-center gap-[8px] font-bold text-midnight-900">
-                          <GavelIcon size={15} color="var(--color-purple)" />
-                          {f.numeroExpediente}
-                          {f.numeroResolucion && (
-                            <span className="font-medium text-[11px] text-text-muted">· Resolución N° {f.numeroResolucion}</span>
-                          )}
-                        </span>
-                        <span className="flex items-center gap-[6px] flex-wrap justify-end">
-                          <PagadoBadge tienePago={f.tienePago} montoPagado={f.montoPagado} fechaPago={f.fechaPago} />
-                          {f.concluidaPorPago && <Badge variant="success">Concluido por pago</Badge>}
-                          {tipo && <Badge variant={tipo === 'RSGSA' ? 'danger' : 'info'}>{tipo}</Badge>}
-                          <Badge variant={varianteEtapa(f)}>{labelEtapa(f)}</Badge>
-                        </span>
-                      </button>
-                    );
-                  })}
-                </>
-              ) : null}
-            </div>
-          )}
-        </div>
-      </Card>
-
-      {/* Pestañas */}
-      <PanelTabla
-        barra={
+      <div className="flex flex-col gap-[16px]">
+        {/* Pestañas de la bandeja, con su contador */}
+        <div className="animate-aparecer [animation-delay:80ms]">
           <SegmentedTabs<Pestana>
             items={PESTANAS.map((p) => ({
               clave: p.clave,
               etiqueta: p.titulo,
-              contador: bandeja[p.clave].length,
+              contador: loading && bandeja[p.clave].length === 0 ? undefined : bandeja[p.clave].length,
+              // O5: "Por firmar" se pinta ámbar o rojo cuando alguna lleva demasiado tiempo en firma.
               tono: p.clave === 'porFirmar' ? tonoPorFirmar : undefined,
             }))}
             activa={pestana}
             onChange={setPestana}
           />
-        }
-      >
-        {ayudaPestana && <p className="text-[13px] text-text-muted py-[14px] px-[24px] m-0 border-b border-border">{ayudaPestana}</p>}
+        </div>
+
+        {/* Buscador por N° de expediente: clic → lista de expedientes; escribir → filtra */}
+        <BuscadorDesplegable
+          estado={buscador}
+          placeholder="Buscar cualquier expediente: haz clic para ver la lista o escribe el número (ej. 000007 o EXP-2026-000007)"
+          claveDe={(f) => f.expedienteId}
+          onElegir={(f) => setAbierto({ expedienteId: f.expedienteId, numeroExpediente: f.numeroExpediente })}
+          textoSinResultados={(termino) =>
+            termino
+              ? `Ningún expediente con IFI notificado coincide con "${termino}". Si el IFI todavía no se notifica, el expediente está en la bandeja de IFI.`
+              : 'Todavía no hay expedientes con IFI notificado.'
+          }
+          textoTodos={(n) => `Todos los expedientes disponibles (${n}) · escribe para filtrar`}
+          renderOpcion={(f, activa) => {
+            const tipo = f.tipo ?? f.tipoCorrespondiente;
+            return (
+              <>
+                <span className="flex items-center gap-[8px] font-bold text-text-main">
+                  <span className={cn('flex', activa ? 'text-blue-800' : 'text-text-light')}>
+                    <GavelIcon size={15} />
+                  </span>
+                  <span className="font-display tabular-nums">{f.numeroExpediente}</span>
+                  {f.numeroResolucion && <span className="font-medium text-[11px] text-text-muted">· Resolución N° {f.numeroResolucion}</span>}
+                </span>
+                <span className="flex items-center gap-[6px] flex-wrap justify-end">
+                  <PagadoBadge tienePago={f.tienePago} montoPagado={f.montoPagado} fechaPago={f.fechaPago} />
+                  {f.concluidaPorPago && <span className={cn(CHIP_ESTADO, 'bg-success-bg border-success-border text-success')}>Concluido por pago</span>}
+                  {tipo && <span className={cn(CHIP_ESTADO, CHIP_TIPO[tipo])}>{tipo}</span>}
+                  <span className={cn(CHIP_ESTADO, CHIP_POR_VARIANTE[varianteEtapa(f)])}>{labelEtapa(f)}</span>
+                </span>
+              </>
+            );
+          }}
+        />
+
+        {/* Qué se está viendo y aviso de firma pendiente */}
+        {ayudaPestana && (
+          <p key={pestana} className="text-[13px] text-text-muted m-0 px-[4px] animate-aparecer [animation-duration:300ms]">
+            <span className="font-bold text-text-main">{PESTANAS.find((p) => p.clave === pestana)?.titulo}:</span> {ayudaPestana}
+          </p>
+        )}
         {pestana === 'porFirmar' && bandeja.porFirmar.length > 0 && (
-          <div className="py-[16px] px-[24px] pb-0">
-            <Alert type={varianteDiasEnFirma(maxDiasEnFirma) === 'purple' ? 'info' : varianteDiasEnFirma(maxDiasEnFirma) === 'danger' ? 'error' : 'warning'}>
-              Falta firmar: {bandeja.porFirmar.length} resoluci{bandeja.porFirmar.length === 1 ? 'ón espera' : 'ones esperan'} la firma del Subgerente
-              (la más antigua hace {maxDiasEnFirma} día{maxDiasEnFirma === 1 ? '' : 's'}). La firma es obligatoria para notificar.
-            </Alert>
-          </div>
+          <Alert
+            type={varianteDiasEnFirma(maxDiasEnFirma) === 'purple' ? 'info' : varianteDiasEnFirma(maxDiasEnFirma) === 'danger' ? 'error' : 'warning'}
+            className="mb-0!"
+          >
+            Falta firmar: {bandeja.porFirmar.length} resoluci{bandeja.porFirmar.length === 1 ? 'ón espera' : 'ones esperan'} la firma del Subgerente
+            (la más antigua hace {maxDiasEnFirma} día{maxDiasEnFirma === 1 ? '' : 's'}). La firma es obligatoria para notificar.
+          </Alert>
         )}
+
+        {/* Expedientes */}
         {loading && filas.length === 0 ? (
-          <div className="p-[40px] text-center">
-            <Spinner size={32} />
-            <p className="text-[13px] text-text-muted mt-[12px]">Cargando resoluciones…</p>
-          </div>
+          <EsqueletoTarjetas alto={104} />
         ) : filas.length === 0 ? (
-          <EmptyState
-            icon={<CheckCircleIcon size={40} color="var(--color-success)" />}
-            title="Nada en esta pestaña"
-            description={
-              pestana === 'enRedaccion'
-                ? 'Cuando se notifique un IFI, el expediente aparece aquí automáticamente.'
-                : pestana === 'porFirmar'
-                ? 'No hay resoluciones entregadas al Subgerente en este momento.'
-                : 'No hay resoluciones firmadas pendientes ni notificadas en los últimos 30 días.'
-            }
-          />
+          <div className="rounded-lg bg-bg-card border border-dashed border-border-dark py-[24px]">
+            <TodoAlDia
+              titulo="Nada en esta pestaña"
+              descripcion={
+                pestana === 'enRedaccion'
+                  ? 'Cuando se notifique un IFI, el expediente aparece aquí automáticamente.'
+                  : pestana === 'porFirmar'
+                    ? 'No hay resoluciones entregadas al Subgerente en este momento.'
+                    : 'No hay resoluciones firmadas pendientes ni notificadas en los últimos 30 días.'
+              }
+            />
+          </div>
         ) : (
-          <TablaResoluciones filas={filas} onVer={(f) => setAbierto(f)} />
+          <div className="flex flex-col gap-[12px]">
+            {filas.map((f, i) => (
+              <TarjetaResolucion
+                key={f.expedienteId}
+                resolucion={f}
+                indice={i}
+                onVer={() => setAbierto({ expedienteId: f.expedienteId, numeroExpediente: f.numeroExpediente })}
+              />
+            ))}
+          </div>
         )}
-      </PanelTabla>
+      </div>
 
       {abierto && (
         <ResolucionPanel
@@ -329,101 +217,3 @@ export const ResolucionesView: React.FC = () => {
     </div>
   );
 };
-
-const TablaResoluciones: React.FC<{
-  filas: ExpedienteResolucionItem[];
-  onVer: (f: { expedienteId: string; numeroExpediente: string }) => void;
-}> = ({ filas, onVer }) => (
-  <div className="overflow-x-auto">
-    <table className={TABLA.tabla}>
-      <thead>
-        <tr className={TABLA.encabezado}>
-          <th className={TABLA.th}>N° Expediente</th>
-          <th className={TABLA.th}>Tipo</th>
-          <th className={TABLA.th}>Etapa</th>
-          <th className={TABLA.th}>Plazo</th>
-          <th className={`${TABLA.th} text-right`}></th>
-        </tr>
-      </thead>
-      <tbody>
-        {filas.map((f) => {
-          const tipo = f.tipo ?? f.tipoCorrespondiente;
-          const caducidad = textoCaducidad(f.plazos.diasParaCaducidad);
-          return (
-            <tr
-              key={f.expedienteId}
-              className={`${TABLA.fila} ${f.plazos.alertaAmpliacion ? 'bg-[#fff1f2]' : ''}`}
-            >
-              <td className={`${TABLA.td} font-bold text-midnight-900`}>
-                <div className="flex items-center gap-[8px]">
-                  <GavelIcon size={16} color="var(--color-purple)" />
-                  {f.numeroExpediente}
-                </div>
-                {f.numeroResolucion && (
-                  <div className="text-[11px] text-text-muted mt-[3px] font-medium">
-                    Resolución N° {f.numeroResolucion}
-                  </div>
-                )}
-                {f.tienePago && (
-                  <div className="mt-[4px]">
-                    <PagadoBadge tienePago montoPagado={f.montoPagado} fechaPago={f.fechaPago} />
-                    {f.concluidaPorPago && <EstadoPunto tono="ok">Concluido por pago</EstadoPunto>}
-                  </div>
-                )}
-              </td>
-              <td className={TABLA.td}>
-                {tipo ? <Badge variant={tipo === 'RSGSA' ? 'danger' : 'info'}>{NOMBRE_TIPO[tipo]}</Badge> : <span className="text-text-muted">—</span>}
-                {f.archivoPorVicio && (
-                  <div className="text-[11px] text-[#be123c] mt-[3px]">archivo por error de fondo</div>
-                )}
-                {f.tipoNoCoincideConIfi && (
-                  <div className="mt-[4px]">
-                    <Badge variant="warning">Decisión distinta al IFI</Badge>
-                  </div>
-                )}
-                {f.enParte && <div className="text-[11px] text-text-muted mt-[3px]">sancionar en parte</div>}
-              </td>
-              <td className={TABLA.td}>
-                <EstadoPunto tono={TONO_ETAPA[varianteEtapa(f)] ?? 'neutro'}>{labelEtapa(f)}</EstadoPunto>
-              </td>
-              <td className={`${TABLA.td} whitespace-nowrap`}>
-                {caducidad ? (
-                  <span className={`font-semibold ${caducidad.urgente ? 'text-[#be123c]' : 'text-text-secondary'}`}>{caducidad.texto}</span>
-                ) : (
-                  <span className="text-text-muted">—</span>
-                )}
-                {f.plazos.ampliacionFirmada && <div className="text-[11px] text-text-muted mt-[3px]">plazo ampliado (+3 meses)</div>}
-                {f.ampliacionEstado === 'EN_ELABORACION' && f.ampliacionFechaEnvioFirma && (
-                  <div className={`text-[11px] mt-[3px] ${claseDiasEnFirma(diasDesde(f.ampliacionFechaEnvioFirma))}`}>
-                    RSG de ampliación en firma hace {diasDesde(f.ampliacionFechaEnvioFirma)} día{diasDesde(f.ampliacionFechaEnvioFirma) === 1 ? '' : 's'}
-                  </div>
-                )}
-              </td>
-              <td className={`${TABLA.td} text-right`}>
-                <div className="inline-flex items-center gap-[8px]">
-                  {f.plazos.alertaAmpliacion && (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => onVer({ expedienteId: f.expedienteId, numeroExpediente: f.numeroExpediente })}
-                    >
-                      {f.ampliacionEstado ? 'Ver RSG de ampliación' : 'Emitir RSG de ampliación'}
-                    </Button>
-                  )}
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    icon={<EyeIcon size={14} />}
-                    onClick={() => onVer({ expedienteId: f.expedienteId, numeroExpediente: f.numeroExpediente })}
-                  >
-                    Ver expediente
-                  </Button>
-                </div>
-              </td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
-  </div>
-);

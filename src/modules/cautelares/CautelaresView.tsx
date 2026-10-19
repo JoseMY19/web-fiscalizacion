@@ -75,6 +75,7 @@ export const CautelaresView: React.FC = () => {
   return (
     <div>
       <PageHeader
+        etiqueta="Incidentes y plazos"
         titulo="Medidas Cautelares"
         descripcion="Resoluciones de urgencia del Subgerente para casos graves."
         acciones={

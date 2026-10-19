@@ -3,11 +3,12 @@ import type { NavModule } from '../../components/layout/AppLayout';
 import type { Alerta } from '../../api/alertas';
 import { Card, Spinner } from '../../components/common/Common';
 import { SegmentedTabs } from '../../components/common/PageKit';
-import { AlertTriangleIcon, ArrowRightIcon, CheckCircleIcon, ChevronRightIcon, ClockIcon, FileTextIcon } from '../../components/icons/Icons';
+import { AlertTriangleIcon, ArrowRightIcon, ChevronRightIcon, ClockIcon, FileTextIcon } from '../../components/icons/Icons';
 import { formatearFecha } from '../../lib/fechas';
 import { cn } from '../../lib/cn';
 import { useAlertas } from './AlertasContext';
 import { CHIP_BASE, NIVEL_META, chipDe } from './alertasUi';
+import { TodoAlDia } from '../../components/common/TodoAlDia';
 
 const MAX_ALERTAS = 5;
 
@@ -51,16 +52,19 @@ export const AtencionRequerida: React.FC<{ onNavigate: (m: NavModule) => void }>
 
   return (
     <Card
-      className="min-h-[460px]"
+      className="rounded-lg shadow-xs"
       title="Atención requerida"
       subtitle="Lo más urgente de todos los expedientes, ordenado por riesgo"
       action={
         <button
           type="button"
           onClick={() => onNavigate('alertas')}
-          className="bg-transparent border-0 p-0 text-[12px] font-semibold text-primary-600 cursor-pointer inline-flex items-center gap-[4px] hover:underline"
+          className="group bg-transparent border-0 p-0 text-[12.5px] font-bold text-blue-800 cursor-pointer inline-flex items-center gap-[6px]"
         >
-          Ver alertas y plazos <ArrowRightIcon size={14} />
+          Ver alertas y plazos
+          <span className="[transition:transform_200ms] group-hover:translate-x-[3px]">
+            <ArrowRightIcon size={14} />
+          </span>
         </button>
       }
     >
@@ -69,11 +73,10 @@ export const AtencionRequerida: React.FC<{ onNavigate: (m: NavModule) => void }>
           <Spinner size={24} />
         </div>
       ) : !resumen || resumen.atencion === 0 ? (
-        <div className="py-[20px] flex items-center gap-[10px] text-[13px] text-text-muted">
-          <CheckCircleIcon size={22} color="var(--color-success)" />
-          Nada requiere atención ahora.
-          {resumen && resumen.seguimiento > 0 ? ` Hay ${resumen.seguimiento} plazo${resumen.seguimiento === 1 ? '' : 's'} en seguimiento, sin riesgo.` : ' Todo al día.'}
-        </div>
+        <TodoAlDia
+          titulo="Nada requiere atención ahora"
+          descripcion={resumen && resumen.seguimiento > 0 ? `Hay ${resumen.seguimiento} plazo${resumen.seguimiento === 1 ? '' : 's'} en seguimiento, sin riesgo.` : 'Todo al día.'}
+        />
       ) : (
         <>
           <div className="mb-[8px]">
