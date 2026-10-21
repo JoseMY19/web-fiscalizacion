@@ -104,6 +104,7 @@ interface BadgeProps {
   children: React.ReactNode;
   variant?: 'success' | 'warning' | 'danger' | 'info' | 'purple' | 'neutral' | 'midnight';
   size?: 'sm' | 'md';
+  className?: string;
 }
 
 const BADGE_VARIANTS: Record<string, string> = {
@@ -116,12 +117,13 @@ const BADGE_VARIANTS: Record<string, string> = {
   midnight: 'bg-[#10264a] text-[#ffffff] border-[#163666]',
 };
 
-export const Badge: React.FC<BadgeProps> = ({ children, variant = 'neutral', size = 'sm' }) => (
+export const Badge: React.FC<BadgeProps> = ({ children, variant = 'neutral', size = 'sm', className }) => (
   <span
     className={cn(
       'inline-flex items-center font-semibold rounded-[6px] border whitespace-nowrap tracking-[0.2px]',
       size === 'sm' ? 'py-[2px] px-[8px] text-[11px]' : 'py-[4px] px-[10px] text-[12px]',
       BADGE_VARIANTS[variant] || BADGE_VARIANTS.neutral,
+      className,
     )}
   >
     {children}
