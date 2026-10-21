@@ -401,7 +401,7 @@ const EditorCodigo: React.FC<{
               onChange={(e) => set('requiereDesambiguacion', e.target.checked)}
             />
             <span>
-              <strong className="text-text-main">Número repetido en la ordenanza</strong> — en campo se pide elegir con cuidado entre los códigos con el
+              <strong className="text-text-main">Número repetido en la ordenanza</strong> - en campo se pide elegir con cuidado entre los códigos con el
               mismo número.
             </span>
           </label>

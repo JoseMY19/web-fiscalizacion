@@ -5,6 +5,7 @@ import { Alerta } from '../../api/alertas';
 import { formatearFecha } from '../../lib/fechas';
 import { cn } from '../../lib/cn';
 import { useAlertas } from './AlertasContext';
+import { SegmentedTabs } from '../../components/common/PageKit';
 import { CHIP_BASE, NIVEL_META, chipDe } from './alertasUi';
 
 type Filtro = 'URGENTES' | 'POR_VENCER' | 'ACCION' | 'TODAS';
@@ -85,15 +86,15 @@ export const CampanaAlertas: React.FC<{ onIr: (modulo: NavModule) => void }> = (
         aria-expanded={abierta}
         className={cn(
           'relative border rounded-[8px] w-[36px] h-[36px] flex items-center justify-center cursor-pointer [transition:all_150ms_ease]',
-          abierta ? 'bg-primary-50 border-primary-100 text-primary-600' : 'bg-[#f8fafc] border-[#e2e8f0] text-[#64748b] hover:bg-[#f1f5f9] hover:text-[#0f172a]',
+          abierta ? 'bg-blue-50 border-blue-100 text-blue-800' : 'bg-bg-subtle border-border text-text-muted hover:bg-bg-hover hover:text-text-main',
         )}
       >
         <BellIcon size={17} />
         {(criticas > 0 || porVencer > 0) && (
           <span
             className={cn(
-              'absolute -top-[4px] -right-[4px] min-w-[18px] h-[18px] px-[4px] rounded-[9px] text-[#ffffff] text-[10px] font-bold flex items-center justify-center border-2 border-[#ffffff]',
-              criticas > 0 ? 'bg-[#ef4444]' : 'bg-warning',
+              'absolute -top-[4px] -right-[4px] min-w-[18px] h-[18px] px-[4px] rounded-[9px] text-white text-[10px] font-bold flex items-center justify-center border-2 border-white',
+              criticas > 0 ? 'bg-danger' : 'bg-warning',
             )}
           >
             {criticas > 0 ? criticas : porVencer}
@@ -123,20 +124,8 @@ export const CampanaAlertas: React.FC<{ onIr: (modulo: NavModule) => void }> = (
             </button>
           </div>
 
-          <div className="py-[8px] px-[12px] border-b border-border flex gap-[6px] flex-wrap">
-            {FILTROS.map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => setFiltro(f.id)}
-                className={cn(
-                  'py-[4px] px-[10px] rounded-[999px] border text-[12px] cursor-pointer',
-                  filtro === f.id ? 'bg-primary-600 text-white border-primary-600 font-semibold' : 'bg-white text-text-secondary border-border hover:bg-bg-hover',
-                )}
-              >
-                {f.etiqueta}
-              </button>
-            ))}
+          <div className="py-[10px] px-[12px] border-b border-border">
+            <SegmentedTabs<Filtro> items={FILTROS.map((f) => ({ clave: f.id, etiqueta: f.etiqueta }))} activa={filtro} onChange={setFiltro} />
           </div>
 
           <div className="max-h-[420px] overflow-y-auto">
@@ -188,7 +177,7 @@ export const CampanaAlertas: React.FC<{ onIr: (modulo: NavModule) => void }> = (
             <button
               type="button"
               onClick={() => ir('alertas')}
-              className="w-full py-[8px] rounded-[6px] border-0 bg-primary-600 text-white text-[13px] font-semibold cursor-pointer hover:bg-primary-700"
+              className="w-full py-[8px] rounded-[6px] border-0 bg-blue-800 text-white text-[13px] font-semibold cursor-pointer hover:bg-blue-900"
             >
               Ver todas las alertas y plazos{resumen ? ` (${resumen.total})` : ''}
             </button>

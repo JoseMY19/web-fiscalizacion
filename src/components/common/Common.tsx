@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { cn } from '../../lib/cn';
 
 // Nota: las clases que llegan por `className` desde fuera deben usar el
@@ -17,17 +18,16 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const BUTTON_VARIANTS: Record<NonNullable<ButtonProps['variant']>, string> = {
   primary:
-    'bg-[#1d4ed8] text-[#ffffff] border-none shadow-[0_2px_6px_rgba(29,78,216,0.2)] enabled:hover:bg-[#1e40af] enabled:hover:shadow-[0_6px_16px_rgba(29,78,216,0.35)]',
-  secondary:
-    'bg-[#ffffff] text-[#0f172a] border border-[#cbd5e1] shadow-[0_1px_3px_rgba(0,0,0,0.05)] enabled:hover:bg-[#f8fafc]',
+    'bg-blue-800 text-white border-none shadow-[0_2px_6px_rgba(29,79,145,0.25)] enabled:hover:bg-blue-900 enabled:hover:shadow-[0_6px_16px_rgba(29,79,145,0.35)]',
+  secondary: 'bg-white text-text-main border border-border-dark shadow-xs enabled:hover:bg-bg-subtle',
   danger:
-    'bg-[#dc2626] text-[#ffffff] border-none shadow-[0_2px_6px_rgba(220,38,38,0.2)] enabled:hover:bg-[#b91c1c] enabled:hover:shadow-[0_4px_12px_rgba(220,38,38,0.3)]',
+    'bg-danger text-white border-none shadow-[0_2px_6px_rgba(220,38,38,0.2)] enabled:hover:bg-red-700 enabled:hover:shadow-[0_4px_12px_rgba(220,38,38,0.3)]',
   warning:
-    'bg-[#d97706] text-[#ffffff] border-none shadow-[0_2px_6px_rgba(217,119,6,0.2)] enabled:hover:bg-[#b45309] enabled:hover:shadow-[0_4px_12px_rgba(217,119,6,0.3)]',
+    'bg-warning text-white border-none shadow-[0_2px_6px_rgba(217,119,6,0.2)] enabled:hover:bg-amber-700 enabled:hover:shadow-[0_4px_12px_rgba(217,119,6,0.3)]',
   success:
-    'bg-[#16a34a] text-[#ffffff] border-none shadow-[0_2px_6px_rgba(22,163,74,0.2)] enabled:hover:bg-[#15803d] enabled:hover:shadow-[0_4px_12px_rgba(22,163,74,0.3)]',
-  outline: 'bg-transparent text-[#1d4ed8] border border-[#1d4ed8] shadow-none enabled:hover:bg-[#eff6ff]',
-  ghost: 'bg-transparent text-[#334155] border-none shadow-none enabled:hover:bg-[#f1f5f9]',
+    'bg-success text-white border-none shadow-[0_2px_6px_rgba(22,163,74,0.2)] enabled:hover:bg-green-700 enabled:hover:shadow-[0_4px_12px_rgba(22,163,74,0.3)]',
+  outline: 'bg-transparent text-blue-800 border border-blue-800 shadow-none enabled:hover:bg-blue-50',
+  ghost: 'bg-transparent text-text-secondary border-none shadow-none enabled:hover:bg-bg-hover',
 };
 
 const BUTTON_SIZES: Record<NonNullable<ButtonProps['size']>, string> = {
@@ -104,6 +104,7 @@ interface BadgeProps {
   children: React.ReactNode;
   variant?: 'success' | 'warning' | 'danger' | 'info' | 'purple' | 'neutral' | 'midnight';
   size?: 'sm' | 'md';
+  className?: string;
 }
 
 const BADGE_VARIANTS: Record<string, string> = {
@@ -116,12 +117,13 @@ const BADGE_VARIANTS: Record<string, string> = {
   midnight: 'bg-[#10264a] text-[#ffffff] border-[#163666]',
 };
 
-export const Badge: React.FC<BadgeProps> = ({ children, variant = 'neutral', size = 'sm' }) => (
+export const Badge: React.FC<BadgeProps> = ({ children, variant = 'neutral', size = 'sm', className }) => (
   <span
     className={cn(
       'inline-flex items-center font-semibold rounded-[6px] border whitespace-nowrap tracking-[0.2px]',
       size === 'sm' ? 'py-[2px] px-[8px] text-[11px]' : 'py-[4px] px-[10px] text-[12px]',
       BADGE_VARIANTS[variant] || BADGE_VARIANTS.neutral,
+      className,
     )}
   >
     {children}
@@ -152,7 +154,10 @@ interface ModalProps {
 export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, footer, maxWidth = '560px' }) => {
   if (!isOpen) return null;
 
-  return (
+  // Se monta en <body> con un portal: si el modal se abre desde una tarjeta
+  // con transform u overflow-hidden (animaciones, hover), "fixed" quedaría
+  // atrapado dentro de la tarjeta y el formulario saldría recortado.
+  return createPortal(
     <div
       className="fixed inset-0 bg-[rgba(11,19,43,0.65)] backdrop-blur-[3px] flex items-center justify-center z-[9999] p-[16px]"
       onClick={onClose}
@@ -182,7 +187,8 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
 
@@ -257,7 +263,9 @@ export const EmptyState: React.FC<{
   description?: string;
   action?: React.ReactNode;
 }> = ({ icon, title, description, action }) => (
-  <div className="py-[48px] px-[24px] text-center bg-[#ffffff] rounded-md border border-dashed border-border my-[16px]">
+  // Suele ir dentro de un panel con borde: margen en los cuatro lados y fondo
+  // gris suave para que su borde punteado no se pegue al del panel.
+  <div className="m-[16px] py-[44px] px-[24px] text-center bg-bg-subtle rounded-md border border-dashed border-border-dark">
     {icon && <div className="text-text-light mb-[12px] flex justify-center">{icon}</div>}
     <h4 className="text-[16px] font-semibold text-text-main mb-[4px]">{title}</h4>
     {description && <p className="text-[13px] text-text-muted max-w-[400px] mx-auto mb-[16px]">{description}</p>}

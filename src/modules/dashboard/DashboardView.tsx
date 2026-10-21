@@ -4,60 +4,132 @@ import {
   IfiApi,
   ResolucionesApi,
 } from '../../api';
-import { Card, Button, Spinner } from '../../components/common/Common';
-import { PageHeader } from '../../components/common/PageKit';
-import { ChevronRightIcon, RefreshCwIcon } from '../../components/icons/Icons';
+import { Button, Spinner } from '../../components/common/Common';
+import { ArrowRightIcon, BellIcon, ExpedienteIcon, FileTextIcon, GavelIcon, RefreshCwIcon } from '../../components/icons/Icons';
 import { NavModule } from '../../components/layout/AppLayout';
+import { useAuth } from '../../context/AuthContext';
 import { varianteDiasEnFirma } from '../resoluciones/resolucionUi';
 import { AtencionRequerida } from '../alertas/AtencionRequerida';
 import { useAlertas } from '../alertas/AlertasContext';
 import { cn } from '../../lib/cn';
+import { useConteoAnimado } from '../../lib/useConteoAnimado';
+import { ACENTOS, AcentoBandeja, RECORRIDO, fechaLarga, saludoDelDia } from './dashboardUi';
 
 interface DashboardViewProps {
   onNavigate: (module: NavModule) => void;
 }
 
-/** Recorrido del expediente; cada paso lleva a su módulo (Campo es la app móvil, sin pantalla aquí). */
-const RECORRIDO: { paso: string; titulo: string; detalle: string; modulo?: NavModule }[] = [
-  { paso: '1', titulo: 'Campo', detalle: 'Actas y notificación de cargo' },
-  { paso: '2', titulo: 'Validación', detalle: 'Revisión de que esté completo', modulo: 'expedientes' },
-  { paso: '3', titulo: 'Notificación', detalle: 'Cédulas domiciliarias', modulo: 'notificaciones' },
-  { paso: '4', titulo: 'Instrucción', detalle: 'Descargos e informe final', modulo: 'ifi' },
-  { paso: '5', titulo: 'Resolución', detalle: 'RSG / RSGSA', modulo: 'resoluciones' },
-  { paso: '6', titulo: 'Recursos', detalle: 'Reconsideración y apelación', modulo: 'recursos' },
-  { paso: '7', titulo: 'Cobranza', detalle: 'Acto firme y coactiva', modulo: 'coactiva-pagos' },
-];
-
-/** Una fila de la lista de bandejas: nombre, qué espera y cuántos hay. */
-const FilaBandeja: React.FC<{
+// ============================================================================
+// TARJETA DE BANDEJA: cuántos expedientes esperan y a dónde ir
+// ============================================================================
+const TarjetaBandeja: React.FC<{
   titulo: string;
   detalle: string;
   cantidad: number;
   cargando: boolean;
-  destacada?: boolean;
+  icono: React.ReactNode;
+  acento: AcentoBandeja;
   extra?: React.ReactNode;
+  retraso: number;
   onClick: () => void;
-}> = ({ titulo, detalle, cantidad, cargando, destacada, extra, onClick }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className="group w-full flex-1 flex items-center gap-[12px] py-[14px] px-[4px] bg-transparent border-0 border-b border-b-border-subtle last:border-b-0 text-left cursor-pointer [transition:background-color_120ms_ease] hover:bg-bg-subtle"
-  >
-    <span className="min-w-0 flex-1">
-      <span className="block text-[13.5px] font-semibold text-text-main">{titulo}</span>
-      <span className="block text-[12px] text-text-muted mt-[2px]">{detalle}</span>
+}> = ({ titulo, detalle, cantidad, cargando, icono, acento, extra, retraso, onClick }) => {
+  const numero = useConteoAnimado(cargando ? 0 : cantidad);
+  const estilo = ACENTOS[acento];
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{ animationDelay: `${retraso}ms` }}
+      className={cn(
+        'group relative overflow-hidden text-left flex flex-col p-[20px] rounded-lg bg-bg-card border border-border cursor-pointer shadow-xs',
+        '[transition:transform_250ms_cubic-bezier(0.2,0.8,0.2,1),box-shadow_250ms,border-color_250ms]',
+        'hover:-translate-y-[3px] hover:shadow-lg hover:border-border-dark',
+        'animate-aparecer',
+      )}
+    >
+      {/* Barra de color arriba y brillo que aparece al pasar el mouse */}
+      <span aria-hidden className={cn('absolute top-0 left-0 right-0 h-[3px]', estilo.barra)} />
+      <span
+        aria-hidden
+        className={cn('absolute -top-[60px] -right-[60px] w-[140px] h-[140px] rounded-full blur-[50px] opacity-0 [transition:opacity_300ms] group-hover:opacity-20', estilo.brillo)}
+      />
+
+      <span className="relative flex items-start justify-between">
+        <span className={cn('w-[42px] h-[42px] rounded-md flex items-center justify-center', estilo.icono)}>{icono}</span>
+        <span className="text-text-light [transition:transform_250ms,color_250ms] group-hover:translate-x-[3px] group-hover:text-text-main">
+          <ArrowRightIcon size={18} />
+        </span>
+      </span>
+
+      <span className="relative mt-[18px] font-display text-[36px] font-bold leading-none tracking-[-1px] text-text-main tabular-nums">
+        {cargando ? <Spinner size={26} /> : numero}
+      </span>
+      <span className="relative mt-[10px] text-[14px] font-bold text-text-main">{titulo}</span>
+      <span className="relative mt-[2px] text-[12.5px] text-text-muted">{detalle}</span>
       {extra}
-    </span>
-    <span className={cn('text-[24px] font-extrabold tabular-nums leading-none', destacada ? 'text-danger' : 'text-midnight-900')}>
-      {cargando ? <Spinner size={20} /> : cantidad}
-    </span>
-    <span className="text-text-light [transition:transform_120ms_ease] group-hover:translate-x-[2px] group-hover:text-text-muted">
-      <ChevronRightIcon size={18} />
-    </span>
-  </button>
+    </button>
+  );
+};
+
+// ============================================================================
+// RECORRIDO DEL EXPEDIENTE: línea de pasos, cada uno abre su módulo
+// ============================================================================
+const Recorrido: React.FC<{ onNavigate: (m: NavModule) => void }> = ({ onNavigate }) => (
+  <section className="rounded-lg bg-bg-card border border-border shadow-xs p-[24px] animate-aparecer [animation-delay:420ms]">
+    <h3 className="text-[16px] font-bold text-text-main m-0">Recorrido del expediente</h3>
+    <p className="text-[12.5px] text-text-muted mt-[4px] mb-0">De la intervención en campo hasta la cobranza. Elige una etapa para abrir su bandeja.</p>
+
+    <ol className="relative list-none m-0 mt-[28px] p-0 grid grid-cols-7 gap-[8px] max-xl:grid-cols-4 max-md:grid-cols-2">
+      {/* Línea que une los pasos (solo cuando caben en una fila) */}
+      <span aria-hidden className="absolute top-[17px] left-[7%] right-[7%] h-[2px] rounded-full bg-linear-to-r from-sjl-rojo via-sjl-naranja to-sjl-turquesa opacity-30 max-xl:hidden" />
+      {RECORRIDO.map((p) => {
+        const contenido = (
+          <>
+            <span
+              className={cn(
+                'relative z-[1] w-[36px] h-[36px] rounded-full flex items-center justify-center font-display text-[13px] font-bold',
+                '[transition:all_250ms_cubic-bezier(0.2,0.8,0.2,1)]',
+                p.modulo
+                  ? 'bg-white border-2 border-border-dark text-text-secondary group-hover:bg-blue-800 group-hover:border-blue-800 group-hover:text-white group-hover:scale-110 group-hover:shadow-[0_0_0_6px_var(--color-blue-100)]'
+                  : 'bg-bg-subtle border-2 border-dashed border-border-dark text-text-light',
+              )}
+            >
+              {p.paso}
+            </span>
+            <span className={cn('block mt-[12px] text-[13.5px] font-bold [transition:color_200ms]', p.modulo ? 'text-text-main group-hover:text-blue-800' : 'text-text-muted')}>
+              {p.titulo}
+            </span>
+            <span className="block text-[12px] text-text-muted mt-[4px] leading-[1.4]">{p.detalle}</span>
+          </>
+        );
+        return (
+          <li key={p.paso} className="flex">
+            {p.modulo ? (
+              <button
+                type="button"
+                onClick={() => onNavigate(p.modulo as NavModule)}
+                className="group w-full flex flex-col items-center text-center px-[6px] py-[4px] bg-transparent border-0 rounded-md cursor-pointer"
+              >
+                {contenido}
+              </button>
+            ) : (
+              <div className="w-full flex flex-col items-center text-center px-[6px] py-[4px]" title="Se realiza en la aplicación de campo">
+                {contenido}
+              </div>
+            )}
+          </li>
+        );
+      })}
+    </ol>
+  </section>
 );
 
+// ============================================================================
+// PANEL PRINCIPAL
+// ============================================================================
 export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   // Alertas vencidas o críticas (centro de alertas, mismo origen que la campana).
   const { resumen } = useAlertas();
@@ -100,103 +172,82 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
   }, []);
 
   const colorFirma = varianteDiasEnFirma(stats.maxDiasEnFirma) === 'danger' ? 'text-danger' : varianteDiasEnFirma(stats.maxDiasEnFirma) === 'warning' ? 'text-warning' : 'text-text-muted';
+  const primerNombre = (user?.nombres ?? '').replace(/\s*\(admin\s*dev\)/gi, '').trim().split(/\s+/)[0];
 
   return (
-    <div>
-      <PageHeader
-        titulo="Panel Principal"
-        descripcion="Procedimiento Administrativo Sancionador: lo que requiere tu atención hoy y cuántos expedientes esperan en cada bandeja."
-        acciones={
-          <Button variant="secondary" icon={<RefreshCwIcon size={14} />} loading={loading} onClick={loadData}>
-            Actualizar
-          </Button>
-        }
-      />
+    <div className="flex flex-col gap-[24px]">
+      {/* Saludo y fecha */}
+      <header className="flex items-end justify-between gap-[16px] flex-wrap animate-aparecer">
+        <div className="min-w-0">
+          <p className="text-[12px] font-bold uppercase tracking-[1.6px] text-blue-800 m-0">{fechaLarga()}</p>
+          <h1 className="text-[30px] font-bold text-text-main tracking-[-0.8px] leading-[1.15] mt-[6px] mb-0">
+            {saludoDelDia()}
+            {primerNombre && <>, <span className="bg-linear-to-r from-blue-500 to-blue-800 bg-clip-text text-transparent">{primerNombre}</span></>}
+          </h1>
+          <p className="text-[14px] text-text-muted mt-[6px] mb-0">Lo que requiere tu atención hoy y cuántos expedientes esperan en cada bandeja.</p>
+        </div>
+        <Button variant="secondary" icon={<RefreshCwIcon size={14} />} loading={loading} onClick={loadData}>
+          Actualizar
+        </Button>
+      </header>
 
-      {/* Lo urgente, ancho; al lado, el conteo de cada bandeja. */}
-      <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-[24px] items-stretch mb-[32px] max-lg:grid-cols-1">
-        {/* Centro de alertas: lo más urgente de todos los expedientes. */}
-        <AtencionRequerida onNavigate={onNavigate} />
-
-        <section className="flex flex-col min-h-[460px] bg-bg-card rounded-md border border-border shadow-sm overflow-hidden">
-          <div className="py-[16px] px-[20px] border-b border-b-border bg-[#fafbfc]">
-            <h3 className="text-[15px] font-bold text-text-main">Bandejas</h3>
-            <p className="text-[12px] text-text-muted mt-[2px]">Expedientes esperando una acción</p>
-          </div>
-          <div className="flex-1 flex flex-col p-[20px]">
-            <div className="flex-1 flex flex-col -my-[6px]">
-              <FilaBandeja
-                titulo="Validación de expedientes"
-                detalle="Pendientes de revisar"
-                cantidad={stats.pendientesValidacion}
-                cargando={loading}
-                onClick={() => onNavigate('expedientes')}
-              />
-              <FilaBandeja
-                titulo="Instrucción e IFI"
-                detalle="Para descargos e informe final"
-                cantidad={stats.pendientesIfi}
-                cargando={loading}
-                onClick={() => onNavigate('ifi')}
-              />
-              <FilaBandeja
-                titulo="Resolución sancionadora"
-                detalle="Para redactar o firmar"
-                cantidad={stats.pendientesResolucion}
-                cargando={loading}
-                extra={
-                  !loading && stats.porFirmar > 0 ? (
-                    <span className={cn('block text-[12px] font-medium mt-[2px]', colorFirma)}>
-                      {stats.porFirmar} por firmar (la más antigua hace {stats.maxDiasEnFirma} día{stats.maxDiasEnFirma === 1 ? '' : 's'})
-                    </span>
-                  ) : undefined
-                }
-                onClick={() => onNavigate('resoluciones')}
-              />
-              <FilaBandeja
-                titulo="Alertas críticas"
-                detalle="Vencidas o por vencer pronto"
-                cantidad={alertasCriticas}
-                cargando={loading}
-                destacada={alertasCriticas > 0}
-                onClick={() => onNavigate('alertas')}
-              />
-            </div>
-          </div>
-        </section>
+      {/* Bandejas: una tarjeta por cola de trabajo */}
+      <div className="grid grid-cols-4 gap-[16px] max-xl:grid-cols-2 max-sm:grid-cols-1">
+        <TarjetaBandeja
+          titulo="Validación de expedientes"
+          detalle="Pendientes de revisar"
+          cantidad={stats.pendientesValidacion}
+          cargando={loading}
+          icono={<ExpedienteIcon size={20} />}
+          acento="turquesa"
+          retraso={60}
+          onClick={() => onNavigate('expedientes')}
+        />
+        <TarjetaBandeja
+          titulo="Instrucción e IFI"
+          detalle="Para descargos e informe final"
+          cantidad={stats.pendientesIfi}
+          cargando={loading}
+          icono={<FileTextIcon size={20} />}
+          acento="naranja"
+          retraso={120}
+          onClick={() => onNavigate('ifi')}
+        />
+        <TarjetaBandeja
+          titulo="Resolución sancionadora"
+          detalle="Para redactar o firmar"
+          cantidad={stats.pendientesResolucion}
+          cargando={loading}
+          icono={<GavelIcon size={20} />}
+          acento="azul"
+          retraso={180}
+          extra={
+            !loading && stats.porFirmar > 0 ? (
+              <span className={cn('relative block text-[12px] font-semibold mt-[6px]', colorFirma)}>
+                {stats.porFirmar} por firmar (la más antigua hace {stats.maxDiasEnFirma} día{stats.maxDiasEnFirma === 1 ? '' : 's'})
+              </span>
+            ) : undefined
+          }
+          onClick={() => onNavigate('resoluciones')}
+        />
+        <TarjetaBandeja
+          titulo="Alertas críticas"
+          detalle="Vencidas o por vencer pronto"
+          cantidad={alertasCriticas}
+          cargando={loading}
+          icono={<BellIcon size={20} />}
+          acento={alertasCriticas > 0 ? 'peligro' : 'verde'}
+          retraso={240}
+          onClick={() => onNavigate('alertas')}
+        />
       </div>
 
-      {/* Recorrido del expediente (referencia rápida; cada paso abre su módulo) */}
-      <Card title="Recorrido del expediente" subtitle="De la intervención en campo hasta la cobranza">
-        <ol className="list-none m-0 p-0 grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-[8px]">
-          {RECORRIDO.map((p) => {
-            const contenido = (
-              <>
-                <span className="flex items-center gap-[8px]">
-                  <span className="w-[22px] h-[22px] rounded-full bg-bg-hover text-text-muted text-[11px] font-bold flex items-center justify-center shrink-0">{p.paso}</span>
-                  <span className="text-[13.5px] font-bold text-text-main">{p.titulo}</span>
-                </span>
-                <span className="block text-[12px] text-text-muted mt-[6px] leading-[1.35]">{p.detalle}</span>
-              </>
-            );
-            return (
-              <li key={p.paso}>
-                {p.modulo ? (
-                  <button
-                    type="button"
-                    onClick={() => onNavigate(p.modulo as NavModule)}
-                    className="w-full h-full text-left rounded-sm border border-border bg-white p-[14px] cursor-pointer [transition:background-color_120ms_ease,border-color_120ms_ease] hover:bg-bg-subtle hover:border-border-dark"
-                  >
-                    {contenido}
-                  </button>
-                ) : (
-                  <div className="h-full rounded-sm border border-dashed border-border p-[14px]">{contenido}</div>
-                )}
-              </li>
-            );
-          })}
-        </ol>
-      </Card>
+      {/* Centro de alertas: lo más urgente de todos los expedientes. */}
+      <div className="animate-aparecer [animation-delay:300ms]">
+        <AtencionRequerida onNavigate={onNavigate} />
+      </div>
+
+      <Recorrido onNavigate={onNavigate} />
     </div>
   );
 };

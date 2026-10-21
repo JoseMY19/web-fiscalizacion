@@ -91,6 +91,7 @@ export const MapaIntervencionesView: React.FC = () => {
   return (
     <div>
       <PageHeader
+        etiqueta="Consulta"
         titulo="Mapa de Cobertura"
         descripcion="Dónde estuvieron los fiscalizadores en San Juan de Lurigancho, con el GPS real de cada intervención sincronizada."
         acciones={
@@ -155,7 +156,7 @@ export const MapaIntervencionesView: React.FC = () => {
       )}
 
       <div className="grid grid-cols-[1fr_300px] gap-[16px] max-lg:grid-cols-1">
-        <div className="relative h-[660px] rounded-[12px] overflow-hidden border border-border bg-white shadow-xs">
+        <div className="relative h-[660px] rounded-[12px] overflow-hidden border border-border bg-white shadow-xs [&_.leaflet-interactive]:outline-none [&_.leaflet-interactive:focus]:outline-none [&_.leaflet-interactive:focus-visible]:outline-none [&_svg]:outline-none">
           {loading && (
             <div className="absolute inset-0 z-[500] bg-white/70 flex items-center justify-center">
               <Spinner size={30} />
@@ -188,7 +189,13 @@ export const MapaIntervencionesView: React.FC = () => {
                   <Polygon
                     positions={z.poligono}
                     pathOptions={{ color: z.color, weight: activa ? 3 : 1.5, fillColor: z.color, fillOpacity: activa ? 0.22 : 0.09, className: 'outline-none focus:outline-none' }}
-                    eventHandlers={{ click: () => setZonaActivaId(activa ? null : z.id) }}
+                    eventHandlers={{
+                      click: (e) => {
+                        // Sin esto el navegador deja el marco negro del foco alrededor de toda la zona.
+                        (e.originalEvent.target as HTMLElement | null)?.blur?.();
+                        setZonaActivaId(activa ? null : z.id);
+                      },
+                    }}
                   >
                     <Tooltip sticky>
                       {z.nombre} · {conteoPorZona(z.id)} intervención{conteoPorZona(z.id) === 1 ? '' : 'es'}

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { puedeVerModulo as puedeVerModuloPermisos, puedeEditarModulo, PermisosUsuario } from '../../lib/permisos';
 import { AvisoSoloLectura } from '../common/AvisoSoloLectura';
 import { CampanaAlertas } from '../../modules/alertas/CampanaAlertas';
+import { FranjaMarca } from '../common/FranjaMarca';
+import { cn } from '../../lib/cn';
 import {
   DashboardIcon,
   ExpedienteIcon,
@@ -156,28 +158,22 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   return (
     <div className="flex min-h-screen bg-bg-app">
       {/* ================================================================ */}
-      {/* SIDEBAR INSTITUCIONAL - AZUL NAVY INSTITUCIONAL                   */}
+      {/* MENÚ LATERAL - DEGRADADO VINO (#3A0F26 → #1C0912), ACENTO ROSA     */}
       {/* ================================================================ */}
-      <aside
-        className="w-[280px] sticky top-0 h-screen overflow-hidden bg-[linear-gradient(180deg,#163666_0%,#10264a_100%)] text-[#ffffff] flex flex-col shrink-0 border-r border-r-[rgba(255,255,255,0.1)] shadow-[4px_0_20px_rgba(16,38,74,0.25)] z-[100]"
-      >
-        {/* Brand Header con Logo Oficial SJL */}
-        <div
-          className="shrink-0 pt-[20px] px-[20px] pb-[10px] border-b border-b-[rgba(255,255,255,0.1)] flex flex-col items-center justify-center text-center gap-[4px] bg-[rgba(255,255,255,0.02)]"
-        >
-          <div className="flex items-center justify-center w-full">
-            <img
-              src="/logo-sjl-white.png"
-              alt="Municipalidad de San Juan de Lurigancho"
-              className="h-[60px] w-auto max-w-[200px] object-contain scale-[1.25]"
-            />
-          </div>
-          <div className="text-[13.5px] font-semibold uppercase tracking-[1.4px] text-[#93c5fd]">Sistema Sancionador PAS</div>
+      <aside className="w-[272px] sticky top-0 h-screen overflow-hidden bg-linear-to-b from-marino-900 to-marino-950 text-white flex flex-col shrink-0 border-r border-white/5 z-[100]">
+        {/* Brillo rosa suave detrás del logo */}
+        <div aria-hidden className="absolute -top-[140px] -left-[60px] w-[380px] h-[320px] rounded-full bg-blue-500 opacity-25 blur-[90px] pointer-events-none" />
+        <FranjaMarca className="relative shrink-0" />
+
+        {/* Logo y nombre del sistema */}
+        <div className="relative shrink-0 pt-[18px] px-[16px] pb-[14px] flex flex-col items-center text-center gap-[10px]">
+          <img src="/logo-sjl-white.png" alt="Municipalidad de San Juan de Lurigancho" className="h-[60px] w-auto max-w-[210px] object-contain scale-[1.15]" />
+          <div className="font-display text-[10.5px] font-semibold uppercase tracking-[2.4px] text-blue-300">Sistema Sancionador PAS</div>
         </div>
 
         {/* Navegación por grupos */}
-        <div className="py-[12px] px-[12px] flex-1 min-h-0 overflow-y-auto [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.12)_transparent]">
-          <nav className="flex flex-col gap-[14px]">
+        <div className="relative py-[8px] px-[12px] flex-1 min-h-0 overflow-y-auto [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.15)_transparent]">
+          <nav className="flex flex-col gap-[16px]">
             {GRUPOS_NAV.map((grupo) => {
               const items = grupo.modulos
                 .map((id) => navItems.find((n) => n.id === id))
@@ -196,44 +192,63 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                       type="button"
                       onClick={() => alternarGrupo(grupo.id)}
                       aria-expanded={abierto}
-                      className="w-full flex items-center gap-[6px] py-[4px] px-[12px] mb-[4px] bg-transparent border-0 cursor-pointer text-left text-[10.5px] font-semibold uppercase tracking-[1px] text-[#93c5fd] opacity-[0.8] [transition:opacity_150ms_ease] hover:opacity-100"
+                      className="w-full flex items-center gap-[6px] py-[4px] px-[12px] mb-[4px] bg-transparent border-0 cursor-pointer rounded-sm outline-none focus-visible:ring-1 focus-visible:ring-white/30 text-left text-[10.5px] font-bold uppercase tracking-[1.4px] text-white/45 [transition:color_150ms_ease] hover:text-white/80"
                     >
-                      <span className={`inline-flex [transition:transform_150ms_ease] ${abierto ? 'rotate-90' : ''}`}>
+                      <span className={cn('inline-flex [transition:transform_200ms_ease]', abierto && 'rotate-90')}>
                         <ChevronRightIcon size={12} />
                       </span>
                       <span className="flex-1">{grupo.titulo}</span>
-                      {!abierto && pendiente && <span className="w-[6px] h-[6px] rounded-full bg-[#ef4444]" title="Hay pendientes en este grupo" />}
+                      {!abierto && pendiente && <span className="w-[7px] h-[7px] rounded-full bg-danger" title="Hay pendientes en este grupo" />}
                     </button>
                   )}
                   {abierto && (
-                    <div className="flex flex-col gap-[2px]">
+                    <div className="flex flex-col gap-[2px] animate-aparecer [animation-duration:300ms]">
                       {items.map((item) => {
                         const active = currentModule === item.id;
                         const count = badgeCounts[item.id];
                         const alerta = badgeAlertas[item.id];
+                        const alertaRoja = !!alerta && /vencid|cr[ií]tic|por vencer/i.test(alerta.title);
                         return (
                           <button
                             key={item.id}
                             onClick={() => onSelectModule(item.id)}
-                            className={`flex items-center justify-between py-[8px] px-[12px] rounded-[6px] border-0 cursor-pointer text-[13px] [transition:background-color_150ms_ease,color_150ms_ease] text-left w-full shadow-none ${active ? 'bg-[rgba(255,255,255,0.12)]' : 'bg-transparent'} ${active ? 'text-[#ffffff]' : 'text-[#cbd5e1] hover:bg-[rgba(255,255,255,0.06)] hover:text-[#ffffff]'} ${active ? 'font-semibold' : 'font-normal'}`}
+                            aria-current={active ? 'page' : undefined}
+                            className={cn(
+                              'group relative flex items-center justify-between py-[9px] px-[12px] rounded-md border-0 cursor-pointer text-[13px] text-left w-full',
+                              // Sin contorno al hacer clic; anillo rosa solo al navegar con teclado.
+                              'outline-none focus-visible:ring-1 focus-visible:ring-white/30',
+                              '[transition:background-color_150ms_ease,color_150ms_ease]',
+                              active ? 'bg-white/[0.10] text-white font-bold' : 'bg-transparent text-white/75 font-medium hover:bg-white/[0.05] hover:text-white',
+                            )}
                           >
-                            <div className="flex items-center gap-[10px]">
-                              <span className={`flex items-center ${active ? 'text-[#38bdf8]' : 'text-[#94a3b8]'}`}>{item.icon}</span>
+                            {/* Indicador del módulo activo */}
+                            <span
+                              aria-hidden
+                              className={cn(
+                                'absolute left-0 top-[20%] h-[60%] w-[3px] rounded-full bg-blue-400',
+                                '[transition:transform_250ms_cubic-bezier(0.2,0.8,0.2,1)]',
+                                active ? 'scale-y-100' : 'scale-y-0',
+                              )}
+                            />
+                            <span className="flex items-center gap-[10px] [transition:transform_200ms_ease] group-hover:translate-x-[2px]">
+                              <span className={cn('flex items-center [transition:color_150ms_ease]', active ? 'text-blue-300' : 'text-white/50 group-hover:text-white/85')}>
+                                {item.icon}
+                              </span>
                               <span>{item.label}</span>
-                            </div>
-                            {/* Cola de trabajo: número discreto, sin burbuja (con muchos expedientes no debe gritar).
+                            </span>
+                            {/* Cola de trabajo: número en burbuja rosa.
                                 Urgencia: solo un punto de color; el detalle de qué vence está en Alertas y Plazos. */}
                             <span className="inline-flex items-center gap-[8px]">
                               {typeof count === 'number' && count > 0 && (
-                                <span className="text-[11.5px] font-semibold tabular-nums text-[#93c5fd]" title={`${count} pendiente${count === 1 ? '' : 's'}`}>
+                                <span className="min-w-[20px] h-[20px] px-[6px] rounded-pill bg-blue-800 text-white text-[11px] font-bold tabular-nums flex items-center justify-center" title={`${count} pendiente${count === 1 ? '' : 's'}`}>
                                   {count > 99 ? '99+' : count}
                                 </span>
                               )}
                               {alerta && alerta.count > 0 && (
-                                <span
-                                  title={alerta.title}
-                                  className={`w-[8px] h-[8px] rounded-full shrink-0 ${/vencid|cr[ií]tic|por vencer/i.test(alerta.title) ? 'bg-[#ef4444]' : 'bg-[#f59e0b]'}`}
-                                />
+                                <span title={alerta.title} className="relative flex w-[8px] h-[8px] shrink-0">
+                                  {alertaRoja && <span className="absolute inset-0 rounded-full bg-danger opacity-60 animate-ping motion-reduce:animate-none" />}
+                                  <span className={cn('relative w-[8px] h-[8px] rounded-full ring-2 ring-marino-950', alertaRoja ? 'bg-danger' : 'bg-warning')} />
+                                </span>
                               )}
                             </span>
                           </button>
@@ -247,43 +262,36 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           </nav>
         </div>
 
-        {/* User Profile & Logout in Azul Navy */}
-        <div
-          className="shrink-0 py-[14px] px-[16px] border-t border-t-[rgba(255,255,255,0.1)] bg-[#0c1f3c]"
-        >
-          <div className="flex items-center justify-between">
+        {/* Usuario, cambio de contraseña y cierre de sesión */}
+        <div className="relative shrink-0 m-[12px] mt-[4px] py-[12px] px-[12px] rounded-lg bg-white/[0.05] border border-white/10">
+          <div className="flex items-center justify-between gap-[8px]">
             <div className="flex items-center gap-[10px] min-w-0" title={`DNI ${user?.dni ?? ''}`}>
-              <div
-                className="w-[36px] h-[36px] rounded-full bg-[#1d4ed8] text-[#ffffff] flex items-center justify-center font-bold text-[13px] shrink-0 border border-[rgba(255,255,255,0.2)]"
-              >
+              <div className="w-[36px] h-[36px] rounded-full bg-linear-to-br from-blue-500 to-blue-800 text-white flex items-center justify-center font-display font-bold text-[13px] shrink-0 ring-2 ring-white/15">
                 {cleanName.charAt(0)}
               </div>
               <div className="min-w-0">
-                <div
-                  className="text-[13px] font-semibold text-[#ffffff] whitespace-nowrap overflow-hidden text-ellipsis"
-                  title={cleanName}
-                >
+                <div className="text-[13px] font-bold text-white whitespace-nowrap overflow-hidden text-ellipsis" title={cleanName}>
                   {cleanName}
                 </div>
-                <div className="text-[11px] text-[#93c5fd] whitespace-nowrap overflow-hidden text-ellipsis">{cleanRole}</div>
+                <div className="text-[11px] text-white/55 whitespace-nowrap overflow-hidden text-ellipsis" title={cleanRole}>{cleanRole}</div>
               </div>
             </div>
-            <div className="flex items-center gap-[6px]">
+            <div className="flex items-center gap-[2px]">
               {onChangePassword && (
                 <button
                   onClick={onChangePassword}
                   title="Cambiar contraseña"
-                  className="bg-transparent border-0 text-[#bfdbfe] cursor-pointer p-[6px] rounded-[6px] flex items-center justify-center [transition:color_150ms] hover:text-[#38bdf8]"
+                  className="bg-transparent border-0 text-white/55 cursor-pointer p-[7px] rounded-sm flex items-center justify-center [transition:color_150ms,background-color_150ms] hover:text-white hover:bg-white/10"
                 >
-                  <UnlockIcon size={18} />
+                  <UnlockIcon size={17} />
                 </button>
               )}
               <button
                 onClick={onLogout}
                 title="Cerrar sesión"
-                className="bg-transparent border-0 text-[#bfdbfe] cursor-pointer p-[6px] rounded-[6px] flex items-center justify-center [transition:color_150ms] hover:text-[#f87171]"
+                className="bg-transparent border-0 text-white/55 cursor-pointer p-[7px] rounded-sm flex items-center justify-center [transition:color_150ms,background-color_150ms] hover:text-red-400 hover:bg-white/10"
               >
-                <LogOutIcon size={18} />
+                <LogOutIcon size={17} />
               </button>
             </div>
           </div>
@@ -291,25 +299,27 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       </aside>
 
       {/* ================================================================ */}
-      {/* MAIN CONTENT AREA                                                */}
+      {/* ÁREA DE CONTENIDO                                                 */}
       {/* ================================================================ */}
       <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
-        {/* Barra superior: baja y discreta. El título de la página lo pone cada módulo. */}
-        <header className="h-[52px] bg-[#ffffff] border-b border-b-[#e2e8f0] flex items-center justify-between px-[32px] relative z-[20] max-md:px-[16px]">
+        {/* Barra superior: fija, translúcida y discreta. El título de la página lo pone cada módulo. */}
+        <header className="sticky top-0 h-[60px] bg-white/80 backdrop-blur-md border-b border-border flex items-center justify-between px-[32px] z-[20] max-md:px-[16px]">
           <div className="flex items-center gap-[14px] min-w-0">
             {/* Miga de pan: sistema / grupo / pantalla actual (resaltada), en letra pequeña para no competir con el título de la página */}
-            <nav aria-label="Ubicación" className="flex items-center gap-[10px] text-[11.5px] font-semibold uppercase tracking-[0.8px] text-[#94a3b8] min-w-0 whitespace-nowrap">
+            <nav aria-label="Ubicación" className="flex items-center gap-[10px] text-[11px] font-bold uppercase tracking-[1px] text-text-light min-w-0 whitespace-nowrap">
               <span>MDSJL</span>
-              <span className="text-[#cbd5e1]">/</span>
+              <span className="text-border-dark">/</span>
               <span>PAS</span>
               {grupoActual?.titulo && (
                 <>
-                  <span className="text-[#cbd5e1]">/</span>
+                  <span className="text-border-dark">/</span>
                   <span>{grupoActual.titulo}</span>
                 </>
               )}
-              <span className="text-[#cbd5e1]">/</span>
-              <span className="bg-[#eff6ff] text-[#1d4ed8] py-[3px] px-[9px] rounded-[6px] border border-[#dbeafe] overflow-hidden text-ellipsis">{currentNav?.label}</span>
+              <span className="text-border-dark">/</span>
+              <span key={currentModule} className="bg-blue-50 text-blue-800 py-[4px] px-[10px] rounded-pill border border-blue-100 overflow-hidden text-ellipsis animate-aparecer [animation-duration:350ms]">
+                {currentNav?.label}
+              </span>
             </nav>
           </div>
 
@@ -317,8 +327,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           <CampanaAlertas onIr={onSelectModule} />
         </header>
 
-        {/* Page Body */}
-        <main className="flex-1 w-full max-w-[1600px] mx-auto pt-[24px] px-[32px] pb-[48px] max-md:p-[16px]">
+        {/* Contenido de la página (entra con una animación suave al cambiar de módulo) */}
+        <main key={currentModule} className="flex-1 w-full max-w-[1600px] mx-auto pt-[28px] px-[32px] pb-[48px] max-md:p-[16px] animate-aparecer [animation-duration:450ms]">
           {currentModule !== 'dashboard' && currentModule !== 'alertas' && currentModule !== 'usuarios' && !puedeEditarModulo(currentModule, user?.permisos) && (
             <AvisoSoloLectura rolNombre={user?.rolNombre} />
           )}

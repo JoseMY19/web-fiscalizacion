@@ -12,6 +12,7 @@ import { CodigoCuisRegistro, CuisMantenimientoApi, EscalaCuisRegistro } from '..
 import { Alert, Button, Input, Modal, Spinner, Textarea } from '../../components/common/Common';
 import { formatearFechaHora } from '../../lib/fechas';
 import { cn } from '../../lib/cn';
+import { SelectorOpciones } from '../../components/common/SelectorOpciones';
 import { PenToolIcon } from '../../components/icons/Icons';
 
 /** "Historial de correcciones" (fecha, autor, campo, antes → después, motivo). Solo lectura. */
@@ -391,19 +392,19 @@ const FilaInfraccion: React.FC<{
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-[16px] gap-y-[8px] mb-[12px]">
         <div className="w-full">
           <label className="block text-[13px] font-semibold text-text-secondary mb-[6px]">Escala</label>
-          <select
-            value={valor.cuisEscalaMontoId ?? ''}
-            onChange={(e) => onCambio({ ...valor, cuisEscalaMontoId: e.target.value || null })}
-            className={claseCampo}
-            disabled={!valor.escalas}
-          >
-            <option value="">{valor.escalas === null ? 'Cargando…' : valor.escalas.length === 0 ? 'Este código no tiene escala' : '— Elegir escala —'}</option>
-            {valor.escalas?.map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.escala} · {e.valorPorcentaje}% UIT{e.condicion ? ` · ${e.condicion}` : ''}
-              </option>
-            ))}
-          </select>
+          <SelectorOpciones
+            etiqueta="Escala"
+            valor={valor.cuisEscalaMontoId}
+            onCambio={(id) => onCambio({ ...valor, cuisEscalaMontoId: id })}
+            deshabilitado={!valor.escalas || valor.escalas.length === 0}
+            marcador={valor.escalas === null ? 'Cargando…' : valor.escalas.length === 0 ? 'Este código no tiene escala' : 'Elegir escala'}
+            opciones={(valor.escalas ?? []).map((e) => ({
+              valor: e.id,
+              insignia: e.escala,
+              etiqueta: `${e.valorPorcentaje}% de la UIT`,
+              detalle: e.condicion ?? undefined,
+            }))}
+          />
         </div>
         <div className="flex items-end">
           <Button variant="ghost" size="sm" className="w-full" onClick={() => setBuscando((b) => !b)}>
@@ -438,7 +439,7 @@ const FilaInfraccion: React.FC<{
                 <li key={c.id}>
                   <button type="button" onClick={() => elegir(c)} className="w-full text-left py-[7px] px-[10px] text-[12px] hover:bg-bg-hover cursor-pointer">
                     <strong className="text-text-main tabular-nums">{c.idInterno}</strong>
-                    <span className="text-text-secondary"> — {c.textoCompletoPdf ?? ''}</span>
+                    <span className="text-text-secondary"> - {c.textoCompletoPdf ?? ''}</span>
                   </button>
                 </li>
               ))}

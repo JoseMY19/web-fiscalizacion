@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { CanalSolicitudLevantamiento, LevantamientosApi, MedidaLevantamientoItem } from '../../api';
 import { Alert, Badge, Button, Input, Modal, Textarea } from '../../components/common/Common';
 import { ComboboxExpediente } from '../../components/common/ComboboxExpediente';
+import { SelectorOpciones } from '../../components/common/SelectorOpciones';
 import { formatearFecha, formatearFechaHora } from '../../lib/fechas';
 import { ahoraInputLima, isoDesdeInputLima, previsualizarVencimiento, tipoMedidaTexto } from './levantamientoUi';
 
@@ -124,7 +125,7 @@ export const RegistrarSolicitudModal: React.FC<Props> = ({ onClose, onRegistrada
       {medida && (
         <div className="bg-[#f8fafc] py-[12px] px-[14px] rounded-[8px] border border-border text-[13px] mb-[14px]">
           <div className="font-bold text-midnight-900 mb-[4px]">
-            {tipoMedidaTexto(medida.medida.tipoMedida)} — Acta N° {medida.medida.numeroActa} ({formatearFecha(medida.medida.fechaIntervencion)})
+            {tipoMedidaTexto(medida.medida.tipoMedida)} - Acta N° {medida.medida.numeroActa} ({formatearFecha(medida.medida.fechaIntervencion)})
           </div>
           <div className="text-text-secondary">
             Administrado: {medida.medida.administradoNombre ?? 'no identificado'}
@@ -154,15 +155,17 @@ export const RegistrarSolicitudModal: React.FC<Props> = ({ onClose, onRegistrada
         />
         <div className="mb-[14px] w-full">
           <label className="block text-[13px] font-semibold text-text-secondary mb-[6px]">Canal</label>
-          <select
-            value={canal}
-            onChange={(e) => setCanal(e.target.value as CanalSolicitudLevantamiento | '')}
-            className="w-full py-[10px] px-[14px] text-[14px] rounded-sm border border-border bg-[#ffffff] text-text-main outline-none"
-          >
-            <option value="">— Elegir —</option>
-            <option value="PRESENCIAL">Mesa de Partes presencial</option>
-            <option value="VIRTUAL">Mesa de Partes virtual</option>
-          </select>
+          <SelectorOpciones
+            etiqueta="Canal"
+            valor={canal || null}
+            onCambio={(v) => setCanal(v as CanalSolicitudLevantamiento)}
+            marcador="Elegir canal"
+            className="min-h-[42px]! pl-[14px]! text-[14px]!"
+            opciones={[
+              { valor: 'PRESENCIAL', etiqueta: 'Mesa de Partes presencial', detalle: 'Entregada en ventanilla' },
+              { valor: 'VIRTUAL', etiqueta: 'Mesa de Partes virtual', detalle: 'Recibida por la plataforma digital' },
+            ]}
+          />
         </div>
         <Input label="N° de registro (opcional)" placeholder="Tal como figura en el SGD" value={numeroRegistro} onChange={(e) => setNumeroRegistro(e.target.value)} />
         <Input
@@ -177,7 +180,7 @@ export const RegistrarSolicitudModal: React.FC<Props> = ({ onClose, onRegistrada
       {venceEn && (
         <Alert type={esClausura ? 'warning' : 'info'}>
           Plazo para pronunciarse: <strong>{esClausura ? '48 horas corridas' : '30 días calendario'}</strong> (
-          {esClausura ? 'Ley 28976, art. 21.6 — cuentan sábados, domingos y feriados' : 'Ord. 464-MDSJL, art. 63.2'}). Vence el{' '}
+          {esClausura ? 'Ley 28976, art. 21.6 - cuentan sábados, domingos y feriados' : 'Ord. 464-MDSJL, art. 63.2'}). Vence el{' '}
           <strong>{formatearFechaHora(venceEn.toISOString())}</strong>. Si vence sin carta firmada, la medida queda levantada por ley.
         </Alert>
       )}

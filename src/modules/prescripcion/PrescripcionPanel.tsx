@@ -116,7 +116,7 @@ export const PrescripcionPanel: React.FC<Props> = ({ solicitudId, onClose, onCam
     <Modal
       isOpen
       onClose={onClose}
-      title={`Prescripción — ${s.administradoNombre}`}
+      title={`Prescripción - ${s.administradoNombre}`}
       maxWidth="900px"
       footer={
         <Button variant="secondary" onClick={onClose}>
@@ -153,7 +153,7 @@ export const PrescripcionPanel: React.FC<Props> = ({ solicitudId, onClose, onCam
       <PasoTramite n={1} titulo="Solicitud (a pedido de parte)" hecho>
         <div>
           Presentada el <strong>{formatearFecha(s.fechaPresentacion)}</strong>
-          {s.numeroSgd ? ` — Documento ${s.numeroSgd}` : ''}.
+          {s.numeroSgd ? ` - Documento ${s.numeroSgd}` : ''}.
         </div>
         <div className="mt-[6px] whitespace-pre-wrap">{s.resumen}</div>
         <div className="flex gap-[6px] flex-wrap mt-[8px]">

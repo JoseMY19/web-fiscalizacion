@@ -39,7 +39,7 @@ const Descripcion: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <button
           type="button"
           onClick={() => setAbierta((v) => !v)}
-          className="shrink-0 bg-transparent border-0 p-0 text-[12.5px] font-semibold text-primary-600 cursor-pointer hover:underline"
+          className="shrink-0 bg-transparent border-0 p-0 text-[12.5px] font-bold text-blue-800 cursor-pointer hover:underline"
         >
           {abierta ? 'Ver menos' : 'Ver más'}
         </button>
@@ -48,10 +48,17 @@ const Descripcion: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   );
 };
 
-export const PageHeader: React.FC<{ titulo: string; descripcion?: React.ReactNode; acciones?: React.ReactNode }> = ({ titulo, descripcion, acciones }) => (
-  <div className="flex items-start justify-between gap-[16px] flex-wrap mb-[24px]">
+export const PageHeader: React.FC<{
+  titulo: string;
+  descripcion?: React.ReactNode;
+  acciones?: React.ReactNode;
+  /** Texto pequeño en azul sobre el título (ej. la sección del menú o la etapa del procedimiento). */
+  etiqueta?: string;
+}> = ({ titulo, descripcion, acciones, etiqueta }) => (
+  <div className="flex items-end justify-between gap-[16px] flex-wrap mb-[24px] animate-aparecer">
     <div className="min-w-0 flex-1">
-      <h2 className="text-[24px] font-extrabold text-midnight-900 tracking-[-0.4px] leading-[1.2] m-0">{titulo}</h2>
+      {etiqueta && <p className="text-[12px] font-bold uppercase tracking-[1.6px] text-blue-800 m-0 mb-[6px]">{etiqueta}</p>}
+      <h2 className="text-[28px] font-bold text-text-main tracking-[-0.7px] leading-[1.2] m-0">{titulo}</h2>
       {descripcion && <Descripcion>{descripcion}</Descripcion>}
     </div>
     {acciones && <div className="flex items-center gap-[10px] flex-wrap">{acciones}</div>}
@@ -78,26 +85,81 @@ const TONO_CONTADOR: Record<TonoContador, string> = {
   danger: 'bg-danger-bg text-danger',
 };
 
+/** Contador de la pestaña activa: relleno, para que se lea de un vistazo. */
+const TONO_CONTADOR_ACTIVO: Record<TonoContador, string> = {
+  neutral: 'bg-blue-800 text-white',
+  info: 'bg-info text-white',
+  warning: 'bg-warning text-white',
+  danger: 'bg-danger text-white',
+};
+
+/**
+ * Pestañas segmentadas: una "píldora" blanca se desliza bajo la pestaña
+ * activa (se mide su posición con refs) y el contador activo se rellena.
+ */
 export function SegmentedTabs<T extends string>({ items, activa, onChange }: { items: PestanaItem<T>[]; activa: T | null; onChange: (clave: T) => void }) {
+  const botones = useRef<Map<T, HTMLButtonElement>>(new Map());
+  const [indicador, setIndicador] = useState<{ left: number; width: number } | null>(null);
+
+  // Clave estable: `items` llega como arreglo nuevo en cada render.
+  const firma = items.map((p) => `${p.clave}:${p.etiqueta}:${p.contador ?? ''}`).join('|');
+
+  useLayoutEffect(() => {
+    const medir = () => {
+      const b = activa !== null ? botones.current.get(activa) : undefined;
+      const nuevo = b ? { left: b.offsetLeft, width: b.offsetWidth } : null;
+      setIndicador((previo) => (previo?.left === nuevo?.left && previo?.width === nuevo?.width ? previo : nuevo));
+    };
+    medir();
+    // El ancho cambia con los contadores o al cargar la fuente.
+    const observador = new ResizeObserver(medir);
+    botones.current.forEach((b) => observador.observe(b));
+    return () => observador.disconnect();
+  }, [activa, firma]);
+
   return (
-    <div className="inline-flex bg-bg-hover p-[4px] rounded-sm gap-[2px] max-w-full overflow-x-auto" role="tablist">
+    <div
+      role="tablist"
+      className="relative inline-flex p-[5px] gap-[2px] max-w-full overflow-x-auto rounded-md border border-border-dark bg-linear-to-b from-bg-hover to-[#e9eef5] shadow-[inset_0_1px_3px_rgba(15,23,42,0.08),0_1px_0_rgba(255,255,255,0.9)]"
+    >
+      {/* left/width salen de medir la pestaña activa: valor dinámico. */}
+      {indicador && (
+        <span
+          aria-hidden
+          style={{ left: indicador.left, width: indicador.width }}
+          className="absolute top-[5px] bottom-[5px] rounded-[8px] bg-white ring-1 ring-border-dark/70 shadow-[0_2px_6px_-1px_rgba(15,23,42,0.12),0_1px_2px_rgba(15,23,42,0.06)] [transition:left_300ms_cubic-bezier(0.2,0.8,0.2,1),width_300ms_cubic-bezier(0.2,0.8,0.2,1)] motion-reduce:transition-none"
+        >
+          {/* Línea de acento azul bajo el texto activo. */}
+          <span className="absolute left-1/2 -translate-x-1/2 bottom-[3px] h-[2px] w-[28px] rounded-full bg-blue-800" />
+        </span>
+      )}
       {items.map((p) => {
         const esActiva = p.clave === activa;
         return (
           <button
             key={p.clave}
+            ref={(el) => {
+              if (el) botones.current.set(p.clave, el);
+              else botones.current.delete(p.clave);
+            }}
             type="button"
             role="tab"
             aria-selected={esActiva}
             onClick={() => onChange(p.clave)}
             className={cn(
-              'py-[7px] px-[16px] rounded-[6px] border-0 text-[13px] cursor-pointer inline-flex items-center gap-[8px] whitespace-nowrap [transition:background-color_150ms_ease,color_150ms_ease]',
-              esActiva ? 'bg-white text-text-main font-bold shadow-xs' : 'bg-transparent text-text-muted font-medium hover:text-text-main',
+              'relative z-[1] py-[8px] px-[16px] rounded-[8px] border-0 bg-transparent text-[13px] cursor-pointer inline-flex items-center gap-[8px] whitespace-nowrap outline-none',
+              '[transition:color_200ms_ease,background-color_200ms_ease,transform_150ms_ease] active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-blue-400',
+              esActiva ? 'text-blue-900 font-bold' : 'text-text-muted font-medium hover:text-text-main hover:bg-white/50',
             )}
           >
             {p.etiqueta}
             {p.contador !== undefined && (
-              <span className={cn('text-[11px] font-bold py-[1px] px-[7px] rounded-pill tabular-nums', esActiva && !p.tono ? TONO_CONTADOR.info : TONO_CONTADOR[p.tono ?? 'neutral'])}>
+              <span
+                className={cn(
+                  'min-w-[20px] text-center text-[11px] font-bold py-[1px] px-[7px] rounded-pill tabular-nums [transition:background-color_200ms_ease,color_200ms_ease]',
+                  esActiva ? TONO_CONTADOR_ACTIVO[p.tono ?? 'neutral'] : TONO_CONTADOR[p.tono ?? 'neutral'],
+                )}
+              >
                 {p.contador}
               </span>
             )}
@@ -112,8 +174,12 @@ export function SegmentedTabs<T extends string>({ items, activa, onChange }: { i
 // PANEL DE TABLA (contenedor + barra de herramientas)
 // ============================================================================
 export const PanelTabla: React.FC<{ barra?: React.ReactNode; children: React.ReactNode; className?: string }> = ({ barra, children, className }) => (
-  <div className={cn('bg-bg-card rounded-md border border-border shadow-xs overflow-hidden', className)}>
-    {barra && <div className="py-[16px] px-[24px] border-b border-border flex items-center justify-between flex-wrap gap-[14px]">{barra}</div>}
+  // Aparece (solo opacidad) un instante después de la cabecera; la barra lleva
+  // un degradado muy suave para separarse de las filas sin otra línea fuerte.
+  <div className={cn('bg-bg-card rounded-lg border border-border shadow-sm overflow-hidden animate-desvanecer [animation-delay:100ms]', className)}>
+    {barra && (
+      <div className="py-[16px] px-[24px] border-b border-border bg-linear-to-b from-bg-subtle to-bg-card flex items-center justify-between flex-wrap gap-[14px]">{barra}</div>
+    )}
     {children}
   </div>
 );
@@ -122,8 +188,8 @@ export const PanelTabla: React.FC<{ barra?: React.ReactNode; children: React.Rea
 export const TABLA = {
   tabla: 'w-full border-collapse text-[13px] text-left',
   encabezado: 'bg-bg-subtle border-b border-border',
-  th: 'py-[12px] px-[24px] text-[11.5px] font-semibold uppercase tracking-[0.5px] text-text-muted whitespace-nowrap',
-  fila: 'border-b border-border-subtle last:border-b-0 [transition:background-color_120ms_ease] hover:bg-bg-subtle',
+  th: 'py-[12px] px-[24px] text-[11px] font-bold uppercase tracking-[0.9px] text-text-light whitespace-nowrap',
+  fila: 'border-b border-border-subtle last:border-b-0 [transition:background-color_150ms_ease] hover:bg-blue-50/60',
   td: 'py-[18px] px-[24px] align-middle',
 };
 
@@ -137,7 +203,7 @@ export const Buscador: React.FC<{ value: string; onChange: (v: string) => void; 
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full h-[38px] pr-[12px] pl-[36px] text-[13px] rounded-sm border border-border bg-white text-text-main outline-none focus:border-primary-500 [transition:border-color_150ms_ease]"
+      className="w-full h-[38px] pr-[12px] pl-[36px] text-[13px] rounded-sm border border-border bg-white text-text-main outline-none [transition:border-color_150ms_ease,box-shadow_150ms_ease] hover:border-border-dark focus:border-blue-700 focus:ring-4 focus:ring-blue-100"
     />
   </div>
 );
@@ -147,17 +213,18 @@ export const Buscador: React.FC<{ value: string; onChange: (v: string) => void; 
 // ============================================================================
 export type TonoEstado = 'ok' | 'aviso' | 'peligro' | 'info' | 'neutro';
 
+/** Punto con un halo suave del mismo color, para que el estado se lea de un vistazo. */
 const PUNTO: Record<TonoEstado, string> = {
-  ok: 'bg-success',
-  aviso: 'bg-warning',
-  peligro: 'bg-danger',
-  info: 'bg-info',
-  neutro: 'bg-border-dark',
+  ok: 'bg-success ring-success/15',
+  aviso: 'bg-warning ring-warning/15',
+  peligro: 'bg-danger ring-danger/15',
+  info: 'bg-info ring-info/15',
+  neutro: 'bg-border-dark ring-border-dark/25',
 };
 
 export const EstadoPunto: React.FC<{ tono: TonoEstado; children: React.ReactNode }> = ({ tono, children }) => (
   <span className="inline-flex items-center gap-[8px] text-[13px] text-text-secondary">
-    <span className={cn('w-[7px] h-[7px] rounded-full shrink-0', PUNTO[tono])} />
+    <span className={cn('w-[7px] h-[7px] rounded-full shrink-0 ring-[3px]', PUNTO[tono])} />
     {children}
   </span>
 );
@@ -301,7 +368,7 @@ export const PanelDetalle: React.FC<{
       >
         <header className="flex items-start justify-between gap-[16px] py-[22px] px-[28px] border-b border-border shrink-0">
           <div className="min-w-0">
-            <h3 className="text-[19px] font-extrabold text-midnight-900 tracking-[-0.2px] m-0">{titulo}</h3>
+            <h3 className="text-[19px] font-bold text-text-main tracking-[-0.3px] m-0">{titulo}</h3>
             {subtitulo && <div className="text-[13px] text-text-muted mt-[4px]">{subtitulo}</div>}
           </div>
           <button

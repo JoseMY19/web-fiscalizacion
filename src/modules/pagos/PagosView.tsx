@@ -40,6 +40,7 @@ export const PagosView: React.FC = () => {
   return (
     <div>
       <PageHeader
+        etiqueta="Cobranza"
         titulo="Registro de Pagos"
         descripcion="Pagos de multas por N° de Notificación de Cargo (registrados en SIFAT o el sistema de internet). Se aceptan en cualquier momento del procedimiento."
         acciones={

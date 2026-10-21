@@ -172,12 +172,12 @@ export const FichaBasesMunicipales: React.FC<{ documento?: string | null; expedi
             <ul className="border-t border-border-subtle py-[8px] px-[14px] flex flex-col gap-[3px] text-[12px] text-text-secondary">
               {r.licencias.slice(0, max).map((l, i) => (
                 <li key={`l${i}`} className="truncate">
-                  Licencia {l.numeroLicencia ?? '—'} ({l.estado ?? '—'}) — {l.nombre} · {l.giro ?? 'sin giro'} · {l.direccion ?? ''}
+                  Licencia {l.numeroLicencia ?? '—'} ({l.estado ?? '—'}) - {l.nombre} · {l.giro ?? 'sin giro'} · {l.direccion ?? ''}
                 </li>
               ))}
               {r.itse.slice(0, max).map((x, i) => (
                 <li key={`i${i}`} className="truncate">
-                  ITSE {x.numeroCertificado ?? '—'} ({x.vigente ? 'vigente' : 'vencido'}) — {x.razonSocial} · {x.direccion ?? ''}
+                  ITSE {x.numeroCertificado ?? '—'} ({x.vigente ? 'vigente' : 'vencido'}) - {x.razonSocial} · {x.direccion ?? ''}
                 </li>
               ))}
             </ul>

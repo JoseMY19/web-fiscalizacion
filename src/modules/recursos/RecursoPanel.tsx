@@ -115,7 +115,7 @@ export const RecursoPanel: React.FC<Props> = ({ expedienteId, numeroExpediente, 
 
   if (!d) {
     return (
-      <Modal isOpen onClose={onClose} title={`Expediente ${numeroExpediente} — Recursos`} maxWidth="860px">
+      <Modal isOpen onClose={onClose} title={`Expediente ${numeroExpediente} - Recursos`} maxWidth="860px">
         {errorCarga ? (
           <Alert type="error">{errorCarga}</Alert>
         ) : (
@@ -218,7 +218,7 @@ export const RecursoPanel: React.FC<Props> = ({ expedienteId, numeroExpediente, 
             {d.ncFechaNotificacion && (
               <>
                 {' '}
-                — NC notificada el {fechaCorta(d.ncFechaNotificacion)}:{' '}
+                - NC notificada el {fechaCorta(d.ncFechaNotificacion)}:{' '}
                 {rec.fechaSubsanacion < d.ncFechaNotificacion ? (
                   <span className="text-[#047857] font-semibold">anterior a la NC (puede ser fundada)</span>
                 ) : (
@@ -321,12 +321,12 @@ export const RecursoPanel: React.FC<Props> = ({ expedienteId, numeroExpediente, 
               {rsg.estado === 'NOTIFICADA'
                 ? `Notificada el ${fechaCorta(rsg.fechaNotificacion)}`
                 : rsg.estado === 'EMITIDA'
-                  ? `Firmada el ${fechaCorta(rsg.fechaEmision)} — falta notificar`
+                  ? `Firmada el ${fechaCorta(rsg.fechaEmision)} - falta notificar`
                   : rsg.fechaEnvioFirma
                     ? `En firma desde el ${fechaCorta(rsg.fechaEnvioFirma)}`
                     : 'En redacción'}
             </strong>
-            {rsg.numeroResolucion && <> — N° {rsg.numeroResolucion}</>}
+            {rsg.numeroResolucion && <> - N° {rsg.numeroResolucion}</>}
           </div>
         </div>
       ),
@@ -572,7 +572,7 @@ export const RecursoPanel: React.FC<Props> = ({ expedienteId, numeroExpediente, 
       descripcion: ape.decisionGop ? (
         <div className="flex flex-col gap-[6px]">
           <div>
-            <strong>{LABEL_DECISION_GOP[ape.decisionGop]}</strong> — el {fechaCorta(ape.fechaDecisionGop)}.
+            <strong>{LABEL_DECISION_GOP[ape.decisionGop]}</strong> - el {fechaCorta(ape.fechaDecisionGop)}.
           </div>
           {ape.decisionGop === 'FUNDADA' && (
             <span className="text-[#047857] font-semibold">Caso concluido a favor del administrado.</span>
@@ -645,7 +645,7 @@ export const RecursoPanel: React.FC<Props> = ({ expedienteId, numeroExpediente, 
   }
 
   return (
-    <Modal isOpen onClose={onClose} title={`Expediente ${d.numeroExpediente} — Recursos`} maxWidth="860px">
+    <Modal isOpen onClose={onClose} title={`Expediente ${d.numeroExpediente} - Recursos`} maxWidth="860px">
       {mensaje && <Alert type={mensaje.type}>{mensaje.text}</Alert>}
 
       {d.tienePago && (
@@ -669,7 +669,7 @@ export const RecursoPanel: React.FC<Props> = ({ expedienteId, numeroExpediente, 
             <div className="text-[12px] flex flex-col gap-[2px]">
               <div>
                 {d.resolucion.tipo}
-                {d.resolucion.numeroResolucion ? ` N° ${d.resolucion.numeroResolucion}` : ''} — notificada el {fechaCorta(d.resolucion.fechaNotificacion)}
+                {d.resolucion.numeroResolucion ? ` N° ${d.resolucion.numeroResolucion}` : ''} - notificada el {fechaCorta(d.resolucion.fechaNotificacion)}
               </div>
               {d.administrado && <div>Administrado: {d.administrado}</div>}
               <div>Multa: {montoTexto(d.resolucion.montoSinDescuento)}</div>

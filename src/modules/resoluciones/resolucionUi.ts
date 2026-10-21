@@ -102,3 +102,19 @@ export function diasDesde(iso: string | null | undefined): number | null {
   const [ha, hm, hd] = hoyLocal().split('-').map(Number);
   return Math.max(0, Math.round((Date.UTC(ha, hm - 1, hd) - Date.UTC(a, m - 1, d)) / 86_400_000));
 }
+
+// ============================================================================
+// Bandeja de resoluciones (tarjetas)
+// ============================================================================
+
+/** Color del chip de tipo: RSGSA (sanción) en rojo; RSG (a favor del administrado) en verde azulado. */
+export const CHIP_TIPO: Record<TipoResolucion, string> = {
+  RSGSA: 'bg-danger-bg border-danger-border text-danger',
+  RSG: 'bg-teal-50 border-teal-200 text-teal-700',
+};
+
+/** Clase de texto para el "en firma hace N días" (O5): ámbar >5, rojo >10. */
+export function claseDiasEnFirma(dias: number | null): string {
+  const v = varianteDiasEnFirma(dias);
+  return v === 'danger' ? 'text-danger font-semibold' : v === 'warning' ? 'text-warning font-semibold' : 'text-text-muted';
+}
