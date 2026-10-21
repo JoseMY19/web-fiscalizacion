@@ -194,7 +194,7 @@ export const SolicitudPanel: React.FC<Props> = ({ solicitudId, onClose, onCambio
     <Modal
       isOpen
       onClose={onClose}
-      title={`Levantamiento — ${tipoMedidaTexto(m.tipoMedida)}, Acta N° ${m.numeroActa}`}
+      title={`Levantamiento - ${tipoMedidaTexto(m.tipoMedida)}, Acta N° ${m.numeroActa}`}
       maxWidth="820px"
       footer={
         <Button variant="secondary" onClick={onClose}>
@@ -227,7 +227,7 @@ export const SolicitudPanel: React.FC<Props> = ({ solicitudId, onClose, onCambio
           {m.numeroNotificacionCargo ? ` · NC N° ${m.numeroNotificacionCargo}` : ''}
         </div>
         <div className="text-text-secondary">
-          Plazo: {s.plazoTexto} desde la presentación ({formatearFechaHora(s.fechaHoraPresentacion)}) — vence el{' '}
+          Plazo: {s.plazoTexto} desde la presentación ({formatearFechaHora(s.fechaHoraPresentacion)}) - vence el{' '}
           <strong>{formatearFechaHora(s.venceEn)}</strong>. Base legal: {s.baseLegal}.
         </div>
       </div>
@@ -254,7 +254,7 @@ export const SolicitudPanel: React.FC<Props> = ({ solicitudId, onClose, onCambio
         <div>
           Presentada el <strong>{formatearFechaHora(s.fechaHoraPresentacion)}</strong> por Mesa de Partes{' '}
           {s.canal === 'VIRTUAL' ? 'virtual' : 'presencial'}
-          {s.numeroRegistro ? ` — registro N° ${s.numeroRegistro}` : ''}.
+          {s.numeroRegistro ? ` - registro N° ${s.numeroRegistro}` : ''}.
         </div>
         <div>Correo declarado: {s.correoNotificacion ?? <span className="text-text-muted">no declaró</span>}</div>
         <div className="mt-[6px] whitespace-pre-wrap">{s.resumen}</div>
@@ -294,7 +294,7 @@ export const SolicitudPanel: React.FC<Props> = ({ solicitudId, onClose, onCambio
               {(['FAVORABLE', 'DESFAVORABLE'] as const).map((r) => (
                 <label key={r} className="flex items-center gap-[6px] cursor-pointer">
                   <input type="radio" name="resultado" checked={resultado === r} onChange={() => setResultado(r)} />
-                  {r === 'FAVORABLE' ? 'Favorable — se levanta la medida (p. ej. subsanó)' : 'Desfavorable — la medida sigue vigente'}
+                  {r === 'FAVORABLE' ? 'Favorable - se levanta la medida (p. ej. subsanó)' : 'Desfavorable - la medida sigue vigente'}
                 </label>
               ))}
             </div>

@@ -173,7 +173,7 @@ export const CaducidadPanel: React.FC<Props> = ({ expedienteId, onClose, onCambi
     <Modal
       isOpen
       onClose={onClose}
-      title={`Caducidad del PAS — Expediente ${e.numeroExpediente}`}
+      title={`Caducidad del PAS - Expediente ${e.numeroExpediente}`}
       maxWidth="820px"
       footer={
         <Button variant="secondary" onClick={onClose}>
@@ -228,7 +228,7 @@ export const CaducidadPanel: React.FC<Props> = ({ expedienteId, onClose, onCambi
             {anteriores.map((a) => (
               <li key={a.createdAt} className="text-text-secondary">
                 {a.origen === 'DE_OFICIO' ? 'De oficio' : `Solicitud del ${formatearFecha(a.fechaSolicitud)}`}
-                {a.numeroRegistro ? ` (registro N° ${a.numeroRegistro})` : ''} — denegada con RSG N° <strong>{a.numeroResolucion ?? '—'}</strong>, notificada el{' '}
+                {a.numeroRegistro ? ` (registro N° ${a.numeroRegistro})` : ''} - denegada con RSG N° <strong>{a.numeroResolucion ?? '—'}</strong>, notificada el{' '}
                 <strong>{formatearFecha(a.fechaNotificacion)}</strong>.
               </li>
             ))}
@@ -242,12 +242,12 @@ export const CaducidadPanel: React.FC<Props> = ({ expedienteId, onClose, onCambi
         {c ? (
           c.origen === 'DE_OFICIO' ? (
             <div>
-              <strong>De oficio</strong> — la SFSA advirtió el vencimiento del plazo{c.registradoPorNombre ? ` (registró ${c.registradoPorNombre})` : ''}.
+              <strong>De oficio</strong> - la SFSA advirtió el vencimiento del plazo{c.registradoPorNombre ? ` (registró ${c.registradoPorNombre})` : ''}.
             </div>
           ) : (
             <>
               <div>
-                <strong>A pedido de parte</strong> — solicitud presentada el <strong>{formatearFecha(c.fechaSolicitud)}</strong>
+                <strong>A pedido de parte</strong> - solicitud presentada el <strong>{formatearFecha(c.fechaSolicitud)}</strong>
                 {c.numeroRegistro ? ` (registro N° ${c.numeroRegistro})` : ''}.
               </div>
               <div className="mt-[6px] whitespace-pre-wrap">{c.resumenSolicitud}</div>
@@ -318,11 +318,11 @@ export const CaducidadPanel: React.FC<Props> = ({ expedienteId, onClose, onCambi
               <div className="flex flex-col gap-[6px] mb-[10px]">
                 <label className={cn('flex items-center gap-[6px]', vencido ? 'cursor-pointer' : 'opacity-60')}>
                   <input type="radio" name="resultado" disabled={!vencido} checked={resultado === 'DECLARADA'} onChange={() => setResultado('DECLARADA')} />
-                  Corresponde — RSG que declara la caducidad{!vencido && ' (el plazo no ha vencido según las fechas registradas)'}
+                  Corresponde - RSG que declara la caducidad{!vencido && ' (el plazo no ha vencido según las fechas registradas)'}
                 </label>
                 <label className="flex items-center gap-[6px] cursor-pointer">
                   <input type="radio" name="resultado" checked={resultado === 'DENEGADA'} onChange={() => setResultado('DENEGADA')} />
-                  No corresponde — RSG denegatoria (improcedente); el PAS continúa
+                  No corresponde - RSG denegatoria (improcedente); el PAS continúa
                 </label>
               </div>
             )}
@@ -453,11 +453,11 @@ export const CaducidadPanel: React.FC<Props> = ({ expedienteId, onClose, onCambi
               <div className="flex flex-col gap-[6px] mb-[10px]">
                 <label className={cn('flex items-center gap-[6px]', e.potestad.prescrita ? 'opacity-60' : 'cursor-pointer')}>
                   <input type="radio" name="decision" disabled={e.potestad.prescrita} checked={decision === 'NUEVO_PAS'} onChange={() => setDecision('NUEVO_PAS')} />
-                  Sí — iniciar nuevo PAS{e.potestad.prescrita && ` (la potestad prescribió el ${formatearFecha(e.potestad.fechaPrescripcion)})`}
+                  Sí - iniciar nuevo PAS{e.potestad.prescrita && ` (la potestad prescribió el ${formatearFecha(e.potestad.fechaPrescripcion)})`}
                 </label>
                 <label className="flex items-center gap-[6px] cursor-pointer">
                   <input type="radio" name="decision" checked={decision === 'ARCHIVO'} onChange={() => setDecision('ARCHIVO')} />
-                  No — archivo del expediente caducado (prescribió o subsanó)
+                  No - archivo del expediente caducado (prescribió o subsanó)
                 </label>
               </div>
               <Textarea

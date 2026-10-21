@@ -123,7 +123,7 @@ export function textoAvisoMedida(m: MedidaLevantamientoItem): string | null {
       m.motivoLevantamiento === 'FAVORABLE'
         ? 'favorable: subsanó'
         : `por vencimiento del plazo${m.evaluacionFavorable ? '; la evaluación había sido favorable (subsanó)' : ''}`;
-    return `Medida provisional de ${tipo} (Acta N° ${m.medida.numeroActa}) levantada el ${formatearFecha(m.fechaLevantamiento)} (${motivo}) — tenerlo en cuenta al recomendar/imponer la medida complementaria.`;
+    return `Medida provisional de ${tipo} (Acta N° ${m.medida.numeroActa}) levantada el ${formatearFecha(m.fechaLevantamiento)} (${motivo}) - tenerlo en cuenta al recomendar/imponer la medida complementaria.`;
   }
   return null;
 }

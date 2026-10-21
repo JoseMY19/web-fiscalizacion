@@ -439,7 +439,7 @@ const FilaInfraccion: React.FC<{
                 <li key={c.id}>
                   <button type="button" onClick={() => elegir(c)} className="w-full text-left py-[7px] px-[10px] text-[12px] hover:bg-bg-hover cursor-pointer">
                     <strong className="text-text-main tabular-nums">{c.idInterno}</strong>
-                    <span className="text-text-secondary"> — {c.textoCompletoPdf ?? ''}</span>
+                    <span className="text-text-secondary"> - {c.textoCompletoPdf ?? ''}</span>
                   </button>
                 </li>
               ))}

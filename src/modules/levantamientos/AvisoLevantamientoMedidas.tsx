@@ -41,8 +41,8 @@ export const AvisoLevantamientoMedidas: React.FC<{ expedienteId: string }> = ({ 
         tipo: plazo.nivel === 'rojo' || plazo.nivel === 'vencido' ? ('error' as const) : ('warning' as const),
         texto:
           plazo.nivel === 'vencido'
-            ? `Solicitud de levantamiento de la medida de ${tipo} (Acta N° ${m.medida.numeroActa}): venció el plazo sin pronunciamiento — la medida queda levantada por ley.`
-            : `Solicitud de levantamiento de la medida de ${tipo} (Acta N° ${m.medida.numeroActa}) en evaluación — vence en ${plazo.texto.replace(/ \d+ s$/, '')} (${s.plazoTexto}).`,
+            ? `Solicitud de levantamiento de la medida de ${tipo} (Acta N° ${m.medida.numeroActa}): venció el plazo sin pronunciamiento - la medida queda levantada por ley.`
+            : `Solicitud de levantamiento de la medida de ${tipo} (Acta N° ${m.medida.numeroActa}) en evaluación - vence en ${plazo.texto.replace(/ \d+ s$/, '')} (${s.plazoTexto}).`,
       };
     })
     .filter((a): a is NonNullable<typeof a> => a !== null);

@@ -136,7 +136,7 @@ export const VisitasNotificacionModal: React.FC<{ id: string; onClose: () => voi
               <option value="SE_NEGO_A_RECIBIR">{LABEL_RESULTADO_VISITA.SE_NEGO_A_RECIBIR}</option>
               <option value="BAJO_PUERTA" disabled={!huboSinExito}>
                 {LABEL_RESULTADO_VISITA.BAJO_PUERTA}
-                {!huboSinExito ? ' — solo en la 2ª visita' : ''}
+                {!huboSinExito ? ' - solo en la 2ª visita' : ''}
               </option>
             </select>
           </div>
