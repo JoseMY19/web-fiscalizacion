@@ -95,7 +95,7 @@ export const AmpliacionPlazoCard: React.FC<Props> = ({
     const n = numero.trim();
     const ok = await confirm({
       title: 'Registrar firma de la ampliación',
-      message: `Se registrará la firma del ${fechaCorta(fechaFirma)}${n ? ` — Resolución N° ${n}` : ' (sin N°)'}. Desde ahí el plazo de caducidad pasa al ${fechaCorta(p.fechaCaducidadConAmpliacion)}.`,
+      message: `Se registrará la firma del ${fechaCorta(fechaFirma)}${n ? ` - Resolución N° ${n}` : ' (sin N°)'}. Desde ahí el plazo de caducidad pasa al ${fechaCorta(p.fechaCaducidadConAmpliacion)}.`,
       confirmLabel: 'Registrar firma',
     });
     if (!ok) return;
@@ -153,7 +153,7 @@ export const AmpliacionPlazoCard: React.FC<Props> = ({
             {a.fechaFirma && (
               <div>
                 Firmada el {fechaCorta(a.fechaFirma)}
-                {a.numeroResolucion ? ` — Resolución N° ${a.numeroResolucion}` : ' (sin N° registrado)'}.
+                {a.numeroResolucion ? ` - Resolución N° ${a.numeroResolucion}` : ' (sin N° registrado)'}.
               </div>
             )}
             {a.fechaNotificacion && <div>Notificada el {fechaCorta(a.fechaNotificacion)}.</div>}

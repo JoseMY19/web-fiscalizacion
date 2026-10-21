@@ -51,9 +51,9 @@ export function textoResultadoCaducidad(e: CaducidadExpedienteItem): { texto: st
   if (!c.resultado) return { texto: 'Solicitud en evaluación', variante: 'info' };
   if (c.resultado === 'DENEGADA') return { texto: c.fechaNotificacion ? 'Denegada (notificada)' : 'Denegatoria en trámite', variante: 'neutral' };
   if (!c.fechaNotificacion) return { texto: 'Declaración en trámite', variante: 'warning' };
-  if (c.decisionPosterior === 'NUEVO_PAS') return { texto: 'Caducado — nuevo PAS', variante: 'purple' };
-  if (c.decisionPosterior === 'ARCHIVO') return { texto: 'Caducado — archivado', variante: 'midnight' };
-  return { texto: 'Caducado — falta decidir', variante: 'danger' };
+  if (c.decisionPosterior === 'NUEVO_PAS') return { texto: 'Caducado - nuevo PAS', variante: 'purple' };
+  if (c.decisionPosterior === 'ARCHIVO') return { texto: 'Caducado - archivado', variante: 'midnight' };
+  return { texto: 'Caducado - falta decidir', variante: 'danger' };
 }
 
 export function nombreArchivoRsgCaducidad(e: CaducidadExpedienteItem): string {

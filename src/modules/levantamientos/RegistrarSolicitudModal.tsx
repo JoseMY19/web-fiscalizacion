@@ -124,7 +124,7 @@ export const RegistrarSolicitudModal: React.FC<Props> = ({ onClose, onRegistrada
       {medida && (
         <div className="bg-[#f8fafc] py-[12px] px-[14px] rounded-[8px] border border-border text-[13px] mb-[14px]">
           <div className="font-bold text-midnight-900 mb-[4px]">
-            {tipoMedidaTexto(medida.medida.tipoMedida)} — Acta N° {medida.medida.numeroActa} ({formatearFecha(medida.medida.fechaIntervencion)})
+            {tipoMedidaTexto(medida.medida.tipoMedida)} - Acta N° {medida.medida.numeroActa} ({formatearFecha(medida.medida.fechaIntervencion)})
           </div>
           <div className="text-text-secondary">
             Administrado: {medida.medida.administradoNombre ?? 'no identificado'}
@@ -177,7 +177,7 @@ export const RegistrarSolicitudModal: React.FC<Props> = ({ onClose, onRegistrada
       {venceEn && (
         <Alert type={esClausura ? 'warning' : 'info'}>
           Plazo para pronunciarse: <strong>{esClausura ? '48 horas corridas' : '30 días calendario'}</strong> (
-          {esClausura ? 'Ley 28976, art. 21.6 — cuentan sábados, domingos y feriados' : 'Ord. 464-MDSJL, art. 63.2'}). Vence el{' '}
+          {esClausura ? 'Ley 28976, art. 21.6 - cuentan sábados, domingos y feriados' : 'Ord. 464-MDSJL, art. 63.2'}). Vence el{' '}
           <strong>{formatearFechaHora(venceEn.toISOString())}</strong>. Si vence sin carta firmada, la medida queda levantada por ley.
         </Alert>
       )}

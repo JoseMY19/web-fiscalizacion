@@ -141,7 +141,7 @@ export function ComboboxExpediente<T>({
                 <div className="py-[8px] px-[14px] text-[11px] font-semibold text-text-muted border-b border-b-border bg-[#f8fafc]">
                   {filtroActivo
                     ? `${filtradas.length} resultado${filtradas.length === 1 ? '' : 's'}`
-                    : `Todos los expedientes disponibles (${filtradas.length}) — escribe para filtrar`}
+                    : `Todos los expedientes disponibles (${filtradas.length}) - escribe para filtrar`}
                   {cargando && ' · actualizando…'}
                 </div>
                 {filtradas.map((o, i) => {

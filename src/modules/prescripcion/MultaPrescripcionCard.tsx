@@ -94,7 +94,7 @@ export const MultaPrescripcionCard: React.FC<Props> = ({ solicitudId, multa: m, 
       <div className="flex items-start justify-between gap-[10px] flex-wrap">
         <div>
           <div className="font-bold text-midnight-900">
-            {letra} {m.codigoCuis ? `CUIS ${m.codigoCuis}` : 'Multa'} — Resolución N° {m.numeroResolucionSancion ?? '—'}
+            {letra} {m.codigoCuis ? `CUIS ${m.codigoCuis}` : 'Multa'} - Resolución N° {m.numeroResolucionSancion ?? '—'}
           </div>
           <div className="text-[12px] text-text-secondary">
             {m.descripcionInfraccion ?? 'Sin descripción'} · {m.monto !== null ? MONEDA.format(m.monto) : 'monto no registrado'}
@@ -219,7 +219,7 @@ export const MultaPrescripcionCard: React.FC<Props> = ({ solicitudId, multa: m, 
       {/* MEMORANDO (COA / DC) */}
       {m.figuraCoaDc && (
         <div className="mt-[8px] text-[12px] border-t border-t-border pt-[8px]">
-          <div className="font-semibold">Memorando (figura con siglas COA/DC — obligatorio antes de decidir prescrita)</div>
+          <div className="font-semibold">Memorando (figura con siglas COA/DC - obligatorio antes de decidir prescrita)</div>
           {editable ? (
             <>
               <div className={claseFilaTramite}>
@@ -247,7 +247,7 @@ export const MultaPrescripcionCard: React.FC<Props> = ({ solicitudId, multa: m, 
             </>
           ) : (
             <div>
-              {m.memorando.numero ? `Memorando N° ${m.memorando.numero} (${formatearFecha(m.memorando.fecha)}) — respuesta ${formatearFecha(m.memorando.respuestaFecha)}` : 'Sin memorando.'}
+              {m.memorando.numero ? `Memorando N° ${m.memorando.numero} (${formatearFecha(m.memorando.fecha)}) - respuesta ${formatearFecha(m.memorando.respuestaFecha)}` : 'Sin memorando.'}
               {m.memorando.respuestaResumen && `: ${m.memorando.respuestaResumen}`}
             </div>
           )}
@@ -283,7 +283,7 @@ export const MultaPrescripcionCard: React.FC<Props> = ({ solicitudId, multa: m, 
         ) : (
           <div>
             {m.resultado ? (m.resultado === 'PRESCRITA' ? 'Prescrita' : 'No prescrita') : 'Sin decidir'}
-            {m.motivoResultado && ` — ${m.motivoResultado}`}
+            {m.motivoResultado && ` - ${m.motivoResultado}`}
           </div>
         )}
       </div>
