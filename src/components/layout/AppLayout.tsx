@@ -23,6 +23,8 @@ import {
   XCircleIcon,
   BuildingIcon,
   ChevronRightIcon,
+  IdCardIcon,
+  CarIcon,
 } from '../icons/Icons';
 
 export type NavModule =
@@ -42,6 +44,8 @@ export type NavModule =
   | 'pagos'
   | 'cautelares'
   | 'levantamientos'
+  | 'busqueda-dni'
+  | 'busqueda-placa'
   | 'mapa'
   | 'configuracion'
   | 'usuarios';
@@ -91,6 +95,8 @@ const navItems: NavItemConDef[] = [
   { id: 'pagos', label: 'Registro de Pagos', icon: <CreditCardIcon size={18} /> },
   { id: 'cautelares', label: 'Medidas Cautelares', icon: <ShieldAlertIcon size={18} /> },
   { id: 'levantamientos', label: 'Levantamiento de Medidas', icon: <UnlockIcon size={18} /> },
+  { id: 'busqueda-dni', label: 'Búsqueda por DNI', icon: <IdCardIcon size={18} /> },
+  { id: 'busqueda-placa', label: 'Búsqueda por placas', icon: <CarIcon size={18} /> },
   { id: 'consulta-campo', label: 'Exhortación y Consulta', icon: <EyeIcon size={18} /> },
   { id: 'documentos', label: 'Control Documentario', icon: <FileTextIcon size={18} /> },
   { id: 'mapa', label: 'Mapa de Cobertura', icon: <MapPinIcon size={18} /> },
@@ -107,6 +113,7 @@ const GRUPOS_NAV: { id: string; titulo: string | null; modulos: NavModule[] }[] 
   { id: 'inicio', titulo: null, modulos: ['dashboard', 'alertas'] },
   { id: 'procedimiento', titulo: 'Procedimiento sancionador', modulos: ['expedientes', 'notificaciones', 'ifi', 'resoluciones', 'recursos'] },
   { id: 'cobranza', titulo: 'Cobranza', modulos: ['coactiva-pagos', 'coactiva', 'pagos'] },
+  { id: 'busqueda', titulo: 'Búsqueda', modulos: ['busqueda-dni', 'busqueda-placa'] },
   { id: 'incidentes', titulo: 'Incidentes y plazos', modulos: ['levantamientos', 'cautelares', 'caducidad', 'prescripcion'] },
   { id: 'consulta', titulo: 'Consulta', modulos: ['consulta-campo', 'documentos', 'mapa'] },
   { id: 'administracion', titulo: 'Administración', modulos: ['configuracion', 'usuarios'] },
@@ -123,9 +130,12 @@ function leerGruposCerrados(): string[] {
   }
 }
 
+const MODULOS_SIN_PERMISO = new Set<NavModule>(['dashboard', 'alertas', 'busqueda-dni', 'busqueda-placa']);
+
 /** Si el usuario puede entrar a ese módulo (menú y rutas usan la misma regla). */
 export function puedeVerModulo(modulo: NavModule, permisos: PermisosUsuario | undefined): boolean {
-  return modulo === 'dashboard' || modulo === 'alertas' || puedeVerModuloPermisos(modulo, permisos);
+  // Búsqueda: visible para todos mientras el backend no tenga estos módulos en los permisos por rol.
+  return MODULOS_SIN_PERMISO.has(modulo) || puedeVerModuloPermisos(modulo, permisos);
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({
@@ -329,7 +339,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
         {/* Contenido de la página (entra con una animación suave al cambiar de módulo) */}
         <main key={currentModule} className="flex-1 w-full max-w-[1600px] mx-auto pt-[28px] px-[32px] pb-[48px] max-md:p-[16px] animate-aparecer [animation-duration:450ms]">
-          {currentModule !== 'dashboard' && currentModule !== 'alertas' && currentModule !== 'usuarios' && !puedeEditarModulo(currentModule, user?.permisos) && (
+          {!MODULOS_SIN_PERMISO.has(currentModule) && currentModule !== 'usuarios' && !puedeEditarModulo(currentModule, user?.permisos) && (
             <AvisoSoloLectura rolNombre={user?.rolNombre} />
           )}
           {children}

@@ -2,10 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { DocumentoGuardado, DocumentosGuardadosApi, LABEL_TIPO_GUARDADO, descargarDocumentoGuardado } from '../../api/controlDocumentario';
 import { Alert, Button, EmptyState, Spinner } from '../../components/common/Common';
 import { Buscador, EstadoPunto, TABLA } from '../../components/common/PageKit';
+import { SelectorOpciones } from '../../components/common/SelectorOpciones';
 import { FileTextIcon } from '../../components/icons/Icons';
 import { formatearFechaHora } from '../../lib/fechas';
-
-const SELECT = 'h-[38px] px-[12px] text-[13px] rounded-sm border border-border bg-white text-text-main outline-none focus:border-primary-500';
 
 function tamano(bytes: number): string {
   return bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -61,14 +60,16 @@ export const GeneradosTab: React.FC = () => {
     <>
       <div className="py-[16px] px-[24px] border-b border-border flex items-center justify-between flex-wrap gap-[14px]">
         <Buscador value={busqueda} onChange={setBusqueda} placeholder="Buscar por expediente o nombre de archivo" />
-        <select value={tipo} onChange={(e) => setTipo(e.target.value)} className={SELECT}>
-          <option value="">Todos los tipos</option>
-          {Object.entries(LABEL_TIPO_GUARDADO).map(([clave, etiqueta]) => (
-            <option key={clave} value={clave}>
-              {etiqueta}
-            </option>
-          ))}
-        </select>
+        <SelectorOpciones
+          etiqueta="Tipo de documento"
+          valor={tipo}
+          onCambio={setTipo}
+          className="w-[260px]! min-h-[38px]! max-sm:w-full!"
+          opciones={[
+            { valor: '', etiqueta: 'Todos los tipos' },
+            ...Object.entries(LABEL_TIPO_GUARDADO).map(([clave, etiqueta]) => ({ valor: clave, etiqueta })),
+          ]}
+        />
       </div>
 
       {error && (

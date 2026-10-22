@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { CanalSolicitudLevantamiento, LevantamientosApi, MedidaLevantamientoItem } from '../../api';
 import { Alert, Badge, Button, Input, Modal, Textarea } from '../../components/common/Common';
 import { ComboboxExpediente } from '../../components/common/ComboboxExpediente';
+import { SelectorFecha } from '../../components/common/SelectorFecha';
 import { SelectorOpciones } from '../../components/common/SelectorOpciones';
 import { formatearFecha, formatearFechaHora } from '../../lib/fechas';
 import { ahoraInputLima, isoDesdeInputLima, previsualizarVencimiento, tipoMedidaTexto } from './levantamientoUi';
@@ -145,13 +146,14 @@ export const RegistrarSolicitudModal: React.FC<Props> = ({ onClose, onRegistrada
       )}
 
       <div className="grid grid-cols-2 gap-x-[14px] max-md:grid-cols-1">
-        <Input
-          type="datetime-local"
-          label="Fecha y hora de presentación"
-          value={fechaHora}
+        <SelectorFecha
+          conHora
+          etiqueta="Fecha y hora de presentación"
+          marcador="Elegir fecha y hora"
+          valor={fechaHora}
           max={ahoraInputLima()}
-          onChange={(e) => setFechaHora(e.target.value)}
-          helperText="Tal como figura en el cargo de Mesa de Partes (hora de Lima)."
+          onCambio={setFechaHora}
+          ayuda="Tal como figura en el cargo de Mesa de Partes (hora de Lima)."
         />
         <div className="mb-[14px] w-full">
           <label className="block text-[13px] font-semibold text-text-secondary mb-[6px]">Canal</label>

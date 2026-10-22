@@ -11,6 +11,8 @@ import {
   TaxonomiaCuis,
 } from '../../api/cuisMantenimiento';
 import { Alert, Button, Input, Modal, Spinner, Textarea } from '../../components/common/Common';
+import { SelectorFecha } from '../../components/common/SelectorFecha';
+import { SelectorOpciones } from '../../components/common/SelectorOpciones';
 import { PlusIcon, SearchIcon } from '../../components/icons/Icons';
 import { useConfirm } from '../../context/ConfirmContext';
 import { formatearFecha } from '../../lib/fechas';
@@ -26,7 +28,8 @@ import { cn } from '../../lib/cn';
 const TAMANO = 20;
 const ESCALAS: EscalaCuis[] = ['L', 'G', 'MG'];
 const NOMBRE_ESCALA: Record<EscalaCuis, string> = { L: 'Leve', G: 'Grave', MG: 'Muy grave' };
-const claseSelect = 'h-[34px] rounded-[6px] border border-border bg-bg-card px-[8px] text-[12px] text-text-secondary outline-none cursor-pointer';
+// Filtros de la barra: misma altura que el buscador (34 px).
+const claseFiltro = 'w-[230px]! min-h-[34px]! py-[3px]! text-[12px]! max-sm:w-full!';
 const claseCampo = 'w-full py-[8px] px-[10px] text-[13px] rounded-[6px] border border-border bg-bg-card text-text-main outline-none focus:border-primary-600';
 
 const escalaVacia = (): EscalaCuisDatos => ({ escala: 'L', condicion: null, valorPorcentaje: 0, medidaProvisional: null, medidaComplementaria: null });
@@ -112,35 +115,33 @@ export const CatalogoCuisCrud: React.FC = () => {
             className="min-w-0 flex-1 bg-transparent outline-none text-[12px] text-text-main placeholder:text-text-light"
           />
         </form>
-        <select
-          value={categoria}
-          onChange={(e) => {
+        <SelectorOpciones
+          etiqueta="Categoría"
+          valor={categoria}
+          onCambio={(v) => {
             setPagina(1);
-            setCategoria(e.target.value);
+            setCategoria(v);
           }}
-          aria-label="Categoría"
-          className={cn(claseSelect, 'max-w-[220px]')}
-        >
-          <option value="">Todas las categorías</option>
-          {taxonomia?.categorias.map((c) => (
-            <option key={c.numero} value={c.numero}>
-              {c.numero}. {c.nombre}
-            </option>
-          ))}
-        </select>
-        <select
-          value={estado}
-          onChange={(e) => {
+          className={claseFiltro}
+          opciones={[
+            { valor: '', etiqueta: 'Todas las categorías' },
+            ...(taxonomia?.categorias ?? []).map((c) => ({ valor: c.numero, etiqueta: c.nombre, insignia: c.numero })),
+          ]}
+        />
+        <SelectorOpciones
+          etiqueta="Estado"
+          valor={estado}
+          onCambio={(v) => {
             setPagina(1);
-            setEstado(e.target.value as FiltroEstadoCuis);
+            setEstado(v as FiltroEstadoCuis);
           }}
-          aria-label="Estado"
-          className={claseSelect}
-        >
-          <option value="TODOS">Todos</option>
-          <option value="SIN_MEDIDA">Falta medida complementaria</option>
-          <option value="INACTIVOS">Desactivados</option>
-        </select>
+          className={claseFiltro}
+          opciones={[
+            { valor: 'TODOS', etiqueta: 'Todos los estados' },
+            { valor: 'SIN_MEDIDA', etiqueta: 'Falta medida complementaria' },
+            { valor: 'INACTIVOS', etiqueta: 'Desactivados' },
+          ]}
+        />
         <div className="ml-auto">
           <Button size="sm" icon={<PlusIcon size={14} />} onClick={() => setEditando('nuevo')}>
             Agregar código
@@ -367,13 +368,14 @@ const EditorCodigo: React.FC<{
             />
             <div className="mb-[14px]">
               <label className="block text-[13px] font-semibold text-text-secondary mb-[6px]">Subcategoría</label>
-              <select value={form.subcategoriaId} onChange={(e) => set('subcategoriaId', e.target.value)} disabled={bloqueado} className={cn(claseCampo, 'py-[10px]')}>
-                {subcategorias.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.numero} · {s.nombre}
-                  </option>
-                ))}
-              </select>
+              <SelectorOpciones
+                etiqueta="Subcategoría"
+                valor={form.subcategoriaId}
+                onCambio={(v) => set('subcategoriaId', v)}
+                deshabilitado={bloqueado}
+                className="min-h-[42px]!"
+                opciones={subcategorias.map((s) => ({ valor: s.id, etiqueta: s.nombre, insignia: s.numero, detalle: `${s.categoria.numero}. ${s.categoria.nombre}` }))}
+              />
             </div>
           </div>
           {bloqueado && (
@@ -388,10 +390,10 @@ const EditorCodigo: React.FC<{
             rows={6}
             placeholder="Texto del código según la ordenanza."
           />
-          <div className="grid grid-cols-1 sm:grid-cols-[1fr_150px_150px] gap-x-[12px]">
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr_200px_200px] gap-x-[12px]">
             <Input label="Fuente normativa" value={form.fuenteNormativa ?? ''} onChange={(e) => set('fuenteNormativa', e.target.value)} />
-            <Input label="Vigente desde" type="date" value={form.vigenteDesde ?? ''} onChange={(e) => set('vigenteDesde', e.target.value)} />
-            <Input label="Vigente hasta" type="date" value={form.vigenteHasta ?? ''} onChange={(e) => set('vigenteHasta', e.target.value)} />
+            <SelectorFecha etiqueta="Vigente desde" marcador="Sin fecha" valor={form.vigenteDesde ?? ''} onCambio={(v) => set('vigenteDesde', v)} />
+            <SelectorFecha etiqueta="Vigente hasta" marcador="Sin fecha" valor={form.vigenteHasta ?? ''} onCambio={(v) => set('vigenteHasta', v)} />
           </div>
           <label className="flex items-start gap-[8px] text-[13px] text-text-secondary cursor-pointer">
             <input
@@ -509,13 +511,14 @@ const FilaEscala: React.FC<{
 
   return (
     <>
-      <select value={d.escala} onChange={(e) => set('escala', e.target.value as EscalaCuis)} className={claseCampo} title={NOMBRE_ESCALA[d.escala]}>
-        {ESCALAS.map((x) => (
-          <option key={x} value={x}>
-            {x}
-          </option>
-        ))}
-      </select>
+      {/* En el campo angosto solo cabe la sigla; la lista muestra también el nombre. */}
+      <SelectorOpciones
+        etiqueta={`Escala: ${NOMBRE_ESCALA[d.escala]}`}
+        valor={d.escala}
+        onCambio={(v) => set('escala', v as EscalaCuis)}
+        className="min-h-[36px]! py-[4px]! pl-[10px]! pr-[6px]! gap-[4px]! rounded-[6px]! bg-bg-card!"
+        opciones={ESCALAS.map((x) => ({ valor: x, etiqueta: x, detalle: NOMBRE_ESCALA[x] }))}
+      />
       <input value={texto(d.condicion)} onChange={(e) => set('condicion', nulo(e.target.value))} className={claseCampo} placeholder={nueva ? 'Nueva escala…' : ''} />
       <input
         type="number"
