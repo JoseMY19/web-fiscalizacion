@@ -9,6 +9,7 @@ import {
   RegistroLicencia,
 } from '../../api';
 import { Alert, Badge, Button, Input, Modal, Spinner } from '../../components/common/Common';
+import { SelectorOpciones } from '../../components/common/SelectorOpciones';
 import { PlusIcon, SearchIcon } from '../../components/icons/Icons';
 import { useConfirm } from '../../context/ConfirmContext';
 import { formatearFecha } from '../../lib/fechas';
@@ -242,19 +243,20 @@ export const RegistrosBaseCrud: React.FC<{ onCambio?: () => void }> = ({ onCambi
           />
         </form>
 
-        <select
-          value={origen}
-          onChange={(e) => {
+        <SelectorOpciones
+          etiqueta="Origen"
+          valor={origen}
+          onCambio={(v) => {
             setPagina(1);
-            setOrigen(e.target.value as OrigenRegistroBase | '');
+            setOrigen(v as OrigenRegistroBase | '');
           }}
-          aria-label="Origen"
-          className="h-[34px] rounded-[6px] border border-border bg-bg-card px-[8px] text-[12px] text-text-secondary outline-none cursor-pointer"
-        >
-          <option value="">Todos</option>
-          <option value="IMPORTADO">Del Excel</option>
-          <option value="MANUAL">Agregados a mano</option>
-        </select>
+          className="w-[200px]! min-h-[34px]! py-[3px]! text-[12px]! max-sm:w-full!"
+          opciones={[
+            { valor: '', etiqueta: 'Todos los orígenes' },
+            { valor: 'IMPORTADO', etiqueta: 'Del Excel', detalle: 'Cargados con la importación semanal' },
+            { valor: 'MANUAL', etiqueta: 'Agregados a mano', detalle: 'Se conservan al importar un Excel nuevo' },
+          ]}
+        />
 
         <div className="ml-auto">
           <Button

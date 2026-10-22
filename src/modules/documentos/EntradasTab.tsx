@@ -1,8 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ControlDocumentarioApi, LABEL_ORIGEN_EXTERNO, type DocumentoControl, type OrigenExterno } from '../../api/controlDocumentario';
-import { Alert, Button, EmptyState, Input, Select, Spinner, Textarea } from '../../components/common/Common';
+import { Alert, Button, EmptyState, Input, Spinner, Textarea } from '../../components/common/Common';
 import { Buscador, EstadoPunto, PanelDetalle, TABLA } from '../../components/common/PageKit';
+import { SelectorFecha } from '../../components/common/SelectorFecha';
+import { SelectorOpciones } from '../../components/common/SelectorOpciones';
 import { FileTextIcon, PlusIcon } from '../../components/icons/Icons';
 import { formatearFechaHora } from '../../lib/fechas';
 
@@ -220,13 +222,16 @@ export const EntradasTab: React.FC = () => {
       >
         {errorPanel && <Alert type="error">{errorPanel}</Alert>}
 
-        <Select label="Origen" value={form.origen} onChange={set('origen')}>
-          {Object.entries(LABEL_ORIGEN_EXTERNO).map(([valor, etiqueta]) => (
-            <option key={valor} value={valor}>
-              {etiqueta}
-            </option>
-          ))}
-        </Select>
+        <div className="mb-[14px]">
+          <label className="block text-[13px] font-semibold text-text-secondary mb-[6px]">Origen</label>
+          <SelectorOpciones
+            etiqueta="Origen"
+            valor={form.origen}
+            onCambio={(origen) => setForm((f) => ({ ...f, origen }))}
+            className="min-h-[42px]! pl-[14px]! text-[14px]!"
+            opciones={Object.entries(LABEL_ORIGEN_EXTERNO).map(([valor, etiqueta]) => ({ valor, etiqueta }))}
+          />
+        </div>
 
         <Input label="N° de SGD (opcional)" value={form.numeroSgd} onChange={set('numeroSgd')} />
 
@@ -234,12 +239,13 @@ export const EntradasTab: React.FC = () => {
 
         <Textarea label="Asunto *" rows={3} value={form.asunto} onChange={set('asunto')} />
 
-        <Input
-          label="Fecha y hora de ingreso *"
-          type="datetime-local"
+        <SelectorFecha
+          conHora
+          etiqueta="Fecha y hora de ingreso *"
+          marcador="Elegir fecha y hora"
           max={fechaHoraLocal()}
-          value={form.fechaHora}
-          onChange={set('fechaHora')}
+          valor={form.fechaHora}
+          onCambio={(fechaHora) => setForm((f) => ({ ...f, fechaHora }))}
         />
 
         <Input label="Folios" type="number" min={1} value={form.folios} onChange={set('folios')} />
