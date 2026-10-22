@@ -127,6 +127,26 @@ export const UserIcon: React.FC<IconProps> = ({ size = 20, color = 'currentColor
   </svg>
 );
 
+export const IdCardIcon: React.FC<IconProps> = ({ size = 20, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="5" width="20" height="14" rx="2" />
+    <circle cx="8" cy="11" r="2" />
+    <path d="M5 16a3 3 0 0 1 6 0" />
+    <line x1="14" y1="10" x2="19" y2="10" />
+    <line x1="14" y1="14" x2="18" y2="14" />
+  </svg>
+);
+
+export const CarIcon: React.FC<IconProps> = ({ size = 20, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M5 17H3v-5l2-5h14l2 5v5h-2" />
+    <line x1="3" y1="12" x2="21" y2="12" />
+    <circle cx="7.5" cy="17" r="2" />
+    <circle cx="16.5" cy="17" r="2" />
+    <line x1="9.5" y1="17" x2="14.5" y2="17" />
+  </svg>
+);
+
 export const LogOutIcon: React.FC<IconProps> = ({ size = 20, color = 'currentColor' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />

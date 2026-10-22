@@ -42,6 +42,7 @@ import { AvisoRetroaccion } from '../retroaccion/AvisoRetroaccion';
 import { FichaBasesMunicipales } from '../bases-municipales/FichaBasesMunicipales';
 import { EditorTextoEnriquecido, VistaTextoEnriquecido } from '../../components/common/EditorTextoEnriquecido';
 import { PagadoBadge } from '../../components/common/PagadoBadge';
+import { SelectorOpciones } from '../../components/common/SelectorOpciones';
 
 /** Mismo modelo de pasos que IfiView (StepDef/stepper), más un estado para los pasos opcionales. */
 type PasoEstado = 'completado' | 'actual' | 'pendiente' | 'opcional';
@@ -709,18 +710,19 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
               <label className="block text-[13px] font-semibold text-text-secondary mb-[6px]">
                 Tipo de infracción
               </label>
-              <select
-                value={tipoInfraccion}
-                onChange={(e) => setTipoInfraccion(e.target.value as TipoInfraccion | '')}
-                className="w-full py-[9px] px-[12px] rounded-sm border border-border text-[13px]"
-              >
-                <option value="">— Elegir —</option>
-                {(Object.keys(LABEL_INFRACCION) as TipoInfraccion[]).map((t) => (
-                  <option key={t} value={t}>
-                    {LABEL_INFRACCION[t]} ({PCT_DESCUENTO[t]}% de descuento)
-                  </option>
-                ))}
-              </select>
+              <SelectorOpciones
+                etiqueta="Tipo de infracción"
+                valor={tipoInfraccion || null}
+                onCambio={(v) => setTipoInfraccion(v as TipoInfraccion)}
+                marcador="Elegir tipo"
+                className="min-h-[42px]!"
+                opciones={(Object.keys(LABEL_INFRACCION) as TipoInfraccion[]).map((t) => ({
+                  valor: t,
+                  etiqueta: LABEL_INFRACCION[t],
+                  insignia: `${PCT_DESCUENTO[t]}%`,
+                  detalle: `${PCT_DESCUENTO[t]}% de descuento si reconoce y paga a tiempo`,
+                }))}
+              />
             </div>
             <Input label="% UIT" type="number" min={0} step="0.01" placeholder="Ej. 200" value={porcentajeUit} onChange={(e) => setPorcentajeUit(e.target.value)} />
             <Input label="Multa sin descuento (S/)" type="number" min={0} step="0.01" placeholder="Ej. 11000.00" value={montoSin} onChange={(e) => setMontoSin(e.target.value)} />

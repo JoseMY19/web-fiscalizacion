@@ -3,10 +3,11 @@ import { ConsultasApi, IntervencionSelectorItem, descargarDocumentoMedidaCautela
 import { ContenidoMedidaCautelar, MedidaCautelarItem, MedidasCautelaresApi } from '../../api/medidasCautelares';
 import { Alert, Badge, Button, Input, Modal, Spinner, Textarea } from '../../components/common/Common';
 import { EstadoPunto, PageHeader, PanelTabla, SegmentedTabs, TABLA } from '../../components/common/PageKit';
-import { PasoTramite, claseSelectTramite } from '../../components/common/PasoTramite';
+import { CampoSugerencias } from '../../components/common/CampoSugerencias';
+import { PasoTramite } from '../../components/common/PasoTramite';
+import { SelectorOpciones } from '../../components/common/SelectorOpciones';
 import { FileTextIcon, PlusIcon } from '../../components/icons/Icons';
 import { formatearFecha, hoyLocal } from '../../lib/fechas';
-import { cn } from '../../lib/cn';
 
 /**
  * Medidas cautelares (ES2): resolución de URGENCIA de la Subgerencia que
@@ -432,15 +433,21 @@ const FormularioMedida: React.FC<{ medida: MedidaCautelarItem | null; onClose: (
         ) : intervenciones === null ? (
           <Spinner size={16} />
         ) : (
-          <select value={intervencionId} onChange={(e) => setIntervencionId(e.target.value)} className={cn(claseSelectTramite, 'mb-[14px]')}>
-            <option value="">— Elige la intervención —</option>
-            {intervenciones.map((i) => (
-              <option key={i.id} value={i.id}>
-                {formatearFecha(i.fechaHoraInicio)} · {i.administradoNombre ?? 'Sin administrado identificado'}
-                {i.numeroExpediente ? ` · Exp. ${i.numeroExpediente}` : ''} · {ACTUACION[i.tipoActuacion] ?? i.tipoActuacion}
-              </option>
-            ))}
-          </select>
+          <div className="mb-[14px]">
+            <SelectorOpciones
+              etiqueta="Intervención"
+              valor={intervencionId || null}
+              onCambio={setIntervencionId}
+              marcador={intervenciones.length === 0 ? 'No hay intervenciones registradas' : 'Elige la intervención'}
+              deshabilitado={intervenciones.length === 0}
+              className="min-h-[42px]! pl-[14px]! text-[14px]!"
+              opciones={intervenciones.map((i) => ({
+                valor: i.id,
+                etiqueta: i.administradoNombre ?? 'Sin administrado identificado',
+                detalle: [formatearFecha(i.fechaHoraInicio), i.numeroExpediente ? `Exp. ${i.numeroExpediente}` : 'Sin expediente', ACTUACION[i.tipoActuacion] ?? i.tipoActuacion].join(' · '),
+              }))}
+            />
+          </div>
         )}
       </Seccion>
 
@@ -450,19 +457,21 @@ const FormularioMedida: React.FC<{ medida: MedidaCautelarItem | null; onClose: (
 
       <Seccion titulo="3. Qué se dispone" ayuda="Sale en el ARTÍCULO PRIMERO: «DISPONER la MEDIDA CAUTELAR de [medida] en la modalidad de [modalidad]».">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-[14px]">
-          <Input label="Medida *" list="mc-tipos" value={d.tipoMedidaCautelar} onChange={(e) => set('tipoMedidaCautelar', e.target.value)} placeholder="Ej. RETIRO" />
-          <Input label="Modalidad" list="mc-modalidades" value={d.modalidadEjecucion} onChange={(e) => set('modalidadEjecucion', e.target.value)} />
+          <CampoSugerencias
+            etiqueta="Medida *"
+            valor={d.tipoMedidaCautelar ?? ''}
+            onCambio={(v) => set('tipoMedidaCautelar', v)}
+            sugerencias={TIPOS_MEDIDA}
+            marcador="Ej. RETIRO"
+          />
+          <CampoSugerencias
+            etiqueta="Modalidad"
+            valor={d.modalidadEjecucion ?? ''}
+            onCambio={(v) => set('modalidadEjecucion', v)}
+            sugerencias={MODALIDADES}
+            marcador="Elige o escribe la modalidad"
+          />
         </div>
-        <datalist id="mc-tipos">
-          {TIPOS_MEDIDA.map((t) => (
-            <option key={t} value={t} />
-          ))}
-        </datalist>
-        <datalist id="mc-modalidades">
-          {MODALIDADES.map((t) => (
-            <option key={t} value={t} />
-          ))}
-        </datalist>
       </Seccion>
 
       <Seccion titulo="4. Texto de la resolución" ayuda="Lo que varía en el Word; los párrafos legales fijos ya están en la plantilla.">

@@ -142,7 +142,9 @@ export const EditorTextoEnriquecido: React.FC<Props> = ({ value, onChange, label
     <div className="mb-[14px] w-full">
       {label && <label className="block text-[13px] font-semibold text-text-secondary mb-[6px]">{label}</label>}
       <div className="rounded-sm border border-border bg-[#ffffff] focus-within:border-primary-600">
-        <div className="flex items-center flex-wrap gap-[2px] px-[6px] py-[4px] border-b border-border bg-[#f8fafc] rounded-t-sm sticky top-0 z-[1]">
+        {/* Sin sticky: el texto ya tiene su propio scroll (max-h-[55vh]), así que la barra siempre queda
+            justo encima. Pegada al modal, se quedaba flotando a 24 px del borde y el texto se veía detrás. */}
+        <div className="flex items-center flex-wrap gap-[2px] px-[6px] py-[4px] border-b border-border bg-[#f8fafc] rounded-t-sm">
           {boton('Negrita (Ctrl+B)', <strong>B</strong>, () => ejecutar('bold'), activos.bold)}
           {boton('Cursiva (Ctrl+I)', <em className="font-serif">I</em>, () => ejecutar('italic'), activos.italic)}
           {boton('Subrayado (Ctrl+U)', <u>S</u>, () => ejecutar('underline'), activos.underline)}
@@ -177,7 +179,7 @@ export const EditorTextoEnriquecido: React.FC<Props> = ({ value, onChange, label
         </div>
         <div className="relative">
           {vacio && placeholder && (
-            <div className="absolute top-[10px] left-[14px] right-[14px] text-[14px] text-text-muted pointer-events-none">{placeholder}</div>
+            <div className="absolute top-[10px] left-[14px] right-[14px] [font-family:Arial,Helvetica,sans-serif] text-[12pt] text-text-muted pointer-events-none">{placeholder}</div>
           )}
           <div
             ref={ref}
@@ -192,7 +194,8 @@ export const EditorTextoEnriquecido: React.FC<Props> = ({ value, onChange, label
             onKeyUp={refrescarActivos}
             onMouseUp={refrescarActivos}
             className={cn(
-              'py-[10px] px-[14px] text-[14px] leading-[1.55] text-text-main outline-none overflow-y-auto max-h-[55vh]',
+              // Arial 12, como se ve en el Word generado.
+              'py-[10px] px-[14px] [font-family:Arial,Helvetica,sans-serif] text-[12pt] leading-[1.55] text-text-main outline-none overflow-y-auto max-h-[55vh]',
               alto === 'lg' ? 'min-h-[300px]' : 'min-h-[180px]',
               CLASES_CONTENIDO_ENRIQUECIDO,
             )}

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { abrirDocumentoDescargo, DescargoItem, DescargosApi, LABEL_ETAPA_DESCARGO, ListaDescargos } from '../../api/descargos';
 import { Alert, Badge, Button, Input, Modal, Spinner, Textarea } from '../../components/common/Common';
+import { SelectorFecha } from '../../components/common/SelectorFecha';
 import { formatearFecha, formatearFechaHora, hoyLocal } from '../../lib/fechas';
 import { EyeIcon, FileTextIcon, PlusIcon } from '../../components/icons/Icons';
 
@@ -223,7 +224,7 @@ const AgregarDescargoModal: React.FC<{ expedienteId: string; onClose: () => void
     >
       {error && <Alert type="error">{error}</Alert>}
       <div className="grid grid-cols-2 gap-x-[14px] max-md:grid-cols-1">
-        <Input type="date" label="Fecha de presentación" value={fecha} max={hoyLocal()} onChange={(e) => setFecha(e.target.value)} />
+        <SelectorFecha etiqueta="Fecha de presentación" valor={fecha} max={hoyLocal()} onCambio={setFecha} />
         <Input label="N° de documento SGD (opcional)" value={numeroSgd} onChange={(e) => setNumeroSgd(e.target.value)} />
       </div>
       <Textarea

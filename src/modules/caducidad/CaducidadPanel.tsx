@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { CaducidadApi, CaducidadExpedienteItem, abrirDocumentoCaducidad, descargarRsgCaducidad } from '../../api';
 import { Alert, Badge, Button, Input, Modal, Spinner, Textarea } from '../../components/common/Common';
 import { claseBloqueTramite, claseFilaTramite, claseInputArchivo, PasoTramite } from '../../components/common/PasoTramite';
+import { SelectorFecha } from '../../components/common/SelectorFecha';
 import { EyeIcon, FileTextIcon, PenToolIcon } from '../../components/icons/Icons';
 import { useConfirm } from '../../context/ConfirmContext';
 import { formatearFecha, hoyLocal } from '../../lib/fechas';
@@ -289,8 +290,8 @@ export const CaducidadPanel: React.FC<Props> = ({ expedienteId, onClose, onCambi
             <div className="border-t border-t-border pt-[12px]">
               <div className="font-bold mb-[4px]">Solicitud del administrado (a pedido de parte)</div>
               <div className={claseFilaTramite}>
-                <div className="w-[200px]">
-                  <Input type="date" label="Fecha de presentación" value={fechaSolicitud} max={hoy} onChange={(ev) => setFechaSolicitud(ev.target.value)} />
+                <div className="w-[240px] max-sm:w-full">
+                  <SelectorFecha etiqueta="Fecha de presentación" valor={fechaSolicitud} max={hoy} onCambio={setFechaSolicitud} />
                 </div>
                 <div className="flex-1 min-w-[180px]">
                   <Input label="N° de registro (SGD, opcional)" value={numeroRegistro} onChange={(ev) => setNumeroRegistro(ev.target.value)} />
@@ -365,8 +366,8 @@ export const CaducidadPanel: React.FC<Props> = ({ expedienteId, onClose, onCambi
           <div>Entregada al Subgerente el {formatearFecha(c.fechaEnvioFirma)}.</div>
         ) : c?.resultado ? (
           <div className={claseFilaTramite}>
-            <div className="w-[230px]">
-              <Input type="date" label="Fecha de entrega al Subgerente" value={fechaEnvio} max={hoy} onChange={(ev) => setFechaEnvio(ev.target.value)} />
+            <div className="w-[240px] max-sm:w-full">
+              <SelectorFecha etiqueta="Fecha de entrega al Subgerente" valor={fechaEnvio} max={hoy} onCambio={setFechaEnvio} />
             </div>
             <Button size="sm" icon={<PenToolIcon size={14} />} loading={accion === 'enviar'} onClick={enviar} className="mb-[14px]!">
               Registrar envío a firma
@@ -385,8 +386,8 @@ export const CaducidadPanel: React.FC<Props> = ({ expedienteId, onClose, onCambi
           </div>
         ) : c?.fechaEnvioFirma ? (
           <div className={claseFilaTramite}>
-            <div className="w-[200px]">
-              <Input type="date" label="Fecha de firma" value={fechaFirma} min={c.fechaEnvioFirma.slice(0, 10)} max={hoy} onChange={(ev) => setFechaFirma(ev.target.value)} />
+            <div className="w-[240px] max-sm:w-full">
+              <SelectorFecha etiqueta="Fecha de firma" valor={fechaFirma} min={c.fechaEnvioFirma.slice(0, 10)} max={hoy} onCambio={setFechaFirma} />
             </div>
             <div className="flex-1 min-w-[180px]">
               <Input label="N° de RSG" placeholder="Tal como figura en el papel" value={numeroResolucion} onChange={(ev) => setNumeroResolucion(ev.target.value)} />
@@ -406,8 +407,8 @@ export const CaducidadPanel: React.FC<Props> = ({ expedienteId, onClose, onCambi
           <div>Notificada el {formatearFecha(c.fechaNotificacion)}.</div>
         ) : c?.fechaFirma ? (
           <div className={claseFilaTramite}>
-            <div className="w-[200px]">
-              <Input type="date" label="Fecha de notificación" value={fechaNotificacion} min={c.fechaFirma.slice(0, 10)} max={hoy} onChange={(ev) => setFechaNotificacion(ev.target.value)} />
+            <div className="w-[240px] max-sm:w-full">
+              <SelectorFecha etiqueta="Fecha de notificación" valor={fechaNotificacion} min={c.fechaFirma.slice(0, 10)} max={hoy} onCambio={setFechaNotificacion} />
             </div>
             <Button size="sm" variant="success" loading={accion === 'notificar'} onClick={notificar} className="mb-[14px]!">
               Registrar notificación

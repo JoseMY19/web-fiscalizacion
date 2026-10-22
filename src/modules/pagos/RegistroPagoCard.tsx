@@ -1,8 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { LABEL_SISTEMA_ORIGEN, NotificacionCargoPagoItem, PagosApi, SistemaOrigenPago } from '../../api/pagos';
-import { Alert, Badge, Button, Input, Select, Textarea } from '../../components/common/Common';
+import { Alert, Badge, Button, Input, Textarea } from '../../components/common/Common';
 import { ComboboxExpediente } from '../../components/common/ComboboxExpediente';
 import { montoSoles } from '../../components/common/PagadoBadge';
+import { SelectorFecha } from '../../components/common/SelectorFecha';
+import { SelectorOpciones } from '../../components/common/SelectorOpciones';
 import { formatearFecha, hoyLocal } from '../../lib/fechas';
 import { ScaleIcon } from '../../components/icons/Icons';
 
@@ -166,19 +168,21 @@ export const RegistroPagoCard: React.FC<Props> = ({ onRegistrado }) => {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-x-[12px]">
-        <Input label="Monto pagado (S/)" placeholder="Ej. 1375.00" type="number" step="0.01" min="0" value={monto} onChange={(e) => setMonto(e.target.value)} />
-        <Input type="date" label="Fecha de pago" value={fechaPago} max={hoyLocal()} onChange={(e) => setFechaPago(e.target.value)} />
-      </div>
+      {/* Uno debajo del otro: la tarjeta es angosta y la fecha se muestra completa ("21 de octubre de 2026"). */}
+      <Input label="Monto pagado (S/)" placeholder="Ej. 1375.00" type="number" step="0.01" min="0" value={monto} onChange={(e) => setMonto(e.target.value)} />
+      <SelectorFecha etiqueta="Fecha de pago" valor={fechaPago} max={hoyLocal()} onCambio={setFechaPago} />
       <Input label="N° de recibo / operación (opcional)" value={numeroRecibo} onChange={(e) => setNumeroRecibo(e.target.value)} />
-      <Select label="Sistema donde se registró" value={sistema} onChange={(e) => setSistema(e.target.value as SistemaOrigenPago | '')}>
-        <option value="">— Elegir —</option>
-        {(Object.keys(LABEL_SISTEMA_ORIGEN) as SistemaOrigenPago[]).map((s) => (
-          <option key={s} value={s}>
-            {LABEL_SISTEMA_ORIGEN[s]}
-          </option>
-        ))}
-      </Select>
+      <div className="mb-[14px]">
+        <label className="block text-[13px] font-semibold text-text-secondary mb-[6px]">Sistema donde se registró</label>
+        <SelectorOpciones
+          etiqueta="Sistema donde se registró"
+          valor={sistema || null}
+          onCambio={(v) => setSistema(v as SistemaOrigenPago)}
+          marcador="Elegir sistema"
+          className="min-h-[42px]! pl-[14px]! text-[14px]!"
+          opciones={(Object.keys(LABEL_SISTEMA_ORIGEN) as SistemaOrigenPago[]).map((s) => ({ valor: s, etiqueta: LABEL_SISTEMA_ORIGEN[s] }))}
+        />
+      </div>
       <Textarea label="Observación (opcional)" value={observacion} onChange={(e) => setObservacion(e.target.value)} rows={2} />
 
       <Button variant="success" loading={guardando} onClick={registrar} className="w-full">

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { PrescripcionApi } from '../../api';
 import { Alert, Button, Input, Modal, Textarea } from '../../components/common/Common';
 import { claseFilaTramite, claseInputArchivo } from '../../components/common/PasoTramite';
+import { SelectorFecha } from '../../components/common/SelectorFecha';
 import { hoyLocal } from '../../lib/fechas';
 
 /**
@@ -83,7 +84,7 @@ export const RegistrarSolicitudPrescripcionModal: React.FC<{ onClose: () => void
       <Input label="Domicilio señalado en la solicitud (para notificar)" value={domicilio} onChange={(e) => setDomicilio(e.target.value)} />
       <div className={claseFilaTramite}>
         <div className="w-[200px]">
-          <Input type="date" label="Fecha de presentación" value={fecha} max={hoy} onChange={(e) => setFecha(e.target.value)} />
+          <SelectorFecha etiqueta="Fecha de presentación" valor={fecha} max={hoy} onCambio={setFecha} />
         </div>
         <div className="flex-1 min-w-[180px]">
           <Input label="N° de documento SGD (ej. S-0022315-2026)" value={numeroSgd} onChange={(e) => setNumeroSgd(e.target.value)} />
