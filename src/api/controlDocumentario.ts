@@ -113,6 +113,7 @@ export const LABEL_TIPO_GUARDADO: Record<string, string> = {
   RSG_CADUCIDAD: 'RSG de caducidad',
   RSG_PRESCRIPCION: 'RSG de prescripción',
   MEDIDA_CAUTELAR: 'Medida cautelar',
+  RESOLUCION_COACTIVA: 'Resolución coactiva (REC)',
 };
 
 export const DocumentosGuardadosApi = {
