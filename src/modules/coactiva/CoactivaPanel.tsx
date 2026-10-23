@@ -15,6 +15,7 @@ import { claseBloqueTramite, claseFilaTramite, claseInputArchivo, claseSelectTra
 import { EyeIcon } from '../../components/icons/Icons';
 import { formatearFecha, hoyLocal } from '../../lib/fechas';
 import { cn } from '../../lib/cn';
+import { DocumentosCoactiva } from './DocumentosCoactiva';
 import {
   estadoCoactivo,
   LABEL_CLASE_SUSPENSION,
@@ -167,7 +168,7 @@ export const CoactivaPanel: React.FC<Props> = ({ actoFirmeId, onClose, onCambio 
           <PasoTramite n={2} titulo="Resoluciones de ejecución coactiva (REC)" hecho={archivado}>
             <div className="text-[12px] text-text-muted mb-[8px]">
               Dependen del caso: registra las que correspondan (REC 1 requerimiento, medidas cautelares, ejecución de la medida complementaria,
-              levantamientos, respuestas a escritos…). Las plantillas Word se agregarán cuando coactivo las envíe; por ahora, adjunta el PDF firmado.
+              levantamientos, respuestas a escritos…). Descarga el Word de cada una más abajo y adjunta el PDF firmado.
               {s.venceRequerimiento && (
                 <>
                   {' '}
@@ -183,6 +184,7 @@ export const CoactivaPanel: React.FC<Props> = ({ actoFirmeId, onClose, onCambio 
               ))}
             </div>
             {!archivado && <FormRec c={c} accion={accion} ejecutar={ejecutar} />}
+            <DocumentosCoactiva expedienteCoactivoId={e.id} resoluciones={e.resoluciones} />
           </PasoTramite>
 
           {/* 3. SUSPENSIONES */}
