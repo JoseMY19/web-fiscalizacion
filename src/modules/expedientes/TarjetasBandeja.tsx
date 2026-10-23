@@ -106,7 +106,7 @@ export const TarjetaObservada: React.FC<{
 
     <div className="min-w-0">
       <span className={ETIQUETA_COLUMNA}>Motivo de la observación</span>
-      <p className="m-0 py-[8px] px-[12px] rounded-md bg-danger-bg/60 border border-danger-border/60 text-[13px] text-text-secondary leading-[1.5]">{obs.motivo}</p>
+      <p className="m-0 py-[8px] px-[12px] rounded-md bg-danger-bg/60 border border-danger-border/60 text-[13px] text-text-secondary leading-[1.5]">{obs.motivo?.trim() || 'Sin motivo registrado.'}</p>
     </div>
 
     <div className="flex items-center gap-[8px] md:justify-end">
