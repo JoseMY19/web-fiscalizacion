@@ -86,6 +86,7 @@ export const GeneradosTab: React.FC = () => {
 
       {items !== null && items.length === 0 && (
         <EmptyState
+          llenarPantalla
           icon={<FileTextIcon size={40} />}
           title="Todavía no hay documentos generados"
           description="Cada vez que se descargue un acta, IFI, resolución, carta o RSG, el sistema guarda una copia aquí, con su versión."

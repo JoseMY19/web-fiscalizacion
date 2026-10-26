@@ -55,6 +55,7 @@ export const ConsultaCampoView: React.FC = () => {
           </div>
         ) : items.length === 0 ? (
           <EmptyState
+            llenarPantalla
             icon={<EyeIcon size={32} />}
             title="Sin intervenciones"
             description="No hay intervenciones de Exhortación o Constatación sincronizadas."

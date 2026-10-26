@@ -148,6 +148,7 @@ export const EntradasTab: React.FC = () => {
         )
       ) : items.length === 0 ? (
         <EmptyState
+          llenarPantalla
           icon={<FileTextIcon size={40} />}
           title="Sin documentos de entrada"
           description="Aquí aparecen los escritos que llegan: descargos, solicitudes, recursos y documentos externos."

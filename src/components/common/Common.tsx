@@ -1,6 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '../../lib/cn';
+import { useLlenarAlto } from '../../lib/useLlenarAlto';
 
 // Nota: las clases que llegan por `className` desde fuera deben usar el
 // modificador `!` (ej. `mb-0!`) cuando pisan una propiedad que el componente
@@ -268,16 +269,32 @@ export const EmptyState: React.FC<{
   title: string;
   description?: string;
   action?: React.ReactNode;
-}> = ({ icon, title, description, action }) => (
-  // Suele ir dentro de un panel con borde: margen en los cuatro lados y fondo
-  // gris suave para que su borde punteado no se pegue al del panel.
-  <div className="m-[16px] py-[44px] px-[24px] text-center bg-bg-subtle rounded-md border border-dashed border-border-dark">
-    {icon && <div className="text-text-light mb-[12px] flex justify-center">{icon}</div>}
-    <h4 className="text-[16px] font-semibold text-text-main mb-[4px]">{title}</h4>
-    {description && <p className="text-[13px] text-text-muted max-w-[400px] mx-auto mb-[16px]">{description}</p>}
-    {action && <div className="mt-[16px]">{action}</div>}
-  </div>
-);
+  className?: string;
+  /**
+   * Se estira hasta abajo de la ventana (bandejas vacías), con el contenido
+   * centrado. Un número suma px que quedan debajo (ej. el padding del contenedor).
+   */
+  llenarPantalla?: boolean | number;
+}> = ({ icon, title, description, action, className, llenarPantalla }) => {
+  // Bajo el recuadro: su margen (16) + el borde del panel (1) + el padding inferior de la página (48).
+  const extra = typeof llenarPantalla === 'number' ? llenarPantalla : 0;
+  const { ref, alto } = useLlenarAlto<HTMLDivElement>(!!llenarPantalla, 65 + extra);
+  return (
+    // Suele ir dentro de un panel con borde: margen en los cuatro lados y fondo
+    // gris suave para que su borde punteado no se pegue al del panel.
+    <div
+      ref={ref}
+      // Alto medido al dibujarse: valor dinámico.
+      style={alto ? { minHeight: alto } : undefined}
+      className={cn('m-[16px] py-[44px] px-[24px] text-center bg-bg-subtle rounded-md border border-dashed border-border-dark flex flex-col items-center justify-center', className)}
+    >
+      {icon && <div className="text-text-light mb-[12px] flex justify-center">{icon}</div>}
+      <h4 className="text-[16px] font-semibold text-text-main mb-[4px]">{title}</h4>
+      {description && <p className="text-[13px] text-text-muted max-w-[400px] mx-auto mb-[16px]">{description}</p>}
+      {action && <div className="mt-[16px]">{action}</div>}
+    </div>
+  );
+};
 
 // ============================================================================
 // SELECT

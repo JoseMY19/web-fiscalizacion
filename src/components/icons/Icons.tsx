@@ -127,6 +127,15 @@ export const UserIcon: React.FC<IconProps> = ({ size = 20, color = 'currentColor
   </svg>
 );
 
+export const BarChartIcon: React.FC<IconProps> = ({ size = 20, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="3" y1="21" x2="21" y2="21" />
+    <rect x="5" y="11" width="3" height="7" rx="1" />
+    <rect x="10.5" y="5" width="3" height="13" rx="1" />
+    <rect x="16" y="8" width="3" height="10" rx="1" />
+  </svg>
+);
+
 export const IdCardIcon: React.FC<IconProps> = ({ size = 20, color = 'currentColor' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="2" y="5" width="20" height="14" rx="2" />

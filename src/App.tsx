@@ -16,7 +16,8 @@ import { CoactivaPagosView } from './modules/coactiva-pagos/CoactivaPagosView';
 import { PagosView } from './modules/pagos/PagosView';
 import { CautelaresView } from './modules/cautelares/CautelaresView';
 import { LevantamientosView } from './modules/levantamientos/LevantamientosView';
-import { BusquedaDniView, BusquedaPlacaView } from './modules/busqueda/BusquedaView';
+import { BusquedaView } from './modules/busqueda/BusquedaView';
+import { MetricasView } from './modules/metricas/MetricasView';
 // F2 / F3: caducidad del PAS y prescripción de multas.
 import { CaducidadView } from './modules/caducidad/CaducidadView';
 import { PrescripcionView } from './modules/prescripcion/PrescripcionView';
@@ -150,6 +151,7 @@ function MainApp() {
         badgeAlertas={{ ...badgesCentro, ...badgeAlertas, ...badgesLev.alertas }}
       >
         <Routes>
+          <Route path="/metricas" element={<MetricasView onNavigate={irA} />} />
           <Route path="/" element={<DashboardView onNavigate={irA} />} />
           <Route path="/alertas" element={<AlertasView />} />
           <Route path="/documentos" element={<DocumentosView />} />
@@ -166,8 +168,7 @@ function MainApp() {
           <Route path="/pagos" element={<PagosView />} />
           <Route path="/cautelares" element={<CautelaresView />} />
           <Route path="/levantamientos" element={<LevantamientosView />} />
-          <Route path="/busqueda-dni" element={<BusquedaDniView />} />
-          <Route path="/busqueda-placa" element={<BusquedaPlacaView />} />
+          <Route path="/busqueda" element={<BusquedaView />} />
           <Route path="/mapa" element={<MapaIntervencionesView />} />
           <Route path="/configuracion" element={<ConfiguracionView />} />
           <Route path="/usuarios" element={<UsuariosRolesView />} />
