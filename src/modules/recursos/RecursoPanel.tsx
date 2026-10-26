@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useVistaPrevia } from '../../components/common/useVistaPrevia';
+import { vistaDeRuta } from '../../api/vistaPreviaDocumentos';
 import {
   DecisionGop,
   ExpedienteRecursos,
@@ -97,6 +99,8 @@ export const RecursoPanel: React.FC<Props> = ({ expedienteId, numeroExpediente, 
     recargar();
   }, [recargar]);
 
+  const vp = useVistaPrevia();
+
   const ejecutar = async (clave: string, fn: () => Promise<unknown>, exito: string) => {
     setAccion(clave);
     setMensaje(null);
@@ -108,6 +112,7 @@ export const RecursoPanel: React.FC<Props> = ({ expedienteId, numeroExpediente, 
     } finally {
       await recargar();
       setAccion(null);
+      vp.refrescar();
       onCambio();
     }
   };
@@ -645,7 +650,7 @@ export const RecursoPanel: React.FC<Props> = ({ expedienteId, numeroExpediente, 
   }
 
   return (
-    <Modal isOpen onClose={onClose} title={`Expediente ${d.numeroExpediente} - Recursos`} maxWidth="860px">
+    <Modal isOpen onClose={onClose} title={`Expediente ${d.numeroExpediente} - Recursos`} maxWidth="860px" lateral={vp.lateral}>
       {mensaje && <Alert type={mensaje.type}>{mensaje.text}</Alert>}
 
       {d.tienePago && (
@@ -697,6 +702,18 @@ export const RecursoPanel: React.FC<Props> = ({ expedienteId, numeroExpediente, 
         <div className={estiloTituloSeccion}>Documentos</div>
         <div className="border border-border rounded-[8px] overflow-hidden">
           <FilaDocumento titulo={`Resolución de primera instancia${d.resolucion.numeroResolucion ? ` N° ${d.resolucion.numeroResolucion}` : ''} (Word)`}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="mr-[6px]!"
+              onClick={() =>
+                vp.abrir(`Resolución de primera instancia - Expediente ${d.numeroExpediente}`, vistaDeRuta(`/resoluciones/${d.expedienteId}/documento`), () =>
+                  descargar(() => descargarDocumentoResolucion(d.expedienteId, d.numeroExpediente)),
+                )
+              }
+            >
+              Ver Word
+            </Button>
             <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={() => descargar(() => descargarDocumentoResolucion(d.expedienteId, d.numeroExpediente))}>
               Descargar
             </Button>
@@ -708,15 +725,29 @@ export const RecursoPanel: React.FC<Props> = ({ expedienteId, numeroExpediente, 
               expandido={verRsg ? <div className={estiloTextoLargo}>{rsg.analisisTexto || 'Todavía no redactado.'}</div> : undefined}
             >
               {rsg.analisisTexto && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  icon={<FileTextIcon size={14} />}
-                  className="mr-[6px]!"
-                  onClick={() => descargar(() => descargarDocumentoRsgReconsideracion(rec.id, d.numeroExpediente))}
-                >
-                  Word
-                </Button>
+                <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="mr-[6px]!"
+                    onClick={() =>
+                      vp.abrir(`RSG de reconsideración - Expediente ${d.numeroExpediente}`, vistaDeRuta(`/reconsideraciones/${rec.id}/rsg/documento`), () =>
+                        descargar(() => descargarDocumentoRsgReconsideracion(rec.id, d.numeroExpediente)),
+                      )
+                    }
+                  >
+                    Ver Word
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    icon={<FileTextIcon size={14} />}
+                    className="mr-[6px]!"
+                    onClick={() => descargar(() => descargarDocumentoRsgReconsideracion(rec.id, d.numeroExpediente))}
+                  >
+                    Word
+                  </Button>
+                </>
               )}
               <Button size="sm" variant="outline" icon={<EyeIcon size={14} />} onClick={() => setVerRsg((v) => !v)}>
                 {verRsg ? 'Ocultar' : 'Ver'}
@@ -729,6 +760,18 @@ export const RecursoPanel: React.FC<Props> = ({ expedienteId, numeroExpediente, 
               detalle={ape.fechaFirmaInforme ? `Firmado el ${fechaCorta(ape.fechaFirmaInforme)}` : 'Sin firmar'}
               expandido={verInforme ? <div className={estiloTextoLargo}>{informe?.antecedentes || 'Sin contenido.'}</div> : undefined}
             >
+              <Button
+                size="sm"
+                variant="outline"
+                className="mr-[6px]!"
+                onClick={() =>
+                  vp.abrir(`Informe a GOP - Expediente ${d.numeroExpediente}`, vistaDeRuta(`/apelaciones/${ape.id}/informe-gop/documento`), () =>
+                    descargar(() => descargarDocumentoInformeGop(ape.id, d.numeroExpediente)),
+                  )
+                }
+              >
+                Ver Word
+              </Button>
               <Button
                 size="sm"
                 variant="outline"

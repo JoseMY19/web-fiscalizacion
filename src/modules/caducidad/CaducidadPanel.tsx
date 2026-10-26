@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useVistaPrevia } from '../../components/common/useVistaPrevia';
+import { vistaDeRuta } from '../../api/vistaPreviaDocumentos';
 import { CaducidadApi, CaducidadExpedienteItem, abrirDocumentoCaducidad, descargarRsgCaducidad } from '../../api';
 import { Alert, Badge, Button, Input, Modal, Spinner, Textarea } from '../../components/common/Common';
 import { claseBloqueTramite, claseFilaTramite, claseInputArchivo, PasoTramite } from '../../components/common/PasoTramite';
@@ -63,6 +65,8 @@ export const CaducidadPanel: React.FC<Props> = ({ expedienteId, onClose, onCambi
     });
   }, [recargar]);
 
+  const vp = useVistaPrevia();
+
   const ejecutar = async (clave: string, fn: () => Promise<unknown>, exito: string) => {
     setAccion(clave);
     try {
@@ -75,6 +79,7 @@ export const CaducidadPanel: React.FC<Props> = ({ expedienteId, onClose, onCambi
       const t = d ? tramiteVigente(d) : null;
       setResultado(t?.resultado ?? '');
       if (!t) setFundamentacion('');
+      vp.refrescar();
       onCambio();
       setAccion(null);
     }
@@ -176,6 +181,7 @@ export const CaducidadPanel: React.FC<Props> = ({ expedienteId, onClose, onCambi
       onClose={onClose}
       title={`Caducidad del PAS - Expediente ${e.numeroExpediente}`}
       maxWidth="820px"
+      lateral={vp.lateral}
       footer={
         <Button variant="secondary" onClick={onClose}>
           Cerrar
@@ -352,9 +358,18 @@ export const CaducidadPanel: React.FC<Props> = ({ expedienteId, onClose, onCambi
       {/* 3. RSG */}
       <PasoTramite n={3} titulo="RSG (Word)" hecho={!!c?.resultado}>
         {c?.resultado ? (
-          <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={descargar}>
-            Descargar RSG {c.resultado === 'DECLARADA' ? 'que declara la caducidad' : 'denegatoria'} (Word)
-          </Button>
+          <div className="flex gap-[8px] flex-wrap">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => vp.abrir(`RSG de caducidad - Expediente ${e.numeroExpediente}`, vistaDeRuta(`/caducidad/expediente/${expedienteId}/documento`), descargar)}
+            >
+              Ver Word
+            </Button>
+            <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={descargar}>
+              Descargar RSG {c.resultado === 'DECLARADA' ? 'que declara la caducidad' : 'denegatoria'} (Word)
+            </Button>
+          </div>
         ) : (
           <span className="text-text-muted">Disponible después de la evaluación.</span>
         )}
