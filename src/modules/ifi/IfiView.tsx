@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useVistaPrevia } from '../../components/common/useVistaPrevia';
+import { vistaDeRuta } from '../../api/vistaPreviaDocumentos';
 import {
   IfiApi,
   ExpedienteIfiItem,
@@ -1196,6 +1198,11 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
   onCambioAmpliacion,
   actionLoading,
 }) => {
+  const vp = useVistaPrevia();
+  // Cada vez que termina una acción (guardar el análisis, firmar…) la vista previa se vuelve a armar con lo nuevo.
+  useEffect(() => {
+    if (!actionLoading) vp.refrescar();
+  }, [actionLoading, vp.refrescar]);
   const imputacionSaneada = e.imputacionCorrecta !== null;
   const esViciada = e.imputacionCorrecta === false;
   const esCorrecta = e.imputacionCorrecta === true;
@@ -1443,7 +1450,12 @@ const IfiDetallePanel: React.FC<IfiDetallePanelProps> = ({
   }, [e, esViciada, esCorrecta, imputacionSaneada, actionLoading, descargandoDocumento]);
 
   return (
-    <Modal isOpen onClose={onClose} title={`Expediente ${e.numeroExpediente} - Detalle de instrucción`} maxWidth="680px">
+    <Modal isOpen onClose={onClose} title={`Expediente ${e.numeroExpediente} - Detalle de instrucción`} maxWidth="680px" lateral={vp.lateral}>
+      <div className="flex justify-end mb-[10px]">
+        <Button size="sm" variant="outline" onClick={() => vp.abrir(`IFI - Expediente ${e.numeroExpediente}`, vistaDeRuta(`/ifi/${e.expedienteId}/documento`), onDescargarDocumento)}>
+          Ver IFI (Word)
+        </Button>
+      </div>
       <ResumenPlazoPagoIfi e={e} />
       <AvisoLevantamientoMedidas expedienteId={e.expedienteId} />
       <AvisoCaducidadExpediente expedienteId={e.expedienteId} />

@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import type { useVistaPrevia } from '../../components/common/useVistaPrevia';
+import { vistaDeRuta } from '../../api/vistaPreviaDocumentos';
 import {
   CambiosExpediente,
   CambiosResolucion,
@@ -17,6 +19,8 @@ import { LABEL_TIPO_REC } from './coactivaUi';
 interface Props {
   expedienteCoactivoId: string;
   resoluciones: ResolucionCoactivaItem[];
+  /** Vista previa en la columna derecha del panel que contiene esta sección. */
+  vistaPrevia: ReturnType<typeof useVistaPrevia>;
 }
 
 type Mensaje = { type: 'success' | 'error'; text: string };
@@ -36,7 +40,7 @@ const CASILLA = 'flex items-center gap-[6px] text-[13px] text-text-main mb-[14px
  * en letras, N° de REC y fechas registrados) y acá se completa lo que solo coactivo conoce. Lo que quede
  * vacío sale como renglón en blanco para llenarlo a mano en el Word.
  */
-export const DocumentosCoactiva: React.FC<Props> = ({ expedienteCoactivoId, resoluciones }) => {
+export const DocumentosCoactiva: React.FC<Props> = ({ expedienteCoactivoId, resoluciones, vistaPrevia }) => {
   const [datos, setDatos] = useState<DatosDocumentoCoactivo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [mensaje, setMensaje] = useState<Mensaje | null>(null);
@@ -63,6 +67,7 @@ export const DocumentosCoactiva: React.FC<Props> = ({ expedienteCoactivoId, reso
       await fn();
       setMensaje({ type: 'success', text: exito });
       await cargar();
+      vistaPrevia.refrescar();
     } catch (err: any) {
       setMensaje({ type: 'error', text: err.message || 'No se pudo completar la acción.' });
     } finally {
@@ -108,6 +113,10 @@ export const DocumentosCoactiva: React.FC<Props> = ({ expedienteCoactivoId, reso
               etiqueta={r ? LABEL_TIPO_REC[r.tipo] : 'Resolución'}
               accion={accion}
               onGuardar={(cambios) => ejecutar(`res-${d.id}`, () => CoactivaDocumentosApi.guardarResolucion(expedienteCoactivoId, d.id, cambios), `Datos de la REC ${d.numeroRec} guardados.`)}
+              onVer={() => {
+                const descargarWord = () => descargarDocumentoCoactivo(expedienteCoactivoId, d.id, `coactiva-rec${d.numeroRec}.docx`);
+                vistaPrevia.abrir(`REC ${d.numeroRec} - ${r ? LABEL_TIPO_REC[r.tipo] : 'Resolución'}`, vistaDeRuta(`/coactiva/${expedienteCoactivoId}/resoluciones/${d.id}/documento`), descargarWord);
+              }}
               onDescargar={() =>
                 ejecutar(`doc-${d.id}`, () => descargarDocumentoCoactivo(expedienteCoactivoId, d.id, `coactiva-rec${d.numeroRec}.docx`), `Word de la REC ${d.numeroRec} descargado.`)
               }
@@ -181,8 +190,9 @@ const DocumentoDeResolucion: React.FC<{
   etiqueta: string;
   accion: string | null;
   onGuardar: (c: CambiosResolucion) => void;
+  onVer: () => void;
   onDescargar: () => void;
-}> = ({ d, etiqueta, accion, onGuardar, onDescargar }) => {
+}> = ({ d, etiqueta, accion, onGuardar, onVer, onDescargar }) => {
   const [ejecutor, setEjecutor] = useState(d.ejecutorNombre ?? '');
   const [auxiliar, setAuxiliar] = useState(d.auxiliarNombre ?? '');
   const [monto, setMonto] = useState(d.montoEmbargo === null ? '' : String(d.montoEmbargo));
@@ -251,6 +261,9 @@ const DocumentoDeResolucion: React.FC<{
               }
             >
               Guardar datos
+            </Button>
+            <Button size="sm" variant="outline" onClick={onVer}>
+              Ver Word
             </Button>
             <Button size="sm" variant="primary" loading={accion === `doc-${d.id}`} onClick={onDescargar}>
               Descargar Word

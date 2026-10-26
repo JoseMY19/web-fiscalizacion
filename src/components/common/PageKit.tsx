@@ -332,7 +332,9 @@ export const PanelDetalle: React.FC<{
   children: React.ReactNode;
   /** Acciones de decisión (aprobar, observar…), fijas abajo. */
   pie?: React.ReactNode;
-}> = ({ abierto, onClose, titulo, subtitulo, children, pie }) => {
+  /** Columna a la derecha del detalle (por ejemplo la vista previa de un documento): el panel se ensancha para alojarla. */
+  lateral?: React.ReactNode;
+}> = ({ abierto, onClose, titulo, subtitulo, children, pie, lateral }) => {
   // Entra deslizándose: se monta fuera de pantalla y un cuadro después pasa a su lugar.
   const [visible, setVisible] = useState(false);
 
@@ -362,10 +364,12 @@ export const PanelDetalle: React.FC<{
         aria-modal="true"
         aria-label={titulo}
         className={cn(
-          'absolute right-0 top-0 h-full w-[720px] max-w-full bg-bg-card shadow-xl flex flex-col [transition:transform_260ms_cubic-bezier(0.22,1,0.36,1)]',
+          'absolute right-0 top-0 h-full max-w-full bg-bg-card shadow-xl flex [transition:transform_260ms_cubic-bezier(0.22,1,0.36,1)]',
+          lateral ? 'w-[1500px]' : 'w-[720px]',
           visible ? 'translate-x-0' : 'translate-x-full',
         )}
       >
+        <div className={cn('flex flex-col h-full min-w-0', lateral ? 'w-[720px] shrink max-lg:hidden' : 'w-full')}>
         <header className="flex items-start justify-between gap-[16px] py-[22px] px-[28px] border-b border-border shrink-0">
           <div className="min-w-0">
             <h3 className="text-[19px] font-bold text-text-main tracking-[-0.3px] m-0">{titulo}</h3>
@@ -385,6 +389,8 @@ export const PanelDetalle: React.FC<{
         </header>
         <div className="flex-1 overflow-y-auto py-[24px] px-[28px]">{children}</div>
         {pie && <footer className="shrink-0 py-[16px] px-[28px] border-t border-border bg-bg-subtle flex items-center justify-end gap-[10px]">{pie}</footer>}
+        </div>
+        {lateral && <div className="flex-1 min-w-0 h-full border-l border-border bg-bg-card">{lateral}</div>}
       </aside>
     </div>,
     document.body,

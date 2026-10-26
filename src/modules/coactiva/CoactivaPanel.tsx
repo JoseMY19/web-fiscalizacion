@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useVistaPrevia } from '../../components/common/useVistaPrevia';
 import {
   CasoCoactivoItem,
   ClaseSuspension,
@@ -59,6 +60,8 @@ export const CoactivaPanel: React.FC<Props> = ({ actoFirmeId, onClose, onCambio 
     recargar();
   }, [recargar]);
 
+  const vp = useVistaPrevia();
+
   const ejecutar: Ejecutar = async (clave, fn, exito) => {
     setAccion(clave);
     let ok = false;
@@ -95,6 +98,7 @@ export const CoactivaPanel: React.FC<Props> = ({ actoFirmeId, onClose, onCambio 
       onClose={onClose}
       title={`Ejecución coactiva — ${c.numeroExpediente}${e ? ` · Exp. coactivo ${e.numeroExpedienteCoactivo}` : ''}`}
       maxWidth="880px"
+      lateral={vp.lateral}
       footer={
         <Button variant="secondary" onClick={onClose}>
           Cerrar
@@ -184,7 +188,7 @@ export const CoactivaPanel: React.FC<Props> = ({ actoFirmeId, onClose, onCambio 
               ))}
             </div>
             {!archivado && <FormRec c={c} accion={accion} ejecutar={ejecutar} />}
-            <DocumentosCoactiva expedienteCoactivoId={e.id} resoluciones={e.resoluciones} />
+            <DocumentosCoactiva expedienteCoactivoId={e.id} resoluciones={e.resoluciones} vistaPrevia={vp} />
           </PasoTramite>
 
           {/* 3. SUSPENSIONES */}

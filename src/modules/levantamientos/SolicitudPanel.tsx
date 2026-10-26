@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useVistaPrevia } from '../../components/common/useVistaPrevia';
+import { vistaDeRuta } from '../../api/vistaPreviaDocumentos';
 import {
   LevantamientosApi,
   MedidaLevantamientoItem,
@@ -101,6 +103,8 @@ export const SolicitudPanel: React.FC<Props> = ({ solicitudId, onClose, onCambio
     });
   }, [recargar]);
 
+  const vp = useVistaPrevia();
+
   const ejecutar = async (clave: string, fn: () => Promise<unknown>, exito: string) => {
     setAccion(clave);
     try {
@@ -110,6 +114,7 @@ export const SolicitudPanel: React.FC<Props> = ({ solicitudId, onClose, onCambio
       setMensaje({ type: 'error', text: err.message || 'No se pudo completar la acción.' });
     } finally {
       await recargar();
+      vp.refrescar();
       onCambio();
       setAccion(null);
     }
@@ -196,6 +201,7 @@ export const SolicitudPanel: React.FC<Props> = ({ solicitudId, onClose, onCambio
       onClose={onClose}
       title={`Levantamiento - ${tipoMedidaTexto(m.tipoMedida)}, Acta N° ${m.numeroActa}`}
       maxWidth="820px"
+      lateral={vp.lateral}
       footer={
         <Button variant="secondary" onClick={onClose}>
           Cerrar
@@ -326,6 +332,9 @@ export const SolicitudPanel: React.FC<Props> = ({ solicitudId, onClose, onCambio
         {s.tipoCarta && !correspondeCartaVencimiento ? (
           <div className="flex items-center gap-[10px] flex-wrap">
             <span className="font-semibold">{ETIQUETA_CARTA[s.tipoCarta]}</span>
+            <Button size="sm" variant="outline" onClick={() => vp.abrir(`${ETIQUETA_CARTA[s.tipoCarta]} - Acta N° ${m.numeroActa}`, vistaDeRuta(`/levantamientos/${s.id}/carta`), descargar)}>
+              Ver Word
+            </Button>
             <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={descargar}>
               Descargar carta (Word)
             </Button>

@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useVistaPrevia } from '../../components/common/useVistaPrevia';
+import { vistaDeRuta } from '../../api/vistaPreviaDocumentos';
 import { ConsultasApi, IntervencionSelectorItem, descargarDocumentoMedidaCautelar } from '../../api';
 import { ContenidoMedidaCautelar, MedidaCautelarItem, MedidasCautelaresApi } from '../../api/medidasCautelares';
 import { Alert, Badge, Button, Input, Modal, Spinner, Textarea } from '../../components/common/Common';
@@ -228,6 +230,8 @@ const DetalleMedida: React.FC<{ medida: MedidaCautelarItem; onClose: () => void;
   const [enCurso, setEnCurso] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const vp = useVistaPrevia();
+
   const accion = async (clave: string, fn: () => Promise<unknown>, exito: string) => {
     setEnCurso(clave);
     setError(null);
@@ -237,12 +241,13 @@ const DetalleMedida: React.FC<{ medida: MedidaCautelarItem; onClose: () => void;
     } catch (err: any) {
       setError(err.message || 'No se pudo completar la acción.');
     } finally {
+      vp.refrescar();
       setEnCurso(null);
     }
   };
 
   return (
-    <Modal isOpen onClose={onClose} maxWidth="760px" title={`Medida cautelar · ${m.administrado?.nombre ?? 'administrado sin identificar'}`}>
+    <Modal isOpen onClose={onClose} maxWidth="760px" lateral={vp.lateral} title={`Medida cautelar · ${m.administrado?.nombre ?? 'administrado sin identificar'}`}>
       <div className="flex items-center gap-[8px] flex-wrap mb-[14px]">
         <Badge variant={ESTADO[m.estado].variante}>{ESTADO[m.estado].texto}</Badge>
         <span className="text-[12px] text-text-muted">
@@ -281,6 +286,13 @@ const DetalleMedida: React.FC<{ medida: MedidaCautelarItem; onClose: () => void;
           </div>
         )}
         <div className="flex gap-[8px] flex-wrap mt-[12px]">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => vp.abrir(`Medida cautelar - ${m.administrado?.nombre ?? 'administrado'}`, vistaDeRuta(`/medidas-cautelares/${m.id}/documento`), () => descargarDocumentoMedidaCautelar(m.id))}
+          >
+            Ver Word
+          </Button>
           <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={() => descargarDocumentoMedidaCautelar(m.id)}>
             Descargar Word
           </Button>
