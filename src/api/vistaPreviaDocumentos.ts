@@ -40,3 +40,14 @@ export function verActaPdf(intervencionId: string, tipoActa: TipoActaDocumento, 
 export function verActaWord(intervencionId: string, tipoActa: TipoActaDocumento, medidaNumeroCorrelativo?: string): Promise<Blob> {
   return traerBlob(rutaActa(intervencionId, tipoActa, '1', medidaNumeroCorrelativo), 'No se pudo generar el documento.');
 }
+
+/**
+ * Vista previa de cualquier Word que el servidor arma en `GET {ruta}` (IFI, resolución, RSG, cartas…):
+ * el PDF para mirarlo idéntico a como se imprime y, como respaldo, el .docx tal cual.
+ */
+export function vistaDeRuta(ruta: string): { cargarPdf: () => Promise<Blob>; cargarWord: () => Promise<Blob> } {
+  return {
+    cargarPdf: () => traerBlob(`${ruta}?vista=pdf`, 'No se pudo generar la vista previa.'),
+    cargarWord: () => traerBlob(`${ruta}?vista=1`, 'No se pudo generar el documento.'),
+  };
+}

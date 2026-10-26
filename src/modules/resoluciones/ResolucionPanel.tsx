@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useVistaPrevia } from '../../components/common/useVistaPrevia';
+import { vistaDeRuta } from '../../api/vistaPreviaDocumentos';
 import {
   IfiApi,
   IfiDocumentoAdjuntoItem,
@@ -251,6 +253,8 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
     };
   }, [expedienteId, recargar]);
 
+  const vp = useVistaPrevia();
+
   const ejecutar = async (clave: string, fn: () => Promise<unknown>, exito: string, resincronizar = false) => {
     setAccionEnCurso(clave);
     setMensaje(null);
@@ -263,6 +267,7 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
     } finally {
       await recargar(resincronizar);
       setAccionEnCurso(null);
+      vp.refrescar();
       onCambio();
     }
   };
@@ -1057,6 +1062,7 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
       onClose={onClose}
       title={`Expediente ${d.numeroExpediente} — Resolución`}
       maxWidth="860px"
+      lateral={vp.lateral}
       footer={
         <Button variant="secondary" onClick={onClose}>
           Cerrar
@@ -1215,6 +1221,7 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
           plazos={plazos}
           ampliacion={d.ampliacion}
           resolucionNotificada={r?.estado === 'NOTIFICADA'}
+          vistaPrevia={vp}
           onMensaje={setMensaje}
           onCambio={async () => {
             await recargar(false);
@@ -1266,6 +1273,14 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
           ))}
           {d.ifi && d.ifi.estado !== 'EN_ELABORACION' && (
             <FilaDocumento titulo={`Informe Final de Instrucción — IFI${d.ifi.numeroInforme ? ` N° ${d.ifi.numeroInforme}` : ''} (Word)`}>
+              <Button
+                size="sm"
+                variant="outline"
+                className="mr-[6px]!"
+                onClick={() => vp.abrir(`IFI - Expediente ${d.numeroExpediente}`, vistaDeRuta(`/ifi/${expedienteId}/documento`), descargarIfi)}
+              >
+                Ver Word
+              </Button>
               <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={descargarIfi}>
                 Descargar
               </Button>
@@ -1299,9 +1314,19 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
               }
             >
               {r.analisisTexto && (
-                <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={descargarResolucion} className="mr-[6px]!">
-                  Word
-                </Button>
+                <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="mr-[6px]!"
+                    onClick={() => vp.abrir(`Resolución - Expediente ${d.numeroExpediente}`, vistaDeRuta(`/resoluciones/${expedienteId}/documento`), descargarResolucion)}
+                  >
+                    Ver Word
+                  </Button>
+                  <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={descargarResolucion} className="mr-[6px]!">
+                    Word
+                  </Button>
+                </>
               )}
               <Button size="sm" variant="outline" icon={<EyeIcon size={14} />} onClick={() => setVerTextoResolucion((v) => !v)}>
                 {verTextoResolucion ? 'Ocultar' : 'Ver'}

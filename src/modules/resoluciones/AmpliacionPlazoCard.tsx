@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import type { useVistaPrevia } from '../../components/common/useVistaPrevia';
+import { vistaDeRuta } from '../../api/vistaPreviaDocumentos';
 import { AmpliacionApi, ResolucionDetalle, ResolucionesApi, descargarDocumentoAmpliacion } from '../../api';
 import { Badge, Button, Input } from '../../components/common/Common';
 import { FileTextIcon, PenToolIcon } from '../../components/icons/Icons';
@@ -21,6 +23,8 @@ interface Props {
   onMensaje: (m: { type: 'success' | 'error'; text: string }) => void;
   /** Tras cada acción (éxito o error): el panel recarga su detalle y avisa a la bandeja. */
   onCambio: () => void | Promise<void>;
+  /** Si se da, aparece "Ver Word": la vista previa en la columna derecha del panel que la contiene. */
+  vistaPrevia?: ReturnType<typeof useVistaPrevia>;
 }
 
 /**
@@ -39,6 +43,7 @@ export const AmpliacionPlazoCard: React.FC<Props> = ({
   resolucionNotificada,
   onMensaje,
   onCambio,
+  vistaPrevia,
 }) => {
   const confirm = useConfirm();
   const [accionEnCurso, setAccionEnCurso] = useState<string | null>(null);
@@ -66,6 +71,7 @@ export const AmpliacionPlazoCard: React.FC<Props> = ({
       onMensaje({ type: 'error', text: err.message || 'No se pudo completar la acción.' });
     } finally {
       await onCambio();
+      vistaPrevia?.refrescar();
       setAccionEnCurso(null);
     }
   };
@@ -145,6 +151,15 @@ export const AmpliacionPlazoCard: React.FC<Props> = ({
                       ? `En firma hace ${diasEnFirma} día${diasEnFirma === 1 ? '' : 's'}`
                       : 'En elaboración'}
               </Badge>
+              {vistaPrevia && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => vistaPrevia.abrir(`RSG de ampliación - Expediente ${numeroExpediente}`, vistaDeRuta(`/resoluciones/${expedienteId}/ampliacion/documento`), descargar)}
+                >
+                  Ver Word
+                </Button>
+              )}
               <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={descargar}>
                 Descargar RSG de ampliación (Word)
               </Button>
