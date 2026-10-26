@@ -332,7 +332,7 @@ export const SolicitudPanel: React.FC<Props> = ({ solicitudId, onClose, onCambio
         {s.tipoCarta && !correspondeCartaVencimiento ? (
           <div className="flex items-center gap-[10px] flex-wrap">
             <span className="font-semibold">{ETIQUETA_CARTA[s.tipoCarta]}</span>
-            <Button size="sm" variant="outline" onClick={() => vp.abrir(`${ETIQUETA_CARTA[s.tipoCarta]} - Acta N° ${m.numeroActa}`, vistaDeRuta(`/levantamientos/${s.id}/carta`), descargar)}>
+            <Button size="sm" variant="outline" onClick={() => vp.abrir(`${ETIQUETA_CARTA[s.tipoCarta!]} - Acta N° ${m.numeroActa}`, vistaDeRuta(`/levantamientos/${s.id}/carta`), descargar)}>
               Ver Word
             </Button>
             <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={descargar}>
