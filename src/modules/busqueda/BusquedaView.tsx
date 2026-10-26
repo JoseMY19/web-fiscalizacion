@@ -1,4 +1,5 @@
 import React, { useId, useState } from 'react';
+import { BusquedaIdentidadApi } from '../../api/busquedaIdentidad';
 import { Alert, Button } from '../../components/common/Common';
 import { PageHeader } from '../../components/common/PageKit';
 import { CarIcon, CheckCircleIcon, IdCardIcon, SearchIcon, UserIcon } from '../../components/icons/Icons';
@@ -7,9 +8,8 @@ import { useLlenarAlto } from '../../lib/useLlenarAlto';
 
 /**
  * Sección "Búsqueda": ficha de identidad por DNI (RENIEC) y ficha del vehículo
- * por placa. Por ahora solo la pantalla: el backend todavía no tiene estas
- * consultas, así que la ficha se muestra con el dato buscado y "—" en el resto,
- * y un aviso de que falta conectarla. Nunca se inventan datos.
+ * por placa. Ambas consultan el servicio del área de sistemas a través del backend.
+ * Lo que el servicio no trae se muestra como "—": nunca se inventan datos.
  */
 
 interface Campo {
@@ -41,6 +41,8 @@ interface Config {
     foto?: { etiqueta: string; icono: React.ReactNode };
     campos: Campo[];
   };
+  /** Si existe, la búsqueda consulta el servicio; si no, la consulta todavía no está conectada. */
+  consultar?: (valor: string) => Promise<Datos>;
 }
 
 const DNI: Config = {
@@ -73,7 +75,23 @@ const DNI: Config = {
       { clave: 'direccion', etiqueta: 'Dirección completa', completo: true },
       { clave: 'distrito', etiqueta: 'Distrito' },
       { clave: 'provincia', etiqueta: 'Provincia / Depto.' },
+      { clave: 'restriccion', etiqueta: 'Restricción' },
     ],
+  },
+  consultar: async (dni) => {
+    const f = await BusquedaIdentidadApi.dni(dni);
+    return {
+      dni: f.dni,
+      estadoCivil: f.estadoCivil,
+      primerApellido: f.primerApellido,
+      segundoApellido: f.segundoApellido,
+      nombres: f.nombres,
+      direccion: f.direccionCompleta ?? f.direccion,
+      distrito: f.distrito,
+      provincia: [f.provincia, f.departamento].filter(Boolean).join(' / ') || null,
+      restriccion: f.restriccion,
+      foto: f.foto,
+    };
   },
 };
 
@@ -106,15 +124,27 @@ const PLACA: Config = {
     claveBuscada: 'placa',
     campos: [
       { clave: 'placa', etiqueta: 'Placa' },
-      { clave: 'estado', etiqueta: 'Estado' },
+      { clave: 'restriccion', etiqueta: 'Restricción' },
       { clave: 'marca', etiqueta: 'Marca' },
       { clave: 'modelo', etiqueta: 'Modelo' },
       { clave: 'color', etiqueta: 'Color' },
-      { clave: 'anio', etiqueta: 'Año de fabricación' },
-      { clave: 'propietario', etiqueta: 'Propietario', completo: true },
       { clave: 'documentoPropietario', etiqueta: 'DNI / RUC del propietario' },
-      { clave: 'sede', etiqueta: 'Sede registral' },
+      { clave: 'propietario', etiqueta: 'Propietario', completo: true },
+      { clave: 'direccion', etiqueta: 'Dirección del propietario', completo: true },
     ],
+  },
+  consultar: async (placa) => {
+    const f = await BusquedaIdentidadApi.placa(placa);
+    return {
+      placa: f.placa,
+      restriccion: f.restriccion,
+      marca: f.marca,
+      modelo: f.modelo,
+      color: f.color,
+      documentoPropietario: f.documentoPropietario,
+      propietario: f.propietario,
+      direccion: f.direccion,
+    };
   },
 };
 
@@ -126,17 +156,36 @@ const Busqueda: React.FC<{ config: Config }> = ({ config }) => {
   const [texto, setTexto] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [buscado, setBuscado] = useState<string | null>(null);
+  const [datos, setDatos] = useState<Datos | null>(null);
+  const [cargando, setCargando] = useState(false);
+  const [errorConsulta, setErrorConsulta] = useState<string | null>(null);
   const escritos = texto.replace(/-/g, '').length;
 
-  const buscar = (e: React.FormEvent) => {
+  const buscar = async (e: React.FormEvent) => {
     e.preventDefault();
     const fallo = config.validar(texto);
     setError(fallo);
-    setBuscado(fallo ? null : texto);
+    setErrorConsulta(null);
+    setDatos(null);
+    if (fallo) {
+      setBuscado(null);
+      return;
+    }
+    setBuscado(texto);
+    // Sin consulta conectada (placas): solo se conoce el dato buscado.
+    if (!config.consultar) {
+      setDatos({ [config.ficha.claveBuscada]: texto });
+      return;
+    }
+    setCargando(true);
+    try {
+      setDatos(await config.consultar(texto));
+    } catch (err: any) {
+      setErrorConsulta(err.message || 'No se pudo consultar. Intenta de nuevo.');
+    } finally {
+      setCargando(false);
+    }
   };
-
-  // Sin consulta en el backend: solo se conoce el dato buscado.
-  const datos: Datos | null = buscado ? { [config.ficha.claveBuscada]: buscado } : null;
 
   const { ref: refVacio, alto: altoVacio } = useLlenarAlto<HTMLDivElement>(!datos, 48);
 
@@ -180,7 +229,7 @@ const Busqueda: React.FC<{ config: Config }> = ({ config }) => {
             aria-invalid={!!error}
             className="flex-1 min-w-0 h-[42px] border-0 bg-transparent outline-none font-display text-[18px] font-semibold tracking-[1.5px] text-text-main placeholder:font-sans placeholder:text-[14px] placeholder:font-normal placeholder:tracking-normal placeholder:text-text-light"
           />
-          <Button type="submit" icon={<SearchIcon size={15} />} className="h-[42px] shrink-0">
+          <Button type="submit" icon={<SearchIcon size={15} />} loading={cargando} className="h-[42px] shrink-0">
             <span className="max-sm:hidden">{config.textoBoton}</span>
           </Button>
         </div>
@@ -193,8 +242,9 @@ const Busqueda: React.FC<{ config: Config }> = ({ config }) => {
       </form>
 
       {/* Resultado */}
+      {errorConsulta && <Alert type="error">{errorConsulta}</Alert>}
       {datos ? (
-        <Ficha key={buscado} config={config} datos={datos} />
+        <Ficha key={buscado} config={config} datos={datos} conectada={!!config.consultar} />
       ) : (
         <div
           ref={refVacio}
@@ -213,7 +263,7 @@ const Busqueda: React.FC<{ config: Config }> = ({ config }) => {
   );
 };
 
-const Ficha: React.FC<{ config: Config; datos: Datos }> = ({ config, datos }) => {
+const Ficha: React.FC<{ config: Config; datos: Datos; conectada: boolean }> = ({ config, datos, conectada }) => {
   const { ficha } = config;
   const encontrados = ficha.campos.some((c) => c.clave !== ficha.claveBuscada && datos[c.clave]);
   const principal = ficha.campos.find((c) => c.clave === ficha.claveBuscada)!;
@@ -237,12 +287,12 @@ const Ficha: React.FC<{ config: Config; datos: Datos }> = ({ config, datos }) =>
           )}
         >
           {encontrados && <CheckCircleIcon size={13} />}
-          {encontrados ? 'Datos encontrados' : 'Consulta no conectada'}
+          {encontrados ? 'Datos encontrados' : conectada ? 'Sin datos' : 'Consulta no conectada'}
         </span>
       </header>
 
       <div className="p-[22px]">
-        {!encontrados && (
+        {!encontrados && !conectada && (
           <Alert type="info" className="mb-[20px]!">
             La consulta a {config.fuente} todavía no está conectada al sistema. Cuando lo esté, esta ficha se llenará con los datos oficiales.
           </Alert>
@@ -252,7 +302,11 @@ const Ficha: React.FC<{ config: Config; datos: Datos }> = ({ config, datos }) =>
           {ficha.foto && (
             <figure className="m-0 shrink-0 flex flex-col items-center gap-[8px] max-sm:self-center">
               <div className="w-[128px] h-[160px] rounded-md bg-linear-to-b from-bg-subtle to-border-subtle border border-border text-text-light flex items-center justify-center overflow-hidden ring-4 ring-bg-subtle">
-                {ficha.foto.icono}
+                {datos.foto ? (
+                  <img src={datos.foto.startsWith('data:') ? datos.foto : `data:image/jpeg;base64,${datos.foto}`} alt="Foto del documento" className="w-full h-full object-cover" />
+                ) : (
+                  ficha.foto.icono
+                )}
               </div>
               <figcaption className="text-[11.5px] text-text-muted">{ficha.foto.etiqueta}</figcaption>
             </figure>

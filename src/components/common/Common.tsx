@@ -150,9 +150,11 @@ interface ModalProps {
   children: React.ReactNode;
   footer?: React.ReactNode;
   maxWidth?: string;
+  /** Columna a la derecha del cuadro (por ejemplo la vista previa de un documento): el cuadro se ensancha para alojarla. */
+  lateral?: React.ReactNode;
 }
 
-export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, footer, maxWidth = '560px' }) => {
+export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, footer, maxWidth = '560px', lateral }) => {
   if (!isOpen) return null;
 
   // Se monta en <body> con un portal: si el modal se abre desde una tarjeta
@@ -165,10 +167,12 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
     >
       <div
         // maxWidth es una prop libre (cualquier valor CSS): se aplica en línea.
-        className="bg-[#ffffff] rounded-lg shadow-xl w-full max-h-[90vh] flex flex-col overflow-hidden text-left"
-        style={{ maxWidth }}
+        className={cn('bg-[#ffffff] rounded-lg shadow-xl w-full max-h-[90vh] overflow-hidden text-left', lateral ? 'flex h-[90vh]' : 'flex flex-col')}
+        // Con columna lateral el cuadro ocupa hasta 1560 px; sin ella, lo que pida cada pantalla.
+        style={{ maxWidth: lateral ? 'min(1560px, 100%)' : maxWidth }}
         onClick={(e) => e.stopPropagation()}
       >
+        <div className={cn('flex flex-col min-w-0 min-h-0', lateral ? 'shrink min-w-[480px] max-lg:hidden' : 'flex-1 w-full')} style={lateral ? { width: maxWidth } : undefined}>
         <div className="py-[18px] px-[24px] border-b border-b-border flex items-center justify-between bg-[#fafbfc]">
           <h3 className="text-[16px] font-bold text-midnight-900">{title}</h3>
           <button
@@ -187,6 +191,8 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
             {footer}
           </div>
         )}
+        </div>
+        {lateral && <div className="flex-1 min-w-0 h-full border-l border-border bg-bg-card">{lateral}</div>}
       </div>
     </div>,
     document.body,

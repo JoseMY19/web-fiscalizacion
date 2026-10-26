@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useVistaPrevia } from '../../components/common/useVistaPrevia';
+import { vistaDeRuta } from '../../api/vistaPreviaDocumentos';
 import { PrescripcionApi, SolicitudPrescripcionItem, abrirDocumentoPrescripcion, descargarRsgPrescripcion } from '../../api';
 import { UsuariosApi } from '../../api/usuarios';
 import { Alert, Badge, Button, Input, Modal, Spinner, Textarea } from '../../components/common/Common';
@@ -60,6 +62,8 @@ export const PrescripcionPanel: React.FC<Props> = ({ solicitudId, onClose, onCam
       .catch(() => undefined);
   }, [recargar]);
 
+  const vp = useVistaPrevia();
+
   const ejecutar = async (clave: string, fn: () => Promise<unknown>, exito: string) => {
     setAccion(clave);
     try {
@@ -69,6 +73,7 @@ export const PrescripcionPanel: React.FC<Props> = ({ solicitudId, onClose, onCam
       setMensaje({ type: 'error', text: err.message || 'No se pudo completar la acción.' });
     } finally {
       await recargar();
+      vp.refrescar();
       onCambio();
       setAccion(null);
     }
@@ -118,6 +123,7 @@ export const PrescripcionPanel: React.FC<Props> = ({ solicitudId, onClose, onCam
       onClose={onClose}
       title={`Prescripción - ${s.administradoNombre}`}
       maxWidth="900px"
+      lateral={vp.lateral}
       footer={
         <Button variant="secondary" onClick={onClose}>
           Cerrar
@@ -218,9 +224,14 @@ export const PrescripcionPanel: React.FC<Props> = ({ solicitudId, onClose, onCam
       {/* 3. RSG */}
       <PasoTramite n={3} titulo="RSG (Word)" hecho={todasDecididas}>
         {todasDecididas ? (
-          <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={descargar}>
-            Descargar RSG de prescripción (Word)
-          </Button>
+          <div className="flex gap-[8px] flex-wrap">
+            <Button size="sm" variant="outline" onClick={() => vp.abrir(`RSG de prescripción - ${s.administradoNombre}`, vistaDeRuta(`/prescripcion/${s.id}/documento`), descargar)}>
+              Ver Word
+            </Button>
+            <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={descargar}>
+              Descargar RSG de prescripción (Word)
+            </Button>
+          </div>
         ) : (
           <span className="text-text-muted">Disponible cuando cada multa tenga su decisión.</span>
         )}

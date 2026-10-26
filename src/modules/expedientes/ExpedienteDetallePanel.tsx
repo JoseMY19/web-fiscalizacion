@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { IntervencionesApi, BundleIntervencion, abrirDocumento, descargarDocumentoWord } from '../../api';
+import { IntervencionesApi, BundleIntervencion, TipoActaDocumento, abrirDocumento, descargarDocumentoWord } from '../../api';
+import { verActaPdf, verActaWord } from '../../api/vistaPreviaDocumentos';
 import { Alert, Button, Spinner } from '../../components/common/Common';
 import { Dato, Datos, EstadoPunto, PanelDetalle, SeccionPlegable } from '../../components/common/PageKit';
+import { VisorDocumento } from '../../components/common/VisorDocumento';
 import { formatearFecha, formatearFechaHora } from '../../lib/fechas';
-import { HistorialCorreccionesExpediente } from '../correcciones/CorreccionMaterial';
+import { BotonCorregirDato, HistorialCorreccionesExpediente } from '../correcciones/CorreccionMaterial';
 import { ChecklistValidacion } from './ChecklistValidacion';
 
 interface Props {
@@ -50,8 +52,13 @@ export const ExpedienteDetallePanel: React.FC<Props> = ({ abierto, onClose, inte
   const [data, setData] = useState<BundleIntervencion | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Vista previa de un Word en la columna de la derecha (null = cerrada).
+  // Sube cada vez que se corrigen datos: la vista previa se vuelve a armar con lo nuevo.
+  const [versionVista, setVersionVista] = useState(0);
+  const [vista, setVista] = useState<{ titulo: string; cargarPdf: () => Promise<Blob>; cargarWord?: () => Promise<Blob>; descargar: () => void } | null>(null);
 
   useEffect(() => {
+    setVista(null);
     if (!abierto || !intervencionId) {
       setData(null);
       setError(null);
@@ -69,6 +76,29 @@ export const ExpedienteDetallePanel: React.FC<Props> = ({ abierto, onClose, inte
     };
   }, [abierto, intervencionId]);
 
+  /** Tras corregir datos: se vuelve a leer el expediente y se actualiza la vista previa abierta. */
+  const alCorregir = async () => {
+    if (intervencionId) {
+      try {
+        setData(await IntervencionesApi.getDetalle(intervencionId));
+      } catch {
+        // si falla, se queda lo que se veía
+      }
+    }
+    setVersionVista((v) => v + 1);
+  };
+
+  /** Vista previa en la columna de la derecha: PDF del servidor y, solo para Word, el respaldo aproximado. */
+  const verDocumento = (titulo: string, tipo: TipoActaDocumento, medida?: string) => {
+    if (!data) return;
+    setVista({
+      titulo,
+      cargarPdf: () => verActaPdf(data.id, tipo, medida),
+      cargarWord: tipo === 'NOTIFICACION_CARGO' ? undefined : () => verActaWord(data.id, tipo, medida),
+      descargar: () => descargarDocumentoWord(data.id, tipo, medida),
+    });
+  };
+
   const fotoDe = (tipo: string) => data?.fotos?.find((f) => f.actaTipo === tipo);
   const nc = data?.notificacionCargo;
   const acta = data?.actaFiscalizacion;
@@ -83,6 +113,11 @@ export const ExpedienteDetallePanel: React.FC<Props> = ({ abierto, onClose, inte
       titulo={`Expediente ${numeroExpediente ?? (intervencionId ? intervencionId.slice(0, 8) : '')}`}
       subtitulo={data ? `${TIPO_ACTUACION[data.tipoActuacion] ?? data.tipoActuacion} · ${formatearFechaHora(data.fechaHoraInicio)}` : undefined}
       pie={pie}
+      lateral={
+        vista ? (
+          <VisorDocumento key={vista.titulo} version={versionVista} titulo={vista.titulo} cargarPdf={vista.cargarPdf} cargarWord={vista.cargarWord} onDescargar={vista.descargar} onCerrar={() => setVista(null)} />
+        ) : undefined
+      }
     >
       {loading && (
         <div className="flex flex-col items-center justify-center py-[56px] gap-[12px]">
@@ -102,7 +137,7 @@ export const ExpedienteDetallePanel: React.FC<Props> = ({ abierto, onClose, inte
       {!loading && data && (
         <div>
           {/* Validación = revisar que esté completo (reunión). */}
-          {expedienteId && <ChecklistValidacion expedienteId={expedienteId} />}
+          {expedienteId && <ChecklistValidacion key={versionVista} expedienteId={expedienteId} />}
 
           <SeccionPlegable titulo="Intervención" inicialAbierta resumen={ORIGEN[data.origen] ?? data.origen}>
             <Datos>
@@ -118,7 +153,17 @@ export const ExpedienteDetallePanel: React.FC<Props> = ({ abierto, onClose, inte
                 {data.gpsPrecisionM ? ` · ±${Math.round(data.gpsPrecisionM)} m` : ''}
               </Dato>
               <Dato etiqueta="Coordenadas">{data.latitud && data.longitud ? `${data.latitud}, ${data.longitud}` : 'Sin señal GPS'}</Dato>
-              <Dato etiqueta="Dispositivo">{data.deviceId || 'Ingreso manual en oficina'}</Dato>
+              <Dato etiqueta="Registrado por">
+                {data.fiscalizador ? `${data.fiscalizador.nombres} · DNI ${data.fiscalizador.dni}` : 'No disponible'}
+              </Dato>
+              <Dato etiqueta="Medio">
+                {data.deviceId ? 'App de campo' : 'Ingreso en oficina'}
+                {data.deviceId && (
+                  <span className="ml-[8px] text-[11px] font-normal text-text-muted" title="Código interno del celular">
+                    Cód. celular {data.deviceId.slice(0, 8)}
+                  </span>
+                )}
+              </Dato>
             </Datos>
           </SeccionPlegable>
 
@@ -162,6 +207,14 @@ export const ExpedienteDetallePanel: React.FC<Props> = ({ abierto, onClose, inte
             titulo="Actas y notificación de cargo"
             resumen={[nc && `NC N° ${nc.numeroCorrelativo}`, acta && `Acta N° ${acta.numeroCorrelativo}`].filter(Boolean).join(' · ') || undefined}
           >
+            {expedienteId && (
+              <div className="flex items-center justify-between gap-[12px] flex-wrap mb-[18px] py-[10px] px-[14px] rounded-md bg-bg-subtle border border-border-subtle">
+                <span className="text-[12.5px] text-text-secondary">
+                  ¿Un dato del administrado o de la infracción está mal? Corrígelo y la vista previa del documento se actualiza. Queda registrado quién lo cambió y por qué.
+                </span>
+                <BotonCorregirDato expedienteId={expedienteId} variante="secondary" onCorregido={alCorregir} />
+              </div>
+            )}
             <div className="flex flex-col gap-[28px]">
               {nc && (
                 <div>
@@ -170,6 +223,9 @@ export const ExpedienteDetallePanel: React.FC<Props> = ({ abierto, onClose, inte
                       <>
                         <Button variant="secondary" size="sm" disabled={!fotoDe('NOTIFICACION_CARGO')} onClick={() => fotoDe('NOTIFICACION_CARGO') && abrirDocumento(fotoDe('NOTIFICACION_CARGO')!.id)}>
                           Ver foto
+                        </Button>
+                        <Button variant="secondary" size="sm" onClick={() => verDocumento(`Notificación de Cargo · N° ${nc.numeroCorrelativo}`, 'NOTIFICACION_CARGO')}>
+                          Ver Excel
                         </Button>
                         <Button variant="secondary" size="sm" onClick={() => descargarDocumentoWord(data.id, 'NOTIFICACION_CARGO')}>
                           Descargar Excel
@@ -205,6 +261,9 @@ export const ExpedienteDetallePanel: React.FC<Props> = ({ abierto, onClose, inte
                       <>
                         <Button variant="secondary" size="sm" disabled={!fotoDe('ACTA_FISCALIZACION')} onClick={() => fotoDe('ACTA_FISCALIZACION') && abrirDocumento(fotoDe('ACTA_FISCALIZACION')!.id)}>
                           Ver foto
+                        </Button>
+                        <Button variant="secondary" size="sm" onClick={() => verDocumento(`Acta de Fiscalización · N° ${acta.numeroCorrelativo}`, 'FISCALIZACION')}>
+                          Ver Word
                         </Button>
                         <Button variant="secondary" size="sm" onClick={() => descargarDocumentoWord(data.id, 'FISCALIZACION')}>
                           Descargar Word
@@ -251,9 +310,14 @@ export const ExpedienteDetallePanel: React.FC<Props> = ({ abierto, onClose, inte
                           </div>
                           {m.observacionesAdministrado && <div className="text-[12.5px] text-text-secondary italic mt-[2px]">“{m.observacionesAdministrado}”</div>}
                         </div>
-                        <Button variant="secondary" size="sm" onClick={() => descargarDocumentoWord(data.id, 'MEDIDA_PROVISIONAL', m.numeroCorrelativo)}>
-                          Descargar Word
-                        </Button>
+                        <div className="flex gap-[8px] shrink-0">
+                          <Button variant="secondary" size="sm" onClick={() => verDocumento(`Acta de Medida Provisional · N° ${m.numeroCorrelativo}`, 'MEDIDA_PROVISIONAL', m.numeroCorrelativo)}>
+                            Ver Word
+                          </Button>
+                          <Button variant="secondary" size="sm" onClick={() => descargarDocumentoWord(data.id, 'MEDIDA_PROVISIONAL', m.numeroCorrelativo)}>
+                            Descargar Word
+                          </Button>
+                        </div>
                       </li>
                     ))}
                   </ul>
