@@ -117,7 +117,7 @@ export const RolesView: React.FC<Props> = ({ roles, onCambio }) => {
         {mensaje && <Alert type={mensaje.tipo}>{mensaje.texto}</Alert>}
 
         {visibles.length === 0 ? (
-          <EmptyState icon={<ShieldAlertIcon size={36} />} title="No hay roles con ese filtro" description="Cambia la búsqueda o el estado." />
+          <EmptyState llenarPantalla icon={<ShieldAlertIcon size={36} />} title="No hay roles con ese filtro" description="Cambia la búsqueda o el estado." />
         ) : (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-[16px]">
             {visibles.map((r) => (

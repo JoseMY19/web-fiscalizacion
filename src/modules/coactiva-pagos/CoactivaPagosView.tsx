@@ -230,6 +230,7 @@ export const CoactivaPagosView: React.FC = () => {
             <EmptyState
               icon={<CheckCircleIcon size={40} color="var(--color-success)" />}
               title="Nada por declarar"
+              llenarPantalla
               description="No hay expedientes que hoy puedan declararse firmes (resolución notificada con plazo de recursos vencido, o apelación declarada infundada)."
             />
           ) : (
@@ -273,6 +274,7 @@ export const CoactivaPagosView: React.FC = () => {
           <EmptyState
             icon={<CheckCircleIcon size={40} color="var(--color-success)" />}
             title="Nada por derivar"
+            llenarPantalla
             description="No hay expedientes con acto firme pendientes de derivar a coactiva."
           />
         ) : (

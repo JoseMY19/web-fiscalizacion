@@ -119,7 +119,7 @@ export const CaducidadView: React.FC = () => {
             <Spinner size={32} />
           </div>
         ) : filas.length === 0 ? (
-          <EmptyState icon={<CheckCircleIcon size={40} color="var(--color-success)" />} title="Nada en esta pestaña" />
+          <EmptyState llenarPantalla icon={<CheckCircleIcon size={40} color="var(--color-success)" />} title="Nada en esta pestaña" />
         ) : (
           <TablaCaducidad filas={filas} onVer={abrir} />
         )}

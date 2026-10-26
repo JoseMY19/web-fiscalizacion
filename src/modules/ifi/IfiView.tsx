@@ -564,7 +564,7 @@ export const IfiView: React.FC = () => {
         {loading ? (
           <EsqueletoTarjetas alto={104} />
         ) : visibles.length === 0 ? (
-          <div className="rounded-lg bg-bg-card border border-dashed border-border-dark py-[24px]">
+          <div className="rounded-lg bg-bg-card border border-dashed border-border-dark py-[24px] flex items-center justify-center min-h-[max(280px,calc(100vh-385px))]">
             <TodoAlDia
               titulo={
                 texto || pasoFiltro

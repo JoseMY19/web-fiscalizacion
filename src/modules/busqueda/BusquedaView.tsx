@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import { Alert, Button } from '../../components/common/Common';
 import { PageHeader } from '../../components/common/PageKit';
 import { CarIcon, CheckCircleIcon, IdCardIcon, SearchIcon, UserIcon } from '../../components/icons/Icons';
 import { cn } from '../../lib/cn';
+import { useLlenarAlto } from '../../lib/useLlenarAlto';
 
 /**
  * Sección "Búsqueda": ficha de identidad por DNI (RENIEC) y ficha del vehículo
@@ -19,7 +20,8 @@ interface Campo {
 }
 
 interface Config {
-  titulo: string;
+  /** Título de la columna. */
+  nombre: string;
   descripcion: string;
   etiquetaCampo: string;
   marcador: string;
@@ -32,11 +34,17 @@ interface Config {
   validar: (valor: string) => string | null;
   vacio: { titulo: string; descripcion: string };
   fuente: string;
-  ficha: { titulo: string; icono: React.ReactNode; claveBuscada: string; foto?: { etiqueta: string; icono: React.ReactNode }; campos: Campo[] };
+  ficha: {
+    titulo: string;
+    icono: React.ReactNode;
+    claveBuscada: string;
+    foto?: { etiqueta: string; icono: React.ReactNode };
+    campos: Campo[];
+  };
 }
 
 const DNI: Config = {
-  titulo: 'Búsqueda por DNI',
+  nombre: 'Búsqueda por DNI',
   descripcion: 'Consulta la ficha de identidad del administrado a partir de su DNI.',
   etiquetaCampo: 'Documento Nacional de Identidad',
   marcador: 'Ej. 45879632',
@@ -46,7 +54,10 @@ const DNI: Config = {
   iconoGrande: <IdCardIcon size={30} />,
   limpiar: (t) => t.replace(/\D/g, '').slice(0, 8),
   validar: (v) => (/^\d{8}$/.test(v) ? null : 'El DNI tiene 8 dígitos.'),
-  vacio: { titulo: 'Busca un administrado', descripcion: 'Escribe el DNI arriba y presiona Buscar DNI. Aquí aparecerá su ficha de identidad.' },
+  vacio: {
+    titulo: 'Busca un administrado',
+    descripcion: 'Escribe el DNI arriba y presiona Buscar DNI. Aquí aparecerá su ficha de identidad.',
+  },
   fuente: 'RENIEC',
   ficha: {
     titulo: 'Ficha de identidad',
@@ -67,7 +78,7 @@ const DNI: Config = {
 };
 
 const PLACA: Config = {
-  titulo: 'Búsqueda por placas',
+  nombre: 'Búsqueda por placa',
   descripcion: 'Consulta la ficha del vehículo y su propietario a partir de la placa de rodaje.',
   etiquetaCampo: 'Placa de rodaje',
   marcador: 'Ej. ABC-123',
@@ -77,11 +88,17 @@ const PLACA: Config = {
   iconoGrande: <CarIcon size={30} />,
   // Mayúsculas, solo letras y números; el guion se pone solo después del 3.er carácter.
   limpiar: (t) => {
-    const s = t.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+    const s = t
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '')
+      .slice(0, 6);
     return s.length > 3 ? `${s.slice(0, 3)}-${s.slice(3)}` : s;
   },
   validar: (v) => (/^[A-Z0-9]{3}-[A-Z0-9]{3}$/.test(v) ? null : 'La placa tiene 6 caracteres, por ejemplo ABC-123.'),
-  vacio: { titulo: 'Busca un vehículo', descripcion: 'Escribe la placa arriba y presiona Buscar placa. Aquí aparecerá la ficha del vehículo.' },
+  vacio: {
+    titulo: 'Busca un vehículo',
+    descripcion: 'Escribe la placa arriba y presiona Buscar placa. Aquí aparecerá la ficha del vehículo.',
+  },
   fuente: 'SUNARP',
   ficha: {
     titulo: 'Ficha del vehículo',
@@ -105,6 +122,7 @@ const PLACA: Config = {
 type Datos = Record<string, string | null>;
 
 const Busqueda: React.FC<{ config: Config }> = ({ config }) => {
+  const idCampo = useId();
   const [texto, setTexto] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [buscado, setBuscado] = useState<string | null>(null);
@@ -120,64 +138,78 @@ const Busqueda: React.FC<{ config: Config }> = ({ config }) => {
   // Sin consulta en el backend: solo se conoce el dato buscado.
   const datos: Datos | null = buscado ? { [config.ficha.claveBuscada]: buscado } : null;
 
+  const { ref: refVacio, alto: altoVacio } = useLlenarAlto<HTMLDivElement>(!datos, 48);
+
   return (
-    <div>
-      <PageHeader etiqueta="Búsqueda" titulo={config.titulo} descripcion={config.descripcion} />
+    <section className="flex flex-col gap-[20px] min-w-0">
+      {/* Buscador */}
+      <form onSubmit={buscar} noValidate className="bg-bg-card rounded-lg border border-border shadow-sm p-[22px] animate-aparecer">
+        <div className="flex items-center gap-[12px] mb-[16px]">
+          <span className="w-[38px] h-[38px] rounded-[10px] bg-blue-50 border border-blue-100 text-blue-800 flex items-center justify-center shrink-0">
+            {config.ficha.icono}
+          </span>
+          <div className="min-w-0">
+            <h3 className="m-0 font-display text-[16px] font-bold text-text-main leading-[1.25]">{config.nombre}</h3>
+            <p className="m-0 text-[12.5px] text-text-muted">{config.descripcion}</p>
+          </div>
+        </div>
+        <label htmlFor={idCampo} className="block text-[13px] font-semibold text-text-secondary mb-[8px]">
+          {config.etiquetaCampo}
+        </label>
+        <div
+          className={cn(
+            'flex items-center gap-[8px] p-[5px] pl-[16px] rounded-md border bg-white [transition:border-color_150ms,box-shadow_150ms]',
+            error
+              ? 'border-danger ring-4 ring-red-100'
+              : 'border-border hover:border-border-dark focus-within:border-blue-700 focus-within:ring-4 focus-within:ring-blue-100',
+          )}
+        >
+          <span className="flex text-text-light">
+            <SearchIcon size={18} />
+          </span>
+          <input
+            id={idCampo}
+            value={texto}
+            onChange={(e) => {
+              setTexto(config.limpiar(e.target.value));
+              setError(null);
+            }}
+            placeholder={config.marcador}
+            autoComplete="off"
+            inputMode={config === DNI ? 'numeric' : 'text'}
+            aria-invalid={!!error}
+            className="flex-1 min-w-0 h-[42px] border-0 bg-transparent outline-none font-display text-[18px] font-semibold tracking-[1.5px] text-text-main placeholder:font-sans placeholder:text-[14px] placeholder:font-normal placeholder:tracking-normal placeholder:text-text-light"
+          />
+          <Button type="submit" icon={<SearchIcon size={15} />} className="h-[42px] shrink-0">
+            <span className="max-sm:hidden">{config.textoBoton}</span>
+          </Button>
+        </div>
+        <div className="flex items-center justify-between gap-[12px] mt-[7px] text-[12px]">
+          {error ? <span className="text-danger font-semibold">{error}</span> : <span className="text-text-muted">{config.ayuda}</span>}
+          <span className={cn('tabular-nums font-semibold shrink-0', escritos === config.largo ? 'text-success' : 'text-text-light')}>
+            {escritos}/{config.largo}
+          </span>
+        </div>
+      </form>
 
-      <div className="max-w-[880px] mx-auto flex flex-col gap-[20px]">
-        {/* Buscador */}
-        <form onSubmit={buscar} noValidate className="bg-bg-card rounded-lg border border-border shadow-sm p-[22px] animate-aparecer">
-          <label htmlFor="busqueda-campo" className="block text-[13px] font-semibold text-text-secondary mb-[8px]">
-            {config.etiquetaCampo}
-          </label>
-          <div
-            className={cn(
-              'flex items-center gap-[8px] p-[5px] pl-[16px] rounded-md border bg-white [transition:border-color_150ms,box-shadow_150ms]',
-              error ? 'border-danger ring-4 ring-red-100' : 'border-border hover:border-border-dark focus-within:border-blue-700 focus-within:ring-4 focus-within:ring-blue-100',
-            )}
-          >
-            <span className="flex text-text-light">
-              <SearchIcon size={18} />
-            </span>
-            <input
-              id="busqueda-campo"
-              value={texto}
-              onChange={(e) => {
-                setTexto(config.limpiar(e.target.value));
-                setError(null);
-              }}
-              placeholder={config.marcador}
-              autoComplete="off"
-              inputMode={config === DNI ? 'numeric' : 'text'}
-              aria-invalid={!!error}
-              className="flex-1 min-w-0 h-[42px] border-0 bg-transparent outline-none font-display text-[18px] font-semibold tracking-[1.5px] text-text-main placeholder:font-sans placeholder:text-[14px] placeholder:font-normal placeholder:tracking-normal placeholder:text-text-light"
-            />
-            <Button type="submit" icon={<SearchIcon size={15} />} className="h-[42px] shrink-0">
-              <span className="max-sm:hidden">{config.textoBoton}</span>
-            </Button>
+      {/* Resultado */}
+      {datos ? (
+        <Ficha key={buscado} config={config} datos={datos} />
+      ) : (
+        <div
+          ref={refVacio}
+          // Alto medido para llegar hasta abajo de la pantalla: valor dinámico.
+          style={altoVacio ? { minHeight: altoVacio } : undefined}
+          className="flex flex-col items-center justify-center text-center py-[48px] px-[24px] rounded-lg border border-dashed border-border-dark bg-bg-subtle animate-desvanecer"
+        >
+          <div className="w-[64px] h-[64px] rounded-full bg-blue-50 border border-blue-100 text-blue-800 flex items-center justify-center mb-[14px]">
+            {config.iconoGrande}
           </div>
-          <div className="flex items-center justify-between gap-[12px] mt-[7px] text-[12px]">
-            {error ? <span className="text-danger font-semibold">{error}</span> : <span className="text-text-muted">{config.ayuda}</span>}
-            <span className={cn('tabular-nums font-semibold shrink-0', escritos === config.largo ? 'text-success' : 'text-text-light')}>
-              {escritos}/{config.largo}
-            </span>
-          </div>
-        </form>
-
-        {/* Resultado */}
-        {datos ? (
-          <Ficha key={buscado} config={config} datos={datos} />
-        ) : (
-          <div className="flex flex-col items-center text-center py-[48px] px-[24px] rounded-lg border border-dashed border-border-dark bg-bg-subtle animate-desvanecer">
-            <div className="w-[64px] h-[64px] rounded-full bg-blue-50 border border-blue-100 text-blue-800 flex items-center justify-center mb-[14px]">
-              {config.iconoGrande}
-            </div>
-            <h3 className="m-0 mb-[4px] font-display text-[16px] font-bold text-text-main">{config.vacio.titulo}</h3>
-            <p className="m-0 text-[13px] text-text-muted max-w-[380px]">{config.vacio.descripcion}</p>
-          </div>
-        )}
-      </div>
-    </div>
+          <h3 className="m-0 mb-[4px] font-display text-[16px] font-bold text-text-main">{config.vacio.titulo}</h3>
+          <p className="m-0 text-[13px] text-text-muted max-w-[380px]">{config.vacio.descripcion}</p>
+        </div>
+      )}
+    </section>
   );
 };
 
@@ -237,9 +269,17 @@ const Ficha: React.FC<{ config: Config; datos: Datos }> = ({ config, datos }) =>
               {resto.map((c) => {
                 const valor = datos[c.clave];
                 return (
-                  <div key={c.clave} className={cn('min-w-0 py-[9px] px-[12px] rounded-md bg-bg-subtle border border-border-subtle', c.completo && 'col-span-2 max-sm:col-span-1')}>
+                  <div
+                    key={c.clave}
+                    className={cn(
+                      'min-w-0 py-[9px] px-[12px] rounded-md bg-bg-subtle border border-border-subtle',
+                      c.completo && 'col-span-2 max-sm:col-span-1',
+                    )}
+                  >
                     <dt className="text-[10.5px] font-bold uppercase tracking-[0.8px] text-text-muted mb-[3px]">{c.etiqueta}</dt>
-                    <dd className={cn('m-0 break-words uppercase text-[13.5px]', valor ? 'font-semibold text-text-main' : 'text-text-light')}>{valor || '—'}</dd>
+                    <dd className={cn('m-0 break-words uppercase text-[13.5px]', valor ? 'font-semibold text-text-main' : 'text-text-light')}>
+                      {valor || '—'}
+                    </dd>
                   </div>
                 );
               })}
@@ -251,5 +291,17 @@ const Ficha: React.FC<{ config: Config; datos: Datos }> = ({ config, datos }) =>
   );
 };
 
-export const BusquedaDniView: React.FC = () => <Busqueda key="dni" config={DNI} />;
-export const BusquedaPlacaView: React.FC = () => <Busqueda key="placa" config={PLACA} />;
+/** Un solo módulo, mitad y mitad: DNI a la izquierda y placa a la derecha (una debajo de otra en pantallas angostas). */
+export const BusquedaView: React.FC = () => (
+  <div>
+    <PageHeader
+      etiqueta="Búsqueda"
+      titulo="Búsqueda por DNI o placa"
+      descripcion="Consulta la ficha de identidad de un administrado o la del vehículo y su propietario."
+    />
+    <div className="grid grid-cols-2 gap-[24px] items-start max-xl:grid-cols-1">
+      <Busqueda config={DNI} />
+      <Busqueda config={PLACA} />
+    </div>
+  </div>
+);

@@ -85,6 +85,7 @@ export const ExpedienteFoliadoTab: React.FC = () => {
         </div>
       ) : !resultado ? (
         <EmptyState
+          llenarPantalla
           icon={<FileTextIcon size={40} />}
           title="Busca un expediente"
           description="Escribe el N° de expediente para ver todos sus documentos en orden, con su folio."

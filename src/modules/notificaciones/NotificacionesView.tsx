@@ -176,7 +176,7 @@ export const NotificacionesView: React.FC = () => {
         {loading ? (
           <EsqueletoTarjetas />
         ) : cedulas.length === 0 ? (
-          <div className="rounded-lg bg-bg-card border border-dashed border-border-dark py-[24px]">
+          <div className="rounded-lg bg-bg-card border border-dashed border-border-dark py-[24px] flex items-center justify-center min-h-[max(280px,calc(100vh-365px))]">
             <TodoAlDia
               titulo={tab === 'pendientes' ? 'Sin notificaciones domiciliarias pendientes' : 'Sin notificaciones asignadas'}
               descripcion={

@@ -129,6 +129,7 @@ export const SalidasTab: React.FC = () => {
 
       {items !== null && items.length === 0 && (
         <EmptyState
+          llenarPantalla
           icon={<FileTextIcon size={40} />}
           title="Sin documentos de salida"
           description="Aquí aparecen las actas que salen a campo con su número y los documentos que emite la subgerencia: IFI, resoluciones y cartas."
