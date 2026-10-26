@@ -153,7 +153,17 @@ export const ExpedienteDetallePanel: React.FC<Props> = ({ abierto, onClose, inte
                 {data.gpsPrecisionM ? ` · ±${Math.round(data.gpsPrecisionM)} m` : ''}
               </Dato>
               <Dato etiqueta="Coordenadas">{data.latitud && data.longitud ? `${data.latitud}, ${data.longitud}` : 'Sin señal GPS'}</Dato>
-              <Dato etiqueta="Dispositivo">{data.deviceId || 'Ingreso manual en oficina'}</Dato>
+              <Dato etiqueta="Registrado por">
+                {data.fiscalizador ? `${data.fiscalizador.nombres} · DNI ${data.fiscalizador.dni}` : 'No disponible'}
+              </Dato>
+              <Dato etiqueta="Medio">
+                {data.deviceId ? 'App de campo' : 'Ingreso en oficina'}
+                {data.deviceId && (
+                  <span className="ml-[8px] text-[11px] font-normal text-text-muted" title="Código interno del celular">
+                    Cód. celular {data.deviceId.slice(0, 8)}
+                  </span>
+                )}
+              </Dato>
             </Datos>
           </SeccionPlegable>
 
