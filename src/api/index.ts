@@ -939,6 +939,8 @@ export interface IntervencionObservadaItem {
 export interface BundleIntervencion {
   id: string;
   fiscalizadorId: string;
+  /** Quién registró la intervención (nombre y DNI de su usuario). */
+  fiscalizador?: { nombres: string; dni: string };
   deviceId?: string;
   fechaHoraInicio: string;
   latitud?: number;
