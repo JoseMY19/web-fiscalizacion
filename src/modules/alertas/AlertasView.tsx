@@ -121,7 +121,7 @@ export const AlertasView: React.FC = () => {
       {cargando && !datos ? (
         <EsqueletoTarjetas alto={108} />
       ) : datos && datos.items.length === 0 ? (
-        <div className="rounded-lg bg-bg-card border border-dashed border-border-dark py-[24px]">
+        <div className="rounded-lg bg-bg-card border border-dashed border-border-dark py-[24px] flex items-center justify-center min-h-[max(280px,calc(100vh-390px))]">
           <TodoAlDia
             titulo={vista === 'ATENCION' ? 'Nada requiere atención ahora' : 'No hay expedientes en esta pestaña'}
             descripcion={

@@ -23,11 +23,12 @@ import {
   XCircleIcon,
   BuildingIcon,
   ChevronRightIcon,
-  IdCardIcon,
-  CarIcon,
+  SearchIcon,
+  BarChartIcon,
 } from '../icons/Icons';
 
 export type NavModule =
+  | 'metricas'
   | 'dashboard'
   | 'alertas'
   | 'documentos'
@@ -44,8 +45,7 @@ export type NavModule =
   | 'pagos'
   | 'cautelares'
   | 'levantamientos'
-  | 'busqueda-dni'
-  | 'busqueda-placa'
+  | 'busqueda'
   | 'mapa'
   | 'configuracion'
   | 'usuarios';
@@ -77,6 +77,7 @@ interface NavItemConDef extends NavItem {
 // instrucción (IFI) → resolución → recursos → acto firme/cobranza. Después
 // lo transversal (cautelares, consultas, documentos, mapa, configuración).
 const navItems: NavItemConDef[] = [
+  { id: 'metricas', label: 'Dashboard', icon: <BarChartIcon size={18} /> },
   { id: 'dashboard', label: 'Panel Principal', icon: <DashboardIcon size={18} /> },
   // Centro de alertas: qué vence, en qué fase está cada expediente y el riesgo. Visible para todos (se filtra por permisos).
   { id: 'alertas', label: 'Alertas y Plazos', icon: <BellIcon size={18} /> },
@@ -95,8 +96,7 @@ const navItems: NavItemConDef[] = [
   { id: 'pagos', label: 'Registro de Pagos', icon: <CreditCardIcon size={18} /> },
   { id: 'cautelares', label: 'Medidas Cautelares', icon: <ShieldAlertIcon size={18} /> },
   { id: 'levantamientos', label: 'Levantamiento de Medidas', icon: <UnlockIcon size={18} /> },
-  { id: 'busqueda-dni', label: 'Búsqueda por DNI', icon: <IdCardIcon size={18} /> },
-  { id: 'busqueda-placa', label: 'Búsqueda por placas', icon: <CarIcon size={18} /> },
+  { id: 'busqueda', label: 'Búsqueda por DNI o placa', icon: <SearchIcon size={18} /> },
   { id: 'consulta-campo', label: 'Exhortación y Consulta', icon: <EyeIcon size={18} /> },
   { id: 'documentos', label: 'Control Documentario', icon: <FileTextIcon size={18} /> },
   { id: 'mapa', label: 'Mapa de Cobertura', icon: <MapPinIcon size={18} /> },
@@ -110,10 +110,9 @@ const navItems: NavItemConDef[] = [
  * no se muestra. El primero ("Inicio") va sin título.
  */
 const GRUPOS_NAV: { id: string; titulo: string | null; modulos: NavModule[] }[] = [
-  { id: 'inicio', titulo: null, modulos: ['dashboard', 'alertas'] },
+  { id: 'inicio', titulo: null, modulos: ['metricas', 'dashboard', 'alertas', 'busqueda'] },
   { id: 'procedimiento', titulo: 'Procedimiento sancionador', modulos: ['expedientes', 'notificaciones', 'ifi', 'resoluciones', 'recursos'] },
   { id: 'cobranza', titulo: 'Cobranza', modulos: ['coactiva-pagos', 'coactiva', 'pagos'] },
-  { id: 'busqueda', titulo: 'Búsqueda', modulos: ['busqueda-dni', 'busqueda-placa'] },
   { id: 'incidentes', titulo: 'Incidentes y plazos', modulos: ['levantamientos', 'cautelares', 'caducidad', 'prescripcion'] },
   { id: 'consulta', titulo: 'Consulta', modulos: ['consulta-campo', 'documentos', 'mapa'] },
   { id: 'administracion', titulo: 'Administración', modulos: ['configuracion', 'usuarios'] },
@@ -130,7 +129,7 @@ function leerGruposCerrados(): string[] {
   }
 }
 
-const MODULOS_SIN_PERMISO = new Set<NavModule>(['dashboard', 'alertas', 'busqueda-dni', 'busqueda-placa']);
+const MODULOS_SIN_PERMISO = new Set<NavModule>(['metricas', 'dashboard', 'alertas', 'busqueda']);
 
 /** Si el usuario puede entrar a ese módulo (menú y rutas usan la misma regla). */
 export function puedeVerModulo(modulo: NavModule, permisos: PermisosUsuario | undefined): boolean {

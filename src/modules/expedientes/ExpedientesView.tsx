@@ -426,7 +426,7 @@ export const ExpedientesView: React.FC = () => {
             (loading ? (
               <EsqueletoTarjetas />
             ) : filteredExpedientes.length === 0 ? (
-              <div className="rounded-lg bg-bg-card border border-dashed border-border-dark py-[24px]">
+              <div className="rounded-lg bg-bg-card border border-dashed border-border-dark py-[24px] flex items-center justify-center min-h-[max(280px,calc(100vh-390px))]">
                 <TodoAlDia
                   titulo={searchTerm ? 'Sin resultados' : 'Bandeja al día'}
                   descripcion={
@@ -466,7 +466,7 @@ export const ExpedientesView: React.FC = () => {
           {/* EXPEDIENTES OBSERVADOS */}
           {activeTab === 'observadas' &&
             (observadas.length === 0 ? (
-              <div className="rounded-lg bg-bg-card border border-dashed border-border-dark py-[24px]">
+              <div className="rounded-lg bg-bg-card border border-dashed border-border-dark py-[24px] flex items-center justify-center min-h-[max(280px,calc(100vh-390px))]">
                 <TodoAlDia titulo="Sin expedientes observados" descripcion="No hay expedientes observados pendientes de corrección." />
               </div>
             ) : (

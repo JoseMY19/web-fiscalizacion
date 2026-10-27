@@ -68,7 +68,7 @@ export const PagosView: React.FC = () => {
               <Spinner size={16} /> Cargando…
             </div>
           ) : !pagos || pagos.length === 0 ? (
-            <EmptyState icon={<CreditCardIcon size={32} />} title={busqueda.trim() ? 'Sin resultados' : 'Todavía no hay pagos registrados'} />
+            <EmptyState llenarPantalla icon={<CreditCardIcon size={32} />} title={busqueda.trim() ? 'Sin resultados' : 'Todavía no hay pagos registrados'} />
           ) : (
             <div className="overflow-x-auto">
               <table className={TABLA.tabla}>

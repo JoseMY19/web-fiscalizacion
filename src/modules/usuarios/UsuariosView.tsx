@@ -223,6 +223,7 @@ export const UsuariosView: React.FC<Props> = ({ roles, onCambio }) => {
       ) : usuarios.length === 0 ? (
         <div className="px-[24px] pb-[8px]">
           <EmptyState
+            llenarPantalla={8}
             icon={<UsersIcon size={36} />}
             title={hayFiltros ? 'No hay usuarios con esos filtros' : 'Todavía no hay usuarios'}
             description={hayFiltros ? 'Prueba con otro nombre, rol o estado.' : 'Crea el primer usuario para darle acceso al sistema.'}
