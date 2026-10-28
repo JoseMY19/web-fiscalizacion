@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { CoactivaPagosApi, ConsultasApi, ExpedientesApi, IfiApi, NotificacionesApi, RecursosApi, ResolucionesApi } from '../../api';
 import { CoactivaApi } from '../../api/coactiva';
 import { PagosApi } from '../../api/pagos';
@@ -17,6 +17,7 @@ import {
 } from '../../components/icons/Icons';
 import { NavModule } from '../../components/layout/AppLayout';
 import { cn } from '../../lib/cn';
+import { socket } from '../../lib/socket';
 import { useConteoAnimado } from '../../lib/useConteoAnimado';
 import { useAlertas } from '../alertas/AlertasContext';
 import { fechaLarga } from '../dashboard/dashboardUi';
@@ -165,14 +166,21 @@ const TIPOS: SerieDato[] = [
   { clave: 'INICIA_PAS', etiqueta: 'Inicia PAS', color: CATEGORICOS[2] },
 ];
 
+/** Avisos del servidor (socket) que cambian lo que muestra el tablero. */
+const EVENTOS_EN_VIVO = ['expediente:nuevo', 'ifi:pendiente', 'resolucion:pendiente', 'caducidad:cambio', 'coactiva:cambio', 'pago:registrado'];
+const ESPERA_EVENTOS_MS = 1500;
+
 export const MetricasView: React.FC<{ onNavigate: (m: NavModule) => void }> = ({ onNavigate }) => {
   const { resumen } = useAlertas();
   const [datos, setDatos] = useState<Datos | null>(null);
   const [cargando, setCargando] = useState(true);
   const [actualizado, setActualizado] = useState<Date | null>(null);
 
-  const cargar = useCallback(async () => {
-    setCargando(true);
+  const temporizadorEventos = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // `enSilencio`: la recarga por un aviso en vivo no vuelve a mostrar los esqueletos, solo cambia las cifras.
+  const cargar = useCallback(async (enSilencio = false) => {
+    if (!enSilencio) setCargando(true);
     const d = await cargarDatos();
     setDatos(d);
     setActualizado(new Date());
@@ -181,6 +189,19 @@ export const MetricasView: React.FC<{ onNavigate: (m: NavModule) => void }> = ({
 
   useEffect(() => {
     cargar();
+  }, [cargar]);
+
+  // En vivo: cualquier cambio relevante que avisa el servidor refresca el tablero (agrupado, para no consultar de más).
+  useEffect(() => {
+    const alEvento = () => {
+      if (temporizadorEventos.current) clearTimeout(temporizadorEventos.current);
+      temporizadorEventos.current = setTimeout(() => cargar(true), ESPERA_EVENTOS_MS);
+    };
+    EVENTOS_EN_VIVO.forEach((e) => socket.on(e, alEvento));
+    return () => {
+      EVENTOS_EN_VIVO.forEach((e) => socket.off(e, alEvento));
+      if (temporizadorEventos.current) clearTimeout(temporizadorEventos.current);
+    };
   }, [cargar]);
 
   // ─── Derivados ───
@@ -244,7 +265,7 @@ export const MetricasView: React.FC<{ onNavigate: (m: NavModule) => void }> = ({
               Actualizado {actualizado.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}
             </span>
           )}
-          <Button icon={<RefreshCwIcon size={15} />} loading={cargando} onClick={cargar} className="rounded-pill! h-[38px]">
+          <Button icon={<RefreshCwIcon size={15} />} loading={cargando} onClick={() => cargar()} className="rounded-pill! h-[38px]">
             Actualizar
           </Button>
         </div>
