@@ -13,7 +13,8 @@ import {
 import { Alert, Badge, Button, Input, Modal, Spinner, Textarea } from '../../components/common/Common';
 import { useConfirm } from '../../context/ConfirmContext';
 import { RetrotraerNulidad } from '../retroaccion/RetrotraerNulidad';
-import { CheckIcon, EyeIcon, FileTextIcon } from '../../components/icons/Icons';
+import { CheckIcon, EyeIcon, EyeOffIcon } from '../../components/icons/Icons';
+import { BotonesDocumento } from '../../components/common/BotonesDocumento';
 import {
   LABEL_DECISION_GOP,
   LABEL_RESULTADO,
@@ -701,22 +702,15 @@ export const RecursoPanel: React.FC<Props> = ({ expedienteId, numeroExpediente, 
       <section className="mb-[20px]">
         <div className={estiloTituloSeccion}>Documentos</div>
         <div className="border border-border rounded-[8px] overflow-hidden">
-          <FilaDocumento titulo={`Resolución de primera instancia${d.resolucion.numeroResolucion ? ` N° ${d.resolucion.numeroResolucion}` : ''} (Word)`}>
-            <Button
-              size="sm"
-              variant="outline"
-              className="mr-[6px]!"
-              onClick={() =>
+          <FilaDocumento titulo={`Resolución de primera instancia${d.resolucion.numeroResolucion ? ` N° ${d.resolucion.numeroResolucion}` : ''}`}>
+            <BotonesDocumento
+              onVistaPrevia={() =>
                 vp.abrir(`Resolución de primera instancia - Expediente ${d.numeroExpediente}`, vistaDeRuta(`/resoluciones/${d.expedienteId}/documento`), () =>
                   descargar(() => descargarDocumentoResolucion(d.expedienteId, d.numeroExpediente)),
                 )
               }
-            >
-              Ver Word
-            </Button>
-            <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={() => descargar(() => descargarDocumentoResolucion(d.expedienteId, d.numeroExpediente))}>
-              Descargar
-            </Button>
+              onDescargar={() => descargar(() => descargarDocumentoResolucion(d.expedienteId, d.numeroExpediente))}
+            />
           </FilaDocumento>
           {rec && rsg && (
             <FilaDocumento
@@ -724,34 +718,21 @@ export const RecursoPanel: React.FC<Props> = ({ expedienteId, numeroExpediente, 
               detalle={rsg.analisisTexto ? 'Word con la plantilla de RSG de reconsideración.' : 'El Word se habilita cuando esté redactado el análisis.'}
               expandido={verRsg ? <div className={estiloTextoLargo}>{rsg.analisisTexto || 'Todavía no redactado.'}</div> : undefined}
             >
-              {rsg.analisisTexto && (
-                <>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="mr-[6px]!"
-                    onClick={() =>
-                      vp.abrir(`RSG de reconsideración - Expediente ${d.numeroExpediente}`, vistaDeRuta(`/reconsideraciones/${rec.id}/rsg/documento`), () =>
-                        descargar(() => descargarDocumentoRsgReconsideracion(rec.id, d.numeroExpediente)),
-                      )
-                    }
-                  >
-                    Ver Word
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    icon={<FileTextIcon size={14} />}
-                    className="mr-[6px]!"
-                    onClick={() => descargar(() => descargarDocumentoRsgReconsideracion(rec.id, d.numeroExpediente))}
-                  >
-                    Word
-                  </Button>
-                </>
-              )}
-              <Button size="sm" variant="outline" icon={<EyeIcon size={14} />} onClick={() => setVerRsg((v) => !v)}>
-                {verRsg ? 'Ocultar' : 'Ver'}
-              </Button>
+              <BotonesDocumento
+                onVistaPrevia={
+                  rsg.analisisTexto
+                    ? () =>
+                        vp.abrir(`RSG de reconsideración - Expediente ${d.numeroExpediente}`, vistaDeRuta(`/reconsideraciones/${rec.id}/rsg/documento`), () =>
+                          descargar(() => descargarDocumentoRsgReconsideracion(rec.id, d.numeroExpediente)),
+                        )
+                    : undefined
+                }
+                onDescargar={rsg.analisisTexto ? () => descargar(() => descargarDocumentoRsgReconsideracion(rec.id, d.numeroExpediente)) : undefined}
+              >
+                <Button size="sm" variant="outline" icon={verRsg ? <EyeOffIcon size={14} /> : <EyeIcon size={14} />} onClick={() => setVerRsg((v) => !v)}>
+                  {verRsg ? 'Ocultar texto' : 'Ver texto'}
+                </Button>
+              </BotonesDocumento>
             </FilaDocumento>
           )}
           {ape?.informeGenerado && (
@@ -760,30 +741,18 @@ export const RecursoPanel: React.FC<Props> = ({ expedienteId, numeroExpediente, 
               detalle={ape.fechaFirmaInforme ? `Firmado el ${fechaCorta(ape.fechaFirmaInforme)}` : 'Sin firmar'}
               expandido={verInforme ? <div className={estiloTextoLargo}>{informe?.antecedentes || 'Sin contenido.'}</div> : undefined}
             >
-              <Button
-                size="sm"
-                variant="outline"
-                className="mr-[6px]!"
-                onClick={() =>
+              <BotonesDocumento
+                onVistaPrevia={() =>
                   vp.abrir(`Informe a GOP - Expediente ${d.numeroExpediente}`, vistaDeRuta(`/apelaciones/${ape.id}/informe-gop/documento`), () =>
                     descargar(() => descargarDocumentoInformeGop(ape.id, d.numeroExpediente)),
                   )
                 }
+                onDescargar={() => descargar(() => descargarDocumentoInformeGop(ape.id, d.numeroExpediente))}
               >
-                Ver Word
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                icon={<FileTextIcon size={14} />}
-                className="mr-[6px]!"
-                onClick={() => descargar(() => descargarDocumentoInformeGop(ape.id, d.numeroExpediente))}
-              >
-                Word
-              </Button>
-              <Button size="sm" variant="outline" icon={<EyeIcon size={14} />} onClick={cargarInforme}>
-                {verInforme ? 'Ocultar' : 'Ver'}
-              </Button>
+                <Button size="sm" variant="outline" icon={verInforme ? <EyeOffIcon size={14} /> : <EyeIcon size={14} />} onClick={cargarInforme}>
+                  {verInforme ? 'Ocultar texto' : 'Ver texto'}
+                </Button>
+              </BotonesDocumento>
             </FilaDocumento>
           )}
         </div>
