@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useVistaPrevia } from '../../components/common/useVistaPrevia';
-import { vistaDeRuta } from '../../api/vistaPreviaDocumentos';
+import { verActaPdf, verActaWord, vistaDeRuta } from '../../api/vistaPreviaDocumentos';
+import type { TipoActaDocumento } from '../../api';
+import { BotonesDocumento, BotonVerFoto } from '../../components/common/BotonesDocumento';
 import {
   IfiApi,
   IfiDocumentoAdjuntoItem,
@@ -20,7 +22,7 @@ import { Alert, Badge, Button, Input, Modal, Spinner, Textarea } from '../../com
 import { useConfirm } from '../../context/ConfirmContext';
 import { DescargosLista } from '../descargos/DescargosLista';
 import { CorreccionMaterialSeccion } from '../correcciones/CorreccionMaterial';
-import { CheckIcon, EyeIcon, FileTextIcon, PenToolIcon, ZapIcon } from '../../components/icons/Icons';
+import { CheckIcon, EyeIcon, EyeOffIcon, FileTextIcon, PenToolIcon, ZapIcon } from '../../components/icons/Icons';
 import {
   EXPLICACION_TIPO,
   LABEL_FOTO_ACTA,
@@ -254,6 +256,17 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
   }, [expedienteId, recargar]);
 
   const vp = useVistaPrevia();
+
+  // Acta (Word) o Notificación de Cargo (Excel) generada por el sistema, para mirarla al lado sin descargarla.
+  const vistaActa = (titulo: string, tipo: TipoActaDocumento, medida?: string) => {
+    if (!detalle) return;
+    const intervencionId = detalle.intervencionId;
+    vp.abrir(
+      titulo,
+      { cargarPdf: () => verActaPdf(intervencionId, tipo, medida), cargarWord: tipo === 'NOTIFICACION_CARGO' ? undefined : () => verActaWord(intervencionId, tipo, medida) },
+      () => descargarDocumentoWord(intervencionId, tipo, medida),
+    );
+  };
 
   const ejecutar = async (clave: string, fn: () => Promise<unknown>, exito: string, resincronizar = false) => {
     setAccionEnCurso(clave);
@@ -1236,67 +1249,56 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
         <div className="border border-border rounded-[8px] overflow-hidden">
           {d.tieneActaFiscalizacion && (
             <FilaDocumento titulo="Acta de Fiscalización">
-              <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={() => descargarDocumentoWord(d.intervencionId, 'FISCALIZACION')}>
-                Descargar
-              </Button>
-              <BotonesVerFoto fotos={fotos} actaTipo="ACTA_FISCALIZACION" onVer={abrirDocumento} />
+              <BotonesDocumento onVistaPrevia={() => vistaActa('Acta de Fiscalización', 'FISCALIZACION')} onDescargar={() => descargarDocumentoWord(d.intervencionId, 'FISCALIZACION')}>
+                <BotonesVerFoto fotos={fotos} actaTipo="ACTA_FISCALIZACION" onVer={abrirDocumento} />
+              </BotonesDocumento>
             </FilaDocumento>
           )}
           {d.tieneNotificacionCargo && (
             <FilaDocumento titulo="Notificación de Cargo">
-              <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={() => descargarDocumentoWord(d.intervencionId, 'NOTIFICACION_CARGO')}>
-                Descargar
-              </Button>
-              <BotonesVerFoto fotos={fotos} actaTipo="NOTIFICACION_CARGO" onVer={abrirDocumento} />
+              <BotonesDocumento onVistaPrevia={() => vistaActa('Notificación de Cargo', 'NOTIFICACION_CARGO')} onDescargar={() => descargarDocumentoWord(d.intervencionId, 'NOTIFICACION_CARGO')}>
+                <BotonesVerFoto fotos={fotos} actaTipo="NOTIFICACION_CARGO" onVer={abrirDocumento} />
+              </BotonesDocumento>
             </FilaDocumento>
           )}
           {d.medidasProvisionales.map((m) => (
-            <FilaDocumento key={m.numeroCorrelativo} titulo={`Acta de Medida Provisional N° ${m.numeroCorrelativo} — ${m.tipoMedida} (Word)`}>
-              <Button
-                size="sm"
-                variant="outline"
-                icon={<FileTextIcon size={14} />}
-                onClick={() => descargarDocumentoWord(d.intervencionId, 'MEDIDA_PROVISIONAL', m.numeroCorrelativo)}
-              >
-                Descargar
-              </Button>
+            <FilaDocumento key={m.numeroCorrelativo} titulo={`Acta de Medida Provisional N° ${m.numeroCorrelativo} · ${m.tipoMedida}`}>
+              <BotonesDocumento
+                onVistaPrevia={() => vistaActa(`Acta de Medida Provisional N° ${m.numeroCorrelativo}`, 'MEDIDA_PROVISIONAL', m.numeroCorrelativo)}
+                onDescargar={() => descargarDocumentoWord(d.intervencionId, 'MEDIDA_PROVISIONAL', m.numeroCorrelativo)}
+              />
             </FilaDocumento>
           ))}
           {fotos
             .filter((f) => !(f.actaTipo === 'ACTA_FISCALIZACION' && d.tieneActaFiscalizacion) && !(f.actaTipo === 'NOTIFICACION_CARGO' && d.tieneNotificacionCargo))
             .map((f, i) => (
-            <FilaDocumento key={f.id} titulo={f.actaTipo ? LABEL_FOTO_ACTA[f.actaTipo] ?? `Foto (${f.actaTipo})` : `Foto de la intervención ${i + 1}`}>
-              <Button size="sm" variant="outline" icon={<EyeIcon size={14} />} onClick={() => abrirDocumento(f.id)}>
-                Ver
-              </Button>
-            </FilaDocumento>
-          ))}
+              <FilaDocumento key={f.id} titulo={f.actaTipo ? LABEL_FOTO_ACTA[f.actaTipo] ?? `Foto (${f.actaTipo})` : `Foto de la intervención ${i + 1}`}>
+                <BotonesDocumento>
+                  <BotonVerFoto onClick={() => abrirDocumento(f.id)} />
+                </BotonesDocumento>
+              </FilaDocumento>
+            ))}
           {d.ifi && d.ifi.estado !== 'EN_ELABORACION' && (
-            <FilaDocumento titulo={`Informe Final de Instrucción — IFI${d.ifi.numeroInforme ? ` N° ${d.ifi.numeroInforme}` : ''} (Word)`}>
-              <Button
-                size="sm"
-                variant="outline"
-                className="mr-[6px]!"
-                onClick={() => vp.abrir(`IFI - Expediente ${d.numeroExpediente}`, vistaDeRuta(`/ifi/${expedienteId}/documento`), descargarIfi)}
-              >
-                Ver Word
-              </Button>
-              <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={descargarIfi}>
-                Descargar
-              </Button>
+            <FilaDocumento titulo={`Informe Final de Instrucción · IFI${d.ifi.numeroInforme ? ` N° ${d.ifi.numeroInforme}` : ''}`}>
+              <BotonesDocumento
+                onVistaPrevia={() => vp.abrir(`IFI - Expediente ${d.numeroExpediente}`, vistaDeRuta(`/ifi/${expedienteId}/documento`), descargarIfi)}
+                onDescargar={descargarIfi}
+              />
             </FilaDocumento>
           )}
           {docsIfi.map((doc) => (
             <FilaDocumento key={doc.id} titulo={`Adjunto del IFI: ${doc.descripcion}`} detalle={doc.nombreOriginal}>
-              <Button size="sm" variant="outline" icon={<EyeIcon size={14} />} onClick={() => abrirDocumentoIfi(doc.id)}>
-                Ver
-              </Button>
+              <BotonesDocumento>
+                <Button size="sm" variant="outline" icon={<EyeIcon size={14} />} onClick={() => abrirDocumentoIfi(doc.id)}>
+                  Ver adjunto
+                </Button>
+              </BotonesDocumento>
             </FilaDocumento>
           ))}
           {r && (
             <FilaDocumento
-              titulo="La resolución: antecedentes y análisis redactados (texto)"
-              detalle={r.analisisTexto ? 'El Word se genera con la plantilla real (RSGSA / RSG).' : 'El Word se habilita cuando esté redactado el análisis.'}
+              titulo="Resolución"
+              detalle={r.analisisTexto ? 'Antecedentes y análisis redactados. El Word usa la plantilla real (RSGSA / RSG).' : 'El Word se habilita cuando esté redactado el análisis.'}
               expandido={
                 verTextoResolucion ? (
                   <div className="flex flex-col gap-[8px]">
@@ -1313,24 +1315,18 @@ export const ResolucionPanel: React.FC<Props> = ({ expedienteId, numeroExpedient
                 ) : undefined
               }
             >
-              {r.analisisTexto && (
-                <>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="mr-[6px]!"
-                    onClick={() => vp.abrir(`Resolución - Expediente ${d.numeroExpediente}`, vistaDeRuta(`/resoluciones/${expedienteId}/documento`), descargarResolucion)}
-                  >
-                    Ver Word
-                  </Button>
-                  <Button size="sm" variant="outline" icon={<FileTextIcon size={14} />} onClick={descargarResolucion} className="mr-[6px]!">
-                    Word
-                  </Button>
-                </>
-              )}
-              <Button size="sm" variant="outline" icon={<EyeIcon size={14} />} onClick={() => setVerTextoResolucion((v) => !v)}>
-                {verTextoResolucion ? 'Ocultar' : 'Ver'}
-              </Button>
+              <BotonesDocumento
+                onVistaPrevia={
+                  r.analisisTexto
+                    ? () => vp.abrir(`Resolución - Expediente ${d.numeroExpediente}`, vistaDeRuta(`/resoluciones/${expedienteId}/documento`), descargarResolucion)
+                    : undefined
+                }
+                onDescargar={r.analisisTexto ? descargarResolucion : undefined}
+              >
+                <Button size="sm" variant="outline" icon={verTextoResolucion ? <EyeOffIcon size={14} /> : <EyeIcon size={14} />} onClick={() => setVerTextoResolucion((v) => !v)}>
+                  {verTextoResolucion ? 'Ocultar texto' : 'Ver texto'}
+                </Button>
+              </BotonesDocumento>
             </FilaDocumento>
           )}
         </div>
@@ -1437,9 +1433,7 @@ const BotonesVerFoto: React.FC<{ fotos: { id: string; actaTipo: string | null }[
     {fotos
       .filter((f) => f.actaTipo === actaTipo)
       .map((f) => (
-        <Button key={f.id} size="sm" variant="outline" icon={<EyeIcon size={14} />} onClick={() => onVer(f.id)} className="ml-[6px]!">
-          Ver
-        </Button>
+        <BotonVerFoto key={f.id} onClick={() => onVer(f.id)} />
       ))}
   </>
 );
